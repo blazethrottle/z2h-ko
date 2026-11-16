@@ -14,7 +14,7 @@
   - 400 `bad_host`(주소 틀림), `bad_since`, `bad_account`, `bad_grade`, 결과코드 오류(5절)
   - 401 `no_user`(계정을 고르지 않음, 본문에 `auth_provider` 도 있음. 1-1절), 403 `bad_origin`(다른 사이트에서 보낸 쓰기), `not_loopback`(이 컴퓨터 밖에서 접속)
   - 404 `not_found`·`no_account`, 413 `too_large`(본문 1MB 초과), 422 `bad_request`(요청 모양 틀림), 500 `server_error`
-- 쓰기 요청(POST)은 `Origin` 이 있으면 `http://127.0.0.1:8787` 또는 `http://localhost:8787`(`Z2H_TAILSCALE_HOST` 를 설정했으면 `https://<그 serve 이름>` 도) 일 때만 받는다. `Sec-Fetch-Site: cross-site` 인 쓰기도 거부한다. Origin 이 없는 요청(로컬 Jupyter 의 Python `finish()` 등)은 받는다. dev 서버(4321)는 프록시에서 Origin 을 서버 주소로 바꿔 보내면 된다.
+- 쓰기 요청(POST)은 `Origin` 이 있으면 `http://127.0.0.1:8787` 또는 `http://localhost:8787` 일 때만 받는다. `Sec-Fetch-Site: cross-site` 인 쓰기도 거부한다. Origin 이 없는 요청(로컬 Jupyter 의 Python `finish()` 등)은 받는다. `Z2H_TAILSCALE_HOST` 를 설정하면 Origin 을 Host 와 묶는다(1-1절): serve 이름 Host 의 쓰기는 Origin 이 정확히 `https://<serve 이름>` 일 때만(없어도 403), 로컬 Host 의 쓰기는 그 Origin 을 받지 않는다. dev 서버(4321)는 프록시에서 Origin 을 서버 주소로 바꿔 보내면 된다.
 - 본문은 1MB 까지. 오프라인 대기열이 크면 여러 번에 나눠 보낸다(예: 200줄씩).
 
 ## 1. 계정 (로컬 개발 로그인, 127.0.0.1 전용, 비밀번호 없음)
@@ -35,7 +35,7 @@
 
 **개발용 로그인은 이 컴퓨터 안에서만 쓰고, 터널을 붙이면 꺼진다.** 비밀번호 없이 아무 계정으로나 들어가는 길이라 아래 중 하나라도 해당하면 `/api/dev-auth/*` 는 404, `X-Z2H-User` 머리말과 개발용 쿠키는 그 요청에서 무시(기록 API 는 401)된다.
 1. 접속한 쪽이 127.0.0.1 이 아님
-2. 프록시·터널 머리말이 있음: `CF-Connecting-IP`, `CF-Ray`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Real-IP`, `Forwarded`, 그리고 Tailscale serve 가 붙이는 `Tailscale-User-Login`·`Tailscale-User-Name`·`Tailscale-User-Profile-Pic`. 앱 dev 서버 프록시는 이 머리말을 붙이지 않게 둔다(Vite 기본값 `xfwd: false`)
+2. 프록시·터널 머리말이 있음: `CF-Connecting-IP`, `CF-Ray`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Real-IP`, `Forwarded`, 그리고 Tailscale serve 가 붙이는 `Tailscale-User-Login`·`Tailscale-User-Name`·`Tailscale-User-Profile-Pic`·`Tailscale-Funnel-Request`. 앱 dev 서버 프록시는 이 머리말을 붙이지 않게 둔다(Vite 기본값 `xfwd: false`)
 3. Host 가 `127.0.0.1`·`localhost`(포트는 상관없음)가 아님. Host 가 serve 이름(1-1절)인 요청은 늘 여기에 해당한다
 4. 서버 설정에 127.0.0.1·localhost 가 아닌 허용 주소(`Z2H_EXTRA_HOSTS`, 예: 터널 주소)가 하나라도 있거나 `Z2H_DEV_AUTH=0`: 개발용 로그인 자체가 꺼지고 시작 로그에 "개발용 로그인 꺼짐"이 남는다. 그때는 맥 쪽 기록 API 가 401(실제 로그인은 공개 승인 뒤). `Z2H_TAILSCALE_HOST` 의 이름은 이 '바깥 주소'로 세지 않는다(같은 이름을 `Z2H_EXTRA_HOSTS` 에도 넣으면 센다).
 
@@ -52,6 +52,7 @@
 1. 접속한 쪽이 `127.0.0.1`
 2. `Host` 머리말이 정확히 1개이고 설정한 serve 이름과 같음(포트는 상관없음, 대소문자 무시)
 3. `Tailscale-User-Login` 머리말이 정확히 1개이고 비어 있지 않음. 인코딩된 값(`=?` 로 시작), 공백·쉼표가 든 값은 거부
+4. `Tailscale-Funnel-Request`(Funnel 요청), `CF-Connecting-IP`·`CF-Ray`(Cloudflare 터널)가 없음. `X-Forwarded-*` 는 있든 없든 판단에 쓰지 않는다(serve 가 붙이는지 미확인)
 - Host 가 `127.0.0.1`·`localhost` 인 요청에 `Tailscale-User-Login` 이 있어도 믿지 않는다(serve 를 거치지 않은 요청이므로). 그런 요청은 개발용 로그인도 거부한다(1절 2번).
 - 로그인 이름은 대소문자를 가리지 않는다(소문자로 맞춰 찾음). 응답 본문에 로그인 이름을 되돌려 주지 않는다.
 
@@ -62,7 +63,9 @@
 ```
 그 밖의 요청의 401 은 `message_ko` 가 지금과 같고 `auth_provider` 는 `"dev_local"`(개발용 로그인이 꺼져 있으면 `"none"`).
 
-- 쓰기 요청의 Origin 은 `https://<serve 이름>`(포트 없이)만 받는다. serve 를 443 이 아닌 포트로 열면 그 Origin 을 `Z2H_EXTRA_ORIGINS` 에 따로 넣어야 한다.
+- 쓰기 요청(POST 등)은 `Origin` 머리말이 정확히 1개이고 `https://<serve 이름>`(포트 없이, 끝의 `/`·대소문자는 무시)일 때만 받는다. Origin 이 없거나, `http://127.0.0.1:8787` 같은 로컬 Origin 이거나, `Z2H_EXTRA_ORIGINS` 에 넣은 값이어도 403 `bad_origin`. 앱은 같은 주소에서 `fetch` 하므로 브라우저가 알아서 붙인다. serve 는 HTTPS 기본 포트(443)로 연다.
+- 로컬 Host 로 온 쓰기에 `Origin: https://<serve 이름>` 이 붙어 있으면 403.
+- `Tailscale-User-Login`·`Tailscale-Funnel-Request` 같은 serve 머리말이 붙은 로컬 Host 요청은 개발용 로그인도 쓰지 못한다(1절 2번).
 - 짧은 이름(`http://macmini`)이나 Tailscale IP(`100.x.y.z`)로 열면 Host 가 달라 400 `bad_host`.
 
 ## 2. `GET /api/health`

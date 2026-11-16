@@ -7,7 +7,8 @@ API 는 먼저 for_request(request) 로 그 요청을 맡을 로그인 수단 �
 - 계정을 여러 개 만들고 바꿀 수 있다. 비밀번호 없음.
 - 이 컴퓨터 안에서 바로 온 요청에서만 동작한다(local_only). 요청마다 직접 검사하고, 공용 문 검사에만 기대지 않는다.
   1) 접속한 쪽이 127.0.0.1  2) 프록시·터널 머리말(CF-Connecting-IP, X-Forwarded-For 등)과
-  Tailscale serve 가 붙이는 신원 머리말(Tailscale-User-*)이 하나도 없음  3) Host 가 127.0.0.1 또는 localhost.
+  Tailscale serve 가 붙이는 머리말(Tailscale-User-*, Tailscale-Funnel-Request)이 하나도 없음
+  3) Host 가 127.0.0.1 또는 localhost.
   하나라도 어기면 그 요청에서는 누구도 아니다.
 - 터널 주소를 허용하는 설정(Z2H_EXTRA_HOSTS 의 바깥 이름)이 있거나 Z2H_DEV_AUTH=0 이면
   서버가 LocalDevAuth 대신 NoAuth 를 쓴다(앱 조립 때). Z2H_TAILSCALE_HOST 의 이름은 여기에 세지 않는다.
@@ -19,6 +20,8 @@ API 는 먼저 for_request(request) 로 그 요청을 맡을 로그인 수단 �
 - 요청 하나를 serve 경유로 인정하는 조건(모두 충족, 하나라도 어기면 그 요청은 누구도 아니다)
   (a) 접속한 쪽이 127.0.0.1  (b) Host 머리말이 정확히 1개이고 Z2H_TAILSCALE_HOST 와 같음(포트 무시, 대소문자 무시)
   (c) Tailscale-User-Login 이 정확히 1개, 비어 있지 않음. RFC 2047 Q 인코딩 값(=? 로 시작)은 풀지 않고 거부
+  (d) Tailscale-Funnel-Request(Funnel 금지를 서버에서도 한 번 더), CF-Connecting-IP·CF-Ray(Cloudflare 터널)가 없음
+- 쓰기 요청(POST 등)은 공용 문(security.py)에서 Origin 이 정확히 https://<serve 이름> 일 때만 통과한다(없어도 거부).
 - 로그인 이름(소문자) → auth_identity(provider="tailscale", subject=이름) → user_id. 자동 가입 없음.
   이어 두지 않은 이름은 None(401). 잇기는 맥미니에서 직접 실행하는 명령(python -m z2h_server link-tailscale)뿐이다.
 - X-Forwarded-* 를 serve 가 붙이는지는 문서에 없다(미확인). 그래서 이 판단은 그 머리말의 있고 없음을 보지 않는다.
@@ -33,6 +36,9 @@ API 는 먼저 for_request(request) 로 그 요청을 맡을 로그인 수단 �
 남는 위험(문서 server/README.md 에도 적음)
 - 같은 컴퓨터 안 프로그램은 127.0.0.1:8787 에 Host 와 Tailscale-User-Login 을 마음대로 붙여 보낼 수 있다(위조 가능).
   그 프로그램은 DB 파일도 읽을 수 있으므로 이 서버가 막을 수 있는 범위 밖이다.
+- serve 대상은 진도 서버(http://127.0.0.1:8787)만이어야 한다. 앱 dev·preview 서버(4321 등)의 /api 프록시는
+  Host 를 로컬로 바꾸고 전달 머리말을 지우므로, serve 가 그 포트를 가리키면 신원 머리말 없는 요청(태그된 기기 등)이
+  로컬 요청처럼 보여 개발용 로그인에 닿을 수 있다.
 - tailnet 을 공유받은 바깥 사람의 요청에도 머리말이 붙는다. 계정에 이어 두지 않았으면 401.
 - 태그된 기기의 요청에는 머리말이 없다. 그 기기로는 로그인할 수 없다(401).
 
@@ -55,7 +61,7 @@ from typing import Any
 from starlette.requests import Request
 
 from .config import validate_tailscale_host
-from .security import host_allowed
+from .security import host_allowed, serve_host_in
 from .storage.base import StorageAdapter
 from .timeutil import KST, to_kst_iso
 
@@ -74,8 +80,13 @@ FORWARDING_HEADERS = (
 # Tailscale serve 가 프록시한 요청에 붙이는 신원 머리말(태그된 기기·Funnel 요청에는 없음)
 TAILSCALE_LOGIN_HEADER = "tailscale-user-login"
 TAILSCALE_IDENTITY_HEADERS = (TAILSCALE_LOGIN_HEADER, "tailscale-user-name", "tailscale-user-profile-pic")
+# Funnel(인터넷 공개)로 들어온 요청에 serve 가 붙이는 머리말. Funnel 은 쓰지 않으므로 보이면 거부한다
+TAILSCALE_FUNNEL_HEADER = "tailscale-funnel-request"
 # 개발용 로그인(local_only)이 '전달된 요청'으로 보고 거부하는 머리말 전부
-PROXY_MARK_HEADERS = FORWARDING_HEADERS + TAILSCALE_IDENTITY_HEADERS
+PROXY_MARK_HEADERS = FORWARDING_HEADERS + TAILSCALE_IDENTITY_HEADERS + (TAILSCALE_FUNNEL_HEADER,)
+# TailscaleAuth 가 보면 거부하는 머리말: Funnel 표시, Cloudflare 터널 표시.
+# X-Forwarded-* 는 serve 가 붙일 수 있어(문서에 없음, 미확인) 여기에 넣지 않는다. 있든 없든 판단에 쓰지 않는다.
+TAILSCALE_REFUSE_HEADERS = (TAILSCALE_FUNNEL_HEADER, "cf-connecting-ip", "cf-ray")
 
 MAX_LOGIN_CHARS = 255  # auth_identity.subject 칼럼 길이
 # 로그인 이름으로 받는 글자: 공백·쉼표 없는 ASCII 보이는 글자
@@ -257,6 +268,8 @@ class TailscaleAuth(AuthAdapter):
     def current_user_id(self, request: Request) -> str | None:
         if not self.allows(request):
             return None
+        if any(name in request.headers for name in TAILSCALE_REFUSE_HEADERS):
+            return None  # 조건 (d): Funnel 요청이거나 Cloudflare 터널을 거친 요청
         login = self.login_of(request)
         if login is None:
             return None
@@ -276,8 +289,8 @@ class ByHostAuth(AuthAdapter):
     def for_request(self, request: Request) -> AuthAdapter:
         # Host 가 여러 개(같은 컴퓨터 안 프로그램만 만들 수 있음)여도 하나라도 serve 이름이면 Tailscale 쪽으로 보낸다.
         # 거기서 Host 가 1개가 아니라 거부되므로, 그런 요청은 개발용 로그인에도 Tailscale 로그인에도 닿지 않는다.
-        serve = frozenset({self.tailscale.serve_host})
-        if any(host_allowed(h, serve) for h in request.headers.getlist("host")):
+        # 공용 문(security.py)의 Origin 규칙도 같은 함수로 serve 요청을 가른다.
+        if serve_host_in(request.headers.getlist("host"), self.tailscale.serve_host):
             return self.tailscale
         return self.local
 

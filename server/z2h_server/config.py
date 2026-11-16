@@ -10,7 +10,8 @@
 - Z2H_EXTRA_HOSTS, Z2H_EXTRA_ORIGINS  쉼표로 구분한 추가 허용값(기본 없음. 나중 터널 주소용)
 - Z2H_DEV_AUTH  0 이면 개발용 로그인을 끈다. 허용 Host 에 127.0.0.1·localhost 가 아닌 주소가 있어도 꺼진다
 - Z2H_TAILSCALE_HOST  폰 로그인(TailscaleAuth)을 켠다. 값은 '<기기>.<tailnet>.ts.net' 이름 1개(스킴·포트·쉼표 없이).
-                      그 이름이 허용 Host 에, https://<그 이름> 이 허용 Origin 에 자동으로 들어간다.
+                      그 이름이 허용 Host 에 자동으로 들어간다. Origin 은 Host 와 묶는다: serve 이름 Host 의 쓰기는
+                      Origin 이 정확히 https://<그 이름> 일 때만, 로컬 Host 의 쓰기는 그 Origin 을 받지 않는다.
                       이 이름은 개발용 로그인을 끄는 '바깥 주소'로 치지 않는다. 비우거나 없으면 지금과 똑같다
 """
 
@@ -114,10 +115,14 @@ class Settings:
 
     @property
     def allowed_origins(self) -> frozenset[str]:
+        """Host 가 serve 이름이 아닌(로컬) 요청의 쓰기에 받는 Origin. serve Origin 은 여기에 들어가지 않는다."""
         own = {f"http://{h}:{self.port}" for h in ALLOWED_HOSTNAMES}
-        if self.tailscale_host:
-            own.add(f"https://{self.tailscale_host}")  # serve 는 https 기본 포트(443)로 연다
-        return frozenset({*own, *(o.lower().rstrip("/") for o in self.extra_origins)})
+        return frozenset({*own, *(o.lower().rstrip("/") for o in self.extra_origins)} - {self.serve_origin})
+
+    @property
+    def serve_origin(self) -> str | None:
+        """Host 가 serve 이름인 요청의 쓰기에 받는 유일한 Origin(serve 는 https 기본 포트 443). 설정이 없으면 None."""
+        return f"https://{self.tailscale_host}" if self.tailscale_host else None
 
     @property
     def dev_auth_off_reason(self) -> str | None:

@@ -4,6 +4,10 @@
 2. Host 머리말이 127.0.0.1 또는 localhost(포트는 붙어도 됨)인지. DNS 재바인딩 공격 막기
 3. 쓰기 요청(POST 등)은 Origin 이 있으면 이 서버 주소와 같은지. 다른 사이트에서 몰래 보내는 쓰기 막기
    (Origin 이 없는 요청은 브라우저 밖 프로그램, 예: 로컬 Jupyter 의 finish(). 브라우저는 POST 에 늘 Origin 을 붙인다)
+   Z2H_TAILSCALE_HOST 를 설정하면 Origin 을 Host 와 묶는다.
+   - Host 가 serve 이름인 쓰기: Origin 이 정확히 1개이고 https://<serve 이름> 일 때만. 없어도 거부한다.
+     Tailscale 신원은 그 기기의 모든 요청에 저절로 붙으므로(쿠키처럼) Origin 없는 쓰기를 받을 까닭이 없다.
+   - Host 가 로컬인 쓰기: 지금 규칙 그대로(Origin 없으면 허용). 단 https://<serve 이름> Origin 은 받지 않는다.
 4. 본문 1MB 제한(Content-Length 가 없어도 실제로 센다)
 """
 
@@ -31,6 +35,21 @@ def host_allowed(raw: str | None, allowed: frozenset[str]) -> bool:
     elif not port.isdigit() or not (0 < int(port) < 65536):
         return False
     return name in allowed
+
+
+def serve_host_in(hosts: list[str], serve_host: str | None) -> bool:
+    """Host 머리말 중 하나라도 serve 이름인가(포트 무시, 대소문자 무시). 설정이 없으면 늘 False.
+
+    Host 가 여러 개인 요청(같은 컴퓨터 안 프로그램만 만들 수 있음)도 serve 쪽 규칙으로 보낸다. 더 엄격한 쪽이다.
+    """
+    if not serve_host:
+        return False
+    serve = frozenset({serve_host})
+    return any(host_allowed(h, serve) for h in hosts)
+
+
+def _origin(value: str) -> str:
+    return value.strip().lower().rstrip("/")
 
 
 def _error(status: int, error: str, message_ko: str) -> JSONResponse:
@@ -68,11 +87,20 @@ class GuardMiddleware:
 
         method = scope.get("method", "GET").upper()
         if method in UNSAFE_METHODS:
-            origin = headers.get("origin")
-            if origin is not None and origin.strip().lower().rstrip("/") not in s.allowed_origins:
-                resp = _error(403, "bad_origin", "다른 사이트에서 보낸 쓰기 요청은 받지 않습니다.")
-                await resp(scope, receive, send)
-                return
+            if serve_host_in(headers.getlist("host"), s.tailscale_host):
+                # serve 이름 Host: Origin 이 정확히 1개이고 https://<serve 이름> 이어야 한다(없어도 거부)
+                origins = headers.getlist("origin")
+                if len(origins) != 1 or _origin(origins[0]) != s.serve_origin:
+                    resp = _error(403, "bad_origin", "이 주소에서는 앱 화면에서 보낸 쓰기 요청만 받습니다.")
+                    await resp(scope, receive, send)
+                    return
+            else:
+                # 로컬 Host: 지금 규칙(Origin 없으면 허용). allowed_origins 에는 serve Origin 이 없다
+                origin = headers.get("origin")
+                if origin is not None and _origin(origin) not in s.allowed_origins:
+                    resp = _error(403, "bad_origin", "다른 사이트에서 보낸 쓰기 요청은 받지 않습니다.")
+                    await resp(scope, receive, send)
+                    return
             if headers.get("sec-fetch-site", "").lower() == "cross-site":
                 resp = _error(403, "bad_origin", "다른 사이트에서 보낸 쓰기 요청은 받지 않습니다.")
                 await resp(scope, receive, send)
