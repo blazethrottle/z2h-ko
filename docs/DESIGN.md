@@ -1,8 +1,9 @@
-# Z2H 기술 설계 v2 (프로토타입 우선)
+# Z2H 기술 설계 v2 확정본 (프로토타입 우선)
 
 - 작성: 2026-11-16 20:10 KST, CTO 몽키. v1(10편 전체, 개인 학습앱)은 DESIGN_DRAFT_v1.md 로 보관.
 - 바뀐 이유: 얼큰이 방향 전환(t833u, 2026-11-16 20:06 KST, CEO 전달). 일반인 대상 제품, 프로토타입 먼저.
 - 갱신: 20:20 KST pedagogy v1.1·VALUE_CURRICULUM.md·video-segments.json 반영(5절, 4절, 1절).
+- P0 확정: 2026-11-16 KST, PM. 12절이 P0에서 확정한 구현 계약이다. 1~11절과 12절이 다르면 12절이 이기고, 0절 '확정된 결정'이 모든 것보다 우선한다.
 - 표시: [확인됨] 문서·실측으로 확인 / [가정] 근거 있는 추정 / [자리] 교사·디자이너 자료가 오면 채울 곳
 
 ## 0. 확정된 결정 (모두 반영)
@@ -78,11 +79,13 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 | 테이블 | 주요 칼럼 | 비고 |
 |---|---|---|
 | users | user_id(UUID PK), display_name, created_at, locale | 프로토타입은 1행 고정 |
-| step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, updated_at | PK(user_id, step_id) |
+| step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, prediction(예측 칸 글, 없으면 NULL), content_version, updated_at | PK(user_id, step_id) |
 | question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, at | PK(user_id, question_id, attempt_no) |
 | rebuild_attempt | user_id, rebuild_id, passed, max_hint_level, at | |
 | mastery_state | user_id, target_id, state, steps_done_ratio, question_score_ratio, must_pass_ok, rebuild_ok, extra_checks_ok, mastered_at, updated_at | |
 | review_card | user_id, card_id, source_id, kind, interval_days, due_at, last_result, history_json, updated_at | |
+| grade_result | user_id, check_id(문자열, 예 L01-S11b), passed, message_ko, source(notebook/result_code), at, updated_at | PK(user_id, check_id). 노트북 채점 결과(12.4절). P0 추가 |
+| user_pref | user_id, pref_key, value_json, updated_at | PK(user_id, pref_key). 실행 장소 선택 등 기기 사이에 맞출 설정. P0 추가 |
 | checkpoint_attempt | user_id, checkpoint_id(CP1~CP3), attempt_no, covers_json, score_ratio, passed, max_hint_level, hand_task_self_check_json, started_at, at | 문항별 응답은 question_attempt에 checkpoint_attempt 번호를 달아 저장(checkpoint_attempt_no 칼럼). 잠금 동작(C5)은 설정값으로 |
 | diagnostic_result | user_id, attempt_no, answers_json, recommended_units_json, at | 기초 진단 F-D1~F-D5 |
 | taste_result | user_id, done_at, loss_start, loss_end, names_json, source(colab/precomputed) | 맛보기 완료 표시용, 사용자가 붙여넣은 값만 |
@@ -215,7 +218,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 ## 11. 위험·결정 필요
 - 승인 필요(얼큰이): main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제.
 - CEO 사전 통보: 폰 접속용 Tunnel·Access 생성.
-- 조율 중: decisions.md C1~C10(특히 C5 누적 점검 잠금, C8 영상 초 필드), 랜딩·맛보기·배지·공유 카드 내용.
+- 조율 상태: decisions.md 기록으로는 C1~C10이 20:07 KST에 모두 닫혔다. PM 지시서는 '조율 중'으로 적혀 있어, C5(누적 점검 잠금)와 C8(영상 끝 초, X6)은 설정값·변환 함수 한 곳으로 둔다(12.6절). 랜딩·배지·공유 카드 문구는 자료 대기.
 - 위험: Colab 바로 열기는 공개 저장소가 필요(프로토타입은 우회), Fable 한도 소모가 빠름, 맛보기 Pyodide 로딩 크기, 공유 카드의 개인정보(이름·진도 노출 범위는 기본 비공개).
 - 라이선스: MIT 5개 출처 표기, build-nanogpt는 링크만(PUBLIC_RELEASE_CHECKLIST).
 
@@ -224,3 +227,150 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 - YouTube 플레이어 매개변수: developers.google.com/youtube/player_parameters (cc_load_policy, cc_lang_pref, hl)
 - 원본 저장소: karpathy/micrograd, makemore, nn-zero-to-hero, nanoGPT, minbpe(MIT), build-nanogpt(라이선스 표기 없음)
 - 맥 실측: MEASURE_M0.md
+
+---
+
+## 12. P0 확정 (PM, 2026-11-16 KST)
+
+서브 에이전트는 이 절을 계약서로 쓴다. 근거가 없는 값은 지어내지 않고 "미확인" 또는 "자료 대기"로 둔다.
+
+### 12.1 확정 요약
+| 항목 | 확정 | 한 줄 이유 |
+|---|---|---|
+| 앱 | Astro + Preact 부품, 정적 빌드. 버전은 설치 시점 안정판을 `package-lock.json`으로 고정 | 글이 대부분인 앱. 콘텐츠 오류를 빌드 때 잡음 |
+| 콘텐츠 | 저장소 루트 `content/` 아래 YAML. 필드 이름은 data-spec.md 그대로 | 교사 자료와 1:1 대응, 앱과 검사 스크립트가 같은 파일을 읽음 |
+| 진도 서버 | FastAPI + uvicorn, `127.0.0.1:8787` 고정. 빌드된 앱(`app/dist/`)도 같은 주소에서 제공 | 결정 9. 같은 주소라 브라우저 보안 예외 설정(CORS)이 필요 없음 |
+| 저장 | `StorageAdapter`(추상) → `SqliteAdapter`. SQLAlchemy Core의 표준 SQL만 사용 | Postgres로 옮길 때 어댑터만 추가 |
+| 스키마 | Alembic 마이그레이션 파일로만 만들고 바꿈. 올리기·내리기 왕복 테스트 | 결정 9 |
+| 브라우저 저장 | IndexedDB 대기열 + 마지막 상태 사본 | 결정 3 |
+| 실습 | Colab이 기본. 비공개 저장소 기간에는 "노트북 받기 + Colab에 올리기" 안내. 로컬 Jupyter는 선택 | 결정 10, 3절 |
+| 채점 결과 전달 | 노트북의 `finish("L01")`이 결과코드를 출력 → 앱에 붙여넣기. 로컬 Jupyter면 서버로 바로 보내기도 시도 | Colab은 맥미니 127.0.0.1에 닿지 못함 |
+| 화면 검사 | Playwright(자동 브라우저)로 390px·1280px, 글꼴 로딩·굵기 | HANDOFF 4절·9절 |
+| 글꼴 | Pretendard 1.3.9 woff2 4개(400·500·600·700) + JetBrains Mono 가변 1개를 앱 안에 파일로 보관, OFL 사본 동봉 | HANDOFF 4절 |
+
+### 12.2 저장소 폴더
+```
+app/                  웹앱 (Astro). public/fonts/, src/, scripts/, tests/
+content/
+  lectures.yaml       10편 목록(홈 지도용: lecture_id, title_ko, youtube_video_id, video_seconds). 2~10편은 이름만
+  ep00-basics/units.yaml   1편 선행 기초 단위 목록(추천 표시용)
+  ep01-micrograd/     lecture.yaml, steps/*.yaml, questions.yaml, rebuild.yaml
+server/               z2h_server/(api, storage, sync), alembic/, tests/. data/ 는 git 제외
+z2h_check/            채점 패키지(check, finish, 결과코드, graders/, reference/)
+notebooks/ep01-micrograd/  ep01_student.ipynb, ep01_solution.ipynb, README.md(Colab 안내)
+tests/                verify_models.py, 노트북 실행 테스트
+third_party/licenses/ MIT 원본 LICENSE 전문, 글꼴 OFL
+NOTICE.md             원본·저작권자·쓴 위치 표
+docs/                 DESIGN.md, MILESTONES.md, PHONE_ACCESS_PLAN.md, model_audit/
+inputs/               팀 입력 자료(읽기 전용, 고치지 않음)
+```
+
+### 12.3 화면과 주소 (P1)
+| 주소 | 화면(spec.md 번호) | P1 |
+|---|---|---|
+| `/` | A 랜딩 | 뼈대. 문구는 "자료 대기", 맛보기 시작·학습 홈 버튼만 동작 |
+| `/home/` | 1 홈·진도 | 구현. 2~10편은 이름과 "준비 중" |
+| `/lectures/L01/` | 2 강의 개요 | 구현. 선행 기초 단위 추천 줄(잠금 아님), 노트북 받기·Colab 안내, 결과코드 붙여넣기 |
+| `/lectures/L01/{step_id}/` | 3 구간 → 4 따라 하기 → 5 확인 문제, 6 힌트 사다리 | 구현. 주소의 step_id는 문자열 그대로(`S14b`) |
+| `/basics/` | 8 사전 기초 | 뼈대. 1편 선행 단위 목록과 추천 표시. 단위 내용·진단은 뒤로 |
+| `/taste/`, `/taste/precomputed/` | B·C 맛보기, 미리 계산한 결과 보기 | 뼈대와 데이터 자리. 내용은 P2 |
+| `/badges/`, `/share/` | E 배지, 공유 카드 | 뼈대와 데이터 자리. 문구 "자료 대기" |
+| `/review/` | 7 복습 | 빈 상태 화면만 |
+| `/settings/` | 동기화 상태, 실행 장소, JSON 백업 내보내기 | 구현 |
+
+공통 틀: 상단 바(동기화 표시 포함), 하단 탭, 카드, 버튼, 결과 상자(spec.md 0절). 가입·로그인 화면(D)은 만들지 않는다(로그인은 승인 항목).
+
+### 12.4 콘텐츠 형식 (1편)
+- `lecture.yaml`: data-spec lecture 필드 전부 + `notebook{student, solution}`, `mastery_rule`.
+- `steps/{step_id 뒷부분}.yaml` (예 `S14b.yaml`): data-spec step 필드 전부(`step_id`, `lecture_id`, `order`, `title_ko`, `long_step`, `new_code_lines`, `prepared_code`, `kind`, `input_ko`, `code`, `code_line_notes_ko`, `expected_ko`, `expected_check`, `meaning_ko`, `objective_ids`) + 아래 앱 전용 칸.
+- `video_segments`는 단계 파일에 적지 않는다. 빌드가 `inputs/pedagogy/video-segments.json`에서 읽어 붙인다(정본 하나). 1편 22단계 모두 구간이 1개 이상이어야 빌드 통과.
+- 1편 단계는 22개다(S01~S16 + 쪼갠 단계 S09b, S10b, S11b, S13b, S14b, S14c). 근거: pedagogy/01-micrograd.md 3절, video-segments.json.
+
+앱 전용 칸(data-spec에 없음, 교사·디자이너 확인 대기라 모두 선택 칸)
+| 칸 | 설명 |
+|---|---|
+| `prepared_code_line_notes_ko` | 준비 코드 줄별 풀이(개수 = 준비 코드 줄 수) |
+| `code_origin` | `{repo, path, license}` 또는 null. 원본에서 가져온 코드의 출처. build-nanogpt는 검사에서 막음 |
+| `summary_ko` | 구간 요약 최대 3줄. research/01에 근거가 있을 때만 |
+| `concept_ko` | `{term, plain}` 새 개념 1개 |
+| `expected_output`, `output_varies`, `tolerance`, `mismatch_hints_ko` | 붙여넣기 비교용(HANDOFF 6절) |
+| `notebook_cell` | 노트북 안 칸 이름(예 `S04`), `check_id` |
+| `hints` | 힌트 목록을 단계 파일 안에 바로 적음. `hint_ids`는 빌드가 만듦 |
+| `question_ids` | 이 단계 뒤에 푸는 문제 |
+| `origin` | `pedagogy`(교사 자료 그대로) 또는 `content`(콘텐츠 담당 작성, 교사 검수 대기) |
+
+문제와 힌트
+- 문제는 교사의 L01-Q01~Q11만 쓴다. 문제가 없는 단계에 새 문제를 지어 넣지 않는다(익힘 점수 기준을 바꾸지 않기 위해). 문제마다 관련 단계 1곳에 `question_ids`로 건다.
+- 힌트는 hints.md 규칙: 코드 단계와 설명·버그 문제에 H1~H4, 예측 문제에는 없음. 교사 예시(S11, Q06)는 그대로 쓰고, 나머지는 콘텐츠 담당이 써서 `origin: content`로 표시한다. H4에는 정답 코드와 줄별 풀이.
+- 풀이(`answer_ko`, H4)는 제출 뒤 또는 힌트 열림 조건을 채운 뒤에만 화면에 보인다.
+- HELP 메모(5단계)는 P1에서 화면만 두고 저장은 `help_note` 표에 한다. 자동 발송 없음.
+
+빌드 검사(`npm run check:content`, 어기면 빌드 실패)
+1. 스키마와 id 모양. step_id는 문자열, 정렬은 `order`.
+2. `code` 줄 수 = `code_line_notes_ko` 개수(준비 코드, H4 코드도 같은 규칙).
+3. `long_step` ↔ `new_code_lines`(1~5 false, 6~10 true, 10 초과 오류).
+4. choice 문항 `choices` 2개 이상, `answer_index` 범위.
+5. 영상: 구간 1개 이상, `0 ≤ start_s < end_s ≤ video_seconds`, `youtube_video_id`가 강의와 같음.
+6. 문제마다 `answer_ko`와 `rubric`. id 중복 없음. `objective_ids`, `question_ids`, 힌트 대상이 실제로 있음.
+7. 화면 글에 긴 줄표(U+2014) 없음.
+8. `code_origin.repo`에 build-nanogpt가 있으면 실패. 원본 코드를 쓴 저장소의 LICENSE가 `third_party/licenses/`에 있어야 함.
+
+### 12.5 진도 서버
+- 실행: `python -m z2h_server`. 바인드는 `127.0.0.1`만. 다른 주소(`0.0.0.0` 등)를 넘기면 실행을 거부하고 테스트로 확인한다.
+- 요청 검사: `Host`가 `127.0.0.1`·`localhost`일 때만 응답(나중에 터널 주소는 설정 파일로 허용). 쓰기 요청은 `Origin`도 확인. 본문 1MB 제한.
+- 사용자: 모든 요청을 고정 user_id `00000000-0000-4000-8000-000000000001`로 처리. 로그인 없음. 어댑터의 모든 함수는 `user_id`를 첫 인자로 받는다.
+- 표: 5절 목록 전부(배지·공유 카드 포함)를 첫 마이그레이션에서 만든다. 배지 규칙은 자료 대기라 `badge_def`는 빈 표.
+
+API(모두 JSON)
+| 요청 | 하는 일 |
+|---|---|
+| `GET /api/health` | `{ok, server_time, schema_version}` |
+| `GET /api/state?since={시각}` | 그 뒤에 바뀐 기록. `since`가 없으면 전체 |
+| `POST /api/sync` | `{client_id, ops:[{op_id, table, key, data, updated_at}]}` → `{applied[], superseded[], rejected[{op_id, reason_ko}], server_time}`. 같은 `op_id`는 한 번만 반영 |
+| `POST /api/result-code` | 결과코드를 풀어 `grade_result`로 저장 |
+| `POST /api/grade` | 로컬 Jupyter의 `finish()`가 채점 결과를 바로 보냄 |
+| `GET /api/export` | 전체 JSON 백업 |
+
+충돌 규칙: 같은 행은 `updated_at`이 늦은 쪽이 이기고 진 값은 `sync_conflicts`에 남긴다. 쌓이는 기록(`question_attempt`, `checkpoint_attempt`, `study_session`)은 열쇠가 다르면 둘 다 남긴다. 진도가 뒤로 가지 않게 `step_progress`의 `status`는 done이 우선, `max_hint_level`과 `active_seconds_auto`는 큰 값.
+
+브라우저: 모든 변경을 먼저 IndexedDB 대기열에 넣고 서버로 보낸다. 표시는 저장됨 / 동기화 중(1초 넘을 때만) / 오프라인(+ "지금 다시 시도"). 재시도는 연결 복구 즉시, 그 밖에는 30초·1분·5분.
+
+### 12.6 바꾸기 쉽게 둔 곳
+| 항목 | 지금 기본값 | 두는 곳 |
+|---|---|---|
+| C5 누적 점검 잠금 | `recommend`(권고만). `lock`으로 바꿀 수 있음 | 앱 설정 파일 한 곳. P1은 1편뿐이라 화면 영향 없음 |
+| C8·X6 `end_s`가 null일 때 | `next_step_start`(다음 단계 시작, 마지막이면 영상 끝). `video_end`로 바꿀 수 있음 | 영상 주소를 만드는 변환 함수 한 곳. 1편은 null이 없어 영향 없음 |
+| Colab 바로 열기 주소 | 없음(null) → "노트북 받기 + 올리기" 안내 | 앱 설정 파일. 공개 노트북 주소가 승인되면 값만 넣음 |
+| 숫자 비교 허용 오차 | 상대 1e-4(HANDOFF 8절 제안), 단계별 `tolerance`가 우선 | 비교 함수 한 곳 |
+
+### 12.7 채점
+| 갈래 | 어디서 | 무엇을 | 기록 |
+|---|---|---|---|
+| A 노트북 채점 | Colab 또는 로컬 Jupyter, `z2h_check.check()` | 내가 쓴 코드가 맞게 동작하는지 | `grade_result`. 재구성 과제는 `rebuild_attempt` |
+| B 출력 비교 | 앱 따라 하기 칸, 붙여넣기 | 노트북 출력이 예상과 같은지 | 단계 완료를 돕기만 함. 점수 없음 |
+| C 확인 문제 | 앱 문제 칸 | 개념 이해. `auto_grade` 종류대로 | `question_attempt` (choice는 `choice_index`) |
+
+- `check("L01-S11b", 값)`: 맞으면 "✓ 맞음", 틀리면 "✕ 다시: 무엇이 다른지"를 한국어로 출력. 틀려도 예외를 던지지 않는다.
+- 1편 핵심: 학생의 `Value`로 계산한 기울기를 같은 식의 PyTorch 기울기와 비교(원본 micrograd 테스트 방식). 학습 단계는 손실이 줄었는지와 기준 아래인지. 버전마다 달라지는 값은 범위로 대조.
+- Colab에서 쓰기: 비공개 저장소라 설치 주소가 없다. 그래서 `z2h_check`를 파일 하나로 묶어 노트북 준비 셀에 넣는다(묶는 스크립트 + "노트북 안 사본 = 패키지" 테스트).
+- 결과코드: `Z2H1.{base64url(JSON)}.{crc32 8자리}`. 비밀값이 아니고 위조를 막지 않는다(목적은 편의). 오타는 crc32로 잡는다.
+- 익힘 판정(1편): 단계 22개 완료 + 교사 문제 점수 80% 이상(힌트 비율 반영) + 재구성 3조각 통과(H2 이하) + 말하기 질문. P1은 앞의 세 조건을 계산해 `mastery_state`에 저장하고, 말하기 질문은 스스로 표시하는 칸으로 둔다.
+
+### 12.8 입력끼리 다른 곳과 PM 처리
+| # | 다른 점 | PM 처리 |
+|---|---|---|
+| 1 | 1편 단계 수: 디자인 문서 16, pedagogy v1.1은 22(쪼갠 단계 포함) | pedagogy 22 |
+| 2 | 지시서 "C1~C10 조율 중" / decisions.md "모두 닫힘" | 닫힌 답대로 구현하되 C5·C8은 12.6절처럼 설정값으로 |
+| 3 | `end_s` null: data-spec "영상 끝까지" / 교사 답 "다음 단계 시작"(X6) | 12.6절. 교사 확인 대기 |
+| 4 | 맛보기 실행: 디자인은 브라우저 안 실행(Pyodide) 가정 / 교사는 Colab 노트북(PyTorch 필요) | Colab + "미리 계산한 결과 보기"(4절). 디자인 목업의 "실행" 버튼은 "Colab에서 열기 + 결과 붙여넣기"로 |
+| 5 | 맛보기 내용: 디자인 D30은 01편 앞 5단계 / 교사 VALUE_CURRICULUM 3절은 이름 지어내기 | 교사안(지시서 6번) |
+| 6 | 저장: 디자인 v2는 계정·서버 DB(X2) / 결정 9는 맥미니 단일 사용자 | 결정 9. 가입·로그인 화면은 만들지 않음 |
+| 7 | 문제 ↔ 단계 연결: data-spec에 없음 | 단계에 `question_ids`(12.4절) |
+| 8 | 실습 시간 칸 이름: HANDOFF `practice_time` / 5절 `active_seconds_*` + `study_session` | 5절 |
+
+### 12.9 결정이 필요한 질문 (PR 본문 맨 위와 같음)
+1. 맛보기 노트북 제작·맥 실행 검증을 P1에 당겨 넣을지, 일정표대로 P2에 둘지. 기본값: P2.
+2. 1편 확인 문제는 교사 문제 11개만 쓸지, 문제가 없는 단계에 가벼운 확인 문제를 콘텐츠 담당이 추가할지. 기본값: 교사 문제만.
+3. 누적 점검 잠금(C5): 통과해야 다음 편이 열림(교사) / 권고만(디자인 초기안). 기본값: 권고만, 설정값. 2편 이후에 영향.
+4. `end_s`가 비었을 때(X6): 다음 단계 시작 / 영상 끝. 기본값: 다음 단계 시작. 1편에는 영향 없음.
+5. Colab 바로 열기: 노트북만 담은 공개 주소를 만들지(공개 배포 승인 항목). 기본값: 만들지 않고 "받기 + 올리기" 안내.
