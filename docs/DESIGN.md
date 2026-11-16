@@ -80,11 +80,11 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 |---|---|---|
 | users | user_id(UUID PK), display_name, created_at, locale | 프로토타입은 1행 고정 |
 | step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, prediction(예측 칸 글, 없으면 NULL), content_version, updated_at | PK(user_id, step_id) |
-| question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, at | PK(user_id, question_id, attempt_no) |
+| question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), checkpoint_attempt_no(누적 점검 문항이면 그 시도 번호, 아니면 NULL), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, at | PK와 번호 규칙은 12.5절 |
 | rebuild_attempt | user_id, rebuild_id, passed, max_hint_level, at | |
 | mastery_state | user_id, target_id, state, steps_done_ratio, question_score_ratio, must_pass_ok, rebuild_ok, extra_checks_ok, mastered_at, updated_at | |
 | review_card | user_id, card_id, source_id, kind, interval_days, due_at, last_result, history_json, updated_at | |
-| grade_result | user_id, check_id(문자열, 예 L01-S11b), passed, message_ko, source(notebook/result_code), at, updated_at | PK(user_id, check_id). 노트북 채점 결과(12.4절). P0 추가 |
+| grade_result | user_id, check_id(문자열, 예 L01-S11b), passed, message_ko, source(notebook/result_code), at, updated_at | PK(user_id, check_id). 노트북 채점 결과(12.7절). P0 추가 |
 | user_pref | user_id, pref_key, value_json, updated_at | PK(user_id, pref_key). 실행 장소 선택 등 기기 사이에 맞출 설정. P0 추가 |
 | checkpoint_attempt | user_id, checkpoint_id(CP1~CP3), attempt_no, covers_json, score_ratio, passed, max_hint_level, hand_task_self_check_json, started_at, at | 문항별 응답은 question_attempt에 checkpoint_attempt 번호를 달아 저장(checkpoint_attempt_no 칼럼). 잠금 동작(C5)은 설정값으로 |
 | diagnostic_result | user_id, attempt_no, answers_json, recommended_units_json, at | 기초 진단 F-D1~F-D5 |
@@ -95,7 +95,7 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 | user_badge | user_id, badge_id, earned_at, evidence_json | PK(user_id, badge_id) |
 | share_card | share_id(추측 불가 임의 값), user_id, kind, payload_json, image_path, visibility(기본 private), created_at, revoked_at | 공개 공유 주소는 공개 배포 승인 뒤 |
 | sync_conflicts | user_id, table_name, row_key, losing_json, at | 동기화 충돌 기록 |
-| schema_migrations | Alembic 관리 | |
+| alembic_version | Alembic이 스스로 관리하는 버전 표. 따로 만들지 않음 | |
 
 콘텐츠(lecture, step, question, hint, rebuild_task, mastery_rule, checkpoint)는 DB가 아니라 저장소 파일. pedagogy v1.1 반영:
 - step: `long_step`(새 코드 6~10줄이면 true, 10줄 초과 오류), `new_code_lines`, `prepared_code`(+줄별 풀이), `video_segments: [{start_s, end_s|null}]`(여러 개 가능, 없으면 []). 전체 165단계. 나눈 단계는 `L01-S14b`처럼 접미 글자라 **step_id는 늘 문자열**, 정렬은 `order` 필드로(문자열 정렬 금지).
@@ -167,7 +167,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 
 ### 지시서 기본 규칙 (PM과 모든 서브에 적용)
 1. 커밋·PR 본문에 Co-Authored-By, Claude 꼬리표, Claude 링크 금지.
-2. main 병합 금지. 작업은 마일스톤 브랜치(`m1-skeleton-ep01` 등) → PR까지만. 병합은 얼큰이 승인 후.
+2. main 병합 금지. 작업은 마일스톤 브랜치(`p1-skeleton-ep01` 등) → PR까지만. 병합은 얼큰이 승인 후.
 3. 지정 폴더(저장소 안 해당 마일스톤 범위) 밖 쓰기 금지. `~/.claude/settings.json` 수정 금지.
 4. 강제 푸시·`--no-verify`·검사 건너뛰기 금지.
 5. 비밀값을 파일·로그·출력에 쓰지 않음. 결제·로그인·키 발급·공개 배포가 필요하면 멈추고 보고.
@@ -266,7 +266,7 @@ inputs/               팀 입력 자료(읽기 전용, 고치지 않음)
 ```
 
 ### 12.3 화면과 주소 (P1)
-| 주소 | 화면(spec.md 번호) | P1 |
+| 주소 | 화면(flow.md 3절 번호) | P1 |
 |---|---|---|
 | `/` | A 랜딩 | 뼈대. 문구는 "자료 대기", 맛보기 시작·학습 홈 버튼만 동작 |
 | `/home/` | 1 홈·진도 | 구현. 2~10편은 이름과 "준비 중" |
@@ -312,20 +312,47 @@ inputs/               팀 입력 자료(읽기 전용, 고치지 않음)
 4. choice 문항 `choices` 2개 이상, `answer_index` 범위.
 5. 영상: 구간 1개 이상, `0 ≤ start_s < end_s ≤ video_seconds`, `youtube_video_id`가 강의와 같음.
 6. 문제마다 `answer_ko`와 `rubric`. id 중복 없음. `objective_ids`, `question_ids`, 힌트 대상이 실제로 있음.
-7. 화면 글에 긴 줄표(U+2014) 없음.
+7. 화면 글에 긴 줄표(U+2014) 없음. `code`에는 주석을 넣지 않는다(C2, 풀이는 옆 칸).
+9. 힌트 개수: 코드 단계와 설명·버그·적용 문제는 H1~H4가 모두 있고, 예측 문제는 0개.
+10. `new_code_lines`가 0인 단계(앞 코드를 다시 실행하거나 한 줄을 지우는 S12·S16 같은 단계)는 `long_step` false로 허용.
 8. `code_origin.repo`에 build-nanogpt가 있으면 실패. 원본 코드를 쓴 저장소의 LICENSE가 `third_party/licenses/`에 있어야 함.
 
 ### 12.5 진도 서버
 - 실행: `python -m z2h_server`. 바인드는 `127.0.0.1`만. 다른 주소(`0.0.0.0` 등)를 넘기면 실행을 거부하고 테스트로 확인한다.
-- 요청 검사: `Host`가 `127.0.0.1`·`localhost`일 때만 응답(나중에 터널 주소는 설정 파일로 허용). 쓰기 요청은 `Origin`도 확인. 본문 1MB 제한.
+- 요청 검사: `Host`가 `127.0.0.1`·`localhost`일 때만 응답(나중에 터널 주소는 설정 파일로 허용). 쓰기 요청은 `Origin`이 있으면 이 서버 주소(127.0.0.1:8787, localhost:8787)일 때만 받고, 없으면(파이썬 `finish()` 등) 받는다. 본문 1MB 제한.
 - 사용자: 모든 요청을 고정 user_id `00000000-0000-4000-8000-000000000001`로 처리. 로그인 없음. 어댑터의 모든 함수는 `user_id`를 첫 인자로 받는다.
 - 표: 5절 목록 전부(배지·공유 카드 포함)를 첫 마이그레이션에서 만든다. 배지 규칙은 자료 대기라 `badge_def`는 빈 표.
+- 이름: DB 칼럼은 목록·객체 값을 `_json`으로 끝나는 글자 칼럼에 담고, API·내보내기에서는 data-spec 이름(`covers`, `history`, `env`, `hints_seen`)으로 돌려준다. `checkpoint_attempt.max_hint_level`은 data-spec의 `max_hint_level_allowed`와 같은 값이다.
+- 모든 학습 기록 표에 공통 칼럼 3개: `updated_at`(기기 시각), `content_version`, `server_seq`(서버가 반영할 때마다 1씩 올려 넣는 번호).
+
+표별 열쇠(PK). 5절 표에 PK가 적히지 않은 표는 아래를 따른다.
+| 표 | PK | 메모 |
+|---|---|---|
+| step_progress | user_id, step_id | |
+| question_attempt | user_id, question_id, attempt_id | `attempt_id`는 기기가 만든 UUID. `attempt_no`는 서버가 도착 순서로 매김 |
+| rebuild_attempt | user_id, rebuild_id, attempt_id | 위와 같음. `max_hint_level`은 노트북이 모르므로 앱의 힌트 기록으로 채움 |
+| checkpoint_attempt | user_id, checkpoint_id, attempt_id | 위와 같음 |
+| diagnostic_result | user_id, attempt_id | 위와 같음 |
+| study_session | user_id, session_id | 기기가 만든 UUID |
+| help_note | user_id, note_id | 기기가 만든 UUID |
+| mastery_state | user_id, target_id | |
+| review_card | user_id, card_id | |
+| taste_result | user_id | 한 사람 1행 |
+| grade_result | user_id, check_id | |
+| user_pref | user_id, pref_key | |
+| user_badge | user_id, badge_id | |
+| share_card | share_id | |
+| sync_conflicts | conflict_id | 서버가 매기는 번호 |
+| applied_ops | op_id | 같은 요청 중복 방지 |
+
+- 쌓이는 기록의 번호를 기기가 매기면 두 기기가 오프라인에서 같은 문제를 풀 때 둘 다 1번이 되어 하나가 사라진다. 그래서 열쇠는 기기가 만든 `attempt_id`, 번호(`attempt_no`)는 서버가 매긴다.
+- `user_pref` 키(P1): `run_place`(실행 장소), `resume`(이어서 하기 위치: step_id와 단계 안 칸), `practice_week:{주 시작일}`(홈 주간 카드에서 고친 실습 시간 `{edited_seconds, edited_at}`, 지우면 자동 기록으로 되돌아감). 단계별 `active_seconds_user` 칼럼은 두되 P1 화면은 주 단위 수정만 쓴다.
 
 API(모두 JSON)
 | 요청 | 하는 일 |
 |---|---|
 | `GET /api/health` | `{ok, server_time, schema_version}` |
-| `GET /api/state?since={시각}` | 그 뒤에 바뀐 기록. `since`가 없으면 전체 |
+| `GET /api/state?since={server_seq}` | `server_seq`가 그보다 큰 기록과 지금의 가장 큰 `server_seq`. `since`가 없으면 전체. 기기 시각이 아니라 서버 번호로 비교해야 늦게 올라온 옛 기록도 다른 기기가 받는다 |
 | `POST /api/sync` | `{client_id, ops:[{op_id, table, key, data, updated_at}]}` → `{applied[], superseded[], rejected[{op_id, reason_ko}], server_time}`. 같은 `op_id`는 한 번만 반영 |
 | `POST /api/result-code` | 결과코드를 풀어 `grade_result`로 저장 |
 | `POST /api/grade` | 로컬 Jupyter의 `finish()`가 채점 결과를 바로 보냄 |
@@ -338,9 +365,9 @@ API(모두 JSON)
 ### 12.6 바꾸기 쉽게 둔 곳
 | 항목 | 지금 기본값 | 두는 곳 |
 |---|---|---|
-| C5 누적 점검 잠금 | `recommend`(권고만). `lock`으로 바꿀 수 있음 | 앱 설정 파일 한 곳. P1은 1편뿐이라 화면 영향 없음 |
+| C5 누적 점검 잠금 | `lock`(통과해야 다음 편이 열림. 닫힌 C5·D36, data-spec, review.md 4절). `recommend`로 바꿀 수 있음 | 앱 설정 파일 한 곳. CP1이 4편을 여는 것이 첫 적용이라 P1(1편)은 화면 영향 없음 |
 | C8·X6 `end_s`가 null일 때 | `next_step_start`(다음 단계 시작, 마지막이면 영상 끝). `video_end`로 바꿀 수 있음 | 영상 주소를 만드는 변환 함수 한 곳. 1편은 null이 없어 영향 없음 |
-| Colab 바로 열기 주소 | 없음(null) → "노트북 받기 + 올리기" 안내 | 앱 설정 파일. 공개 노트북 주소가 승인되면 값만 넣음 |
+| Colab 바로 열기 주소 | 없음(null) → "Colab에서 열기" 버튼을 숨기고 "노트북 받기 + Colab에 올리기" 안내만 보임 | 앱 설정 파일. 공개 노트북 주소가 승인되면 값만 넣음(질문 5). 3절의 "GitHub 권한 연결로 열기"는 사용자 계정 연결이 필요해 넣지 않음 |
 | 숫자 비교 허용 오차 | 상대 1e-4(HANDOFF 8절 제안), 단계별 `tolerance`가 우선 | 비교 함수 한 곳 |
 
 ### 12.7 채점
@@ -353,14 +380,15 @@ API(모두 JSON)
 - `check("L01-S11b", 값)`: 맞으면 "✓ 맞음", 틀리면 "✕ 다시: 무엇이 다른지"를 한국어로 출력. 틀려도 예외를 던지지 않는다.
 - 1편 핵심: 학생의 `Value`로 계산한 기울기를 같은 식의 PyTorch 기울기와 비교(원본 micrograd 테스트 방식). 학습 단계는 손실이 줄었는지와 기준 아래인지. 버전마다 달라지는 값은 범위로 대조.
 - Colab에서 쓰기: 비공개 저장소라 설치 주소가 없다. 그래서 `z2h_check`를 파일 하나로 묶어 노트북 준비 셀에 넣는다(묶는 스크립트 + "노트북 안 사본 = 패키지" 테스트).
-- 결과코드: `Z2H1.{base64url(JSON)}.{crc32 8자리}`. 비밀값이 아니고 위조를 막지 않는다(목적은 편의). 오타는 crc32로 잡는다.
-- 익힘 판정(1편): 단계 22개 완료 + 교사 문제 점수 80% 이상(힌트 비율 반영) + 재구성 3조각 통과(H2 이하) + 말하기 질문. P1은 앞의 세 조건을 계산해 `mastery_state`에 저장하고, 말하기 질문은 스스로 표시하는 칸으로 둔다.
+- 결과코드: `Z2H1.{base64url(JSON)}.{crc32 8자리 16진수 소문자}`. JSON은 `{"v":1,"l":"L01","p":[통과 check_id],"f":[실패 check_id],"t":"시각+09:00"}`(check_id는 `L01-S11b` 같은 전체 글자), crc32는 base64url 글자(패딩 없음)에 대해 계산. 비밀값이 아니고 위조를 막지 않는다(목적은 편의). 오타는 crc32로 잡는다.
+- `/api/grade` 본문: `{lecture_id, results:[{check_id, passed, message_ko}], at}`.
+- 익힘 판정(1편): 단계 22개 완료 + 교사 문제 점수 80% 이상(힌트 비율 반영. 11점 만점에 8.8점, data-spec `question_score_ratio` 0.8 기준이고 01-micrograd.md의 "9점 이상"과 다른 점은 질문 3) + 재구성 3조각 통과(H2 이하) + 말하기 질문. P1은 앞의 세 조건을 계산해 `mastery_state`에 저장하고, 말하기 질문은 스스로 표시하는 칸으로 둔다.
 
 ### 12.8 입력끼리 다른 곳과 PM 처리
 | # | 다른 점 | PM 처리 |
 |---|---|---|
 | 1 | 1편 단계 수: 디자인 문서 16, pedagogy v1.1은 22(쪼갠 단계 포함) | pedagogy 22 |
-| 2 | 지시서 "C1~C10 조율 중" / decisions.md "모두 닫힘" | 닫힌 답대로 구현하되 C5·C8은 12.6절처럼 설정값으로 |
+| 2 | 지시서 "C1~C10 조율 중" / decisions.md "모두 닫힘" | 닫힌 답대로 구현(C5는 잠금, C8은 배열·공유)하되 C5·C8은 12.6절처럼 설정값으로 바꿀 수 있게 |
 | 3 | `end_s` null: data-spec "영상 끝까지" / 교사 답 "다음 단계 시작"(X6) | 12.6절. 교사 확인 대기 |
 | 4 | 맛보기 실행: 디자인은 브라우저 안 실행(Pyodide) 가정 / 교사는 Colab 노트북(PyTorch 필요) | Colab + "미리 계산한 결과 보기"(4절). 디자인 목업의 "실행" 버튼은 "Colab에서 열기 + 결과 붙여넣기"로 |
 | 5 | 맛보기 내용: 디자인 D30은 01편 앞 5단계 / 교사 VALUE_CURRICULUM 3절은 이름 지어내기 | 교사안(지시서 6번) |
@@ -371,6 +399,6 @@ API(모두 JSON)
 ### 12.9 결정이 필요한 질문 (PR 본문 맨 위와 같음)
 1. 맛보기 노트북 제작·맥 실행 검증을 P1에 당겨 넣을지, 일정표대로 P2에 둘지. 기본값: P2.
 2. 1편 확인 문제는 교사 문제 11개만 쓸지, 문제가 없는 단계에 가벼운 확인 문제를 콘텐츠 담당이 추가할지. 기본값: 교사 문제만.
-3. 누적 점검 잠금(C5): 통과해야 다음 편이 열림(교사) / 권고만(디자인 초기안). 기본값: 권고만, 설정값. 2편 이후에 영향.
+3. 1편 익힘 문턱: 점수 80%(8.8점, data-spec) / 11점 중 9점 이상(01-micrograd.md 6절). 힌트 비율 때문에 두 값이 갈릴 수 있다. 기본값: 80%.
 4. `end_s`가 비었을 때(X6): 다음 단계 시작 / 영상 끝. 기본값: 다음 단계 시작. 1편에는 영향 없음.
 5. Colab 바로 열기: 노트북만 담은 공개 주소를 만들지(공개 배포 승인 항목). 기본값: 만들지 않고 "받기 + 올리기" 안내.

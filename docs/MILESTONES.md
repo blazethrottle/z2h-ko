@@ -8,7 +8,7 @@
 ## 모든 마일스톤 공통 완료 기준
 
 1. 자동 검사 전부 통과: 콘텐츠 빌드 검사(DESIGN.md 12.4절 8개), 서버·채점 패키지 pytest, 앱 단위 테스트, 화면 검사(390px·1280px, 글꼴 로딩·굵기).
-2. 정답 노트북이 맥 `.venv`에서 `jupyter nbconvert --to notebook --execute`로 오류 0. 학생 노트북은 정답을 넣으면 채점 셀 전부 통과, 빈칸 그대로면 멈추지 않고 "✕ 다시"만 나온다. 실행 시간을 PR에 적는다.
+2. 정답 노트북이 맥 `.venv`에서 `jupyter nbconvert --to notebook --execute`로 오류 0. 학생 노트북은 정답을 넣으면 채점 셀 전부 통과. 빈칸 그대로인 학생 노트북은 `--allow-errors`로 끝까지 돌렸을 때 채점 셀(`check`, `finish` 호출 셀)에서는 예외가 0건이고 "✕ 다시" 또는 "아직"만 나온다(자동 테스트). 실행 시간을 PR에 적는다.
 3. 영상은 youtube-nocookie 공식 embed와 링크만. 모든 단계에 영상 ID와 시작 초. 자동 재생 없음, 한국어 자막 매개변수 있음. 영상 파일·자막 전문 0건.
 4. 원본 코드를 쓴 파일 머리에 출처 한 줄, `third_party/licenses/`에 LICENSE 전문, `NOTICE.md` 갱신. build-nanogpt 코드 복사 0건.
 5. 서버는 127.0.0.1 바인드(다른 주소 거부 테스트 포함). 네트워크·보안 설정 변경 0건.
@@ -23,7 +23,7 @@
 - `app/`: 디자인 토큰, 글꼴, 상단 바(동기화 표시)·하단 탭, 영상 플레이어 부품, 홈, 1편 개요, 단계 화면(구간 → 따라 하기 → 확인 문제, 힌트 사다리), 설정, 실습 시간 자동 측정·수정, 결과코드 붙여넣기. 랜딩·맛보기·배지·공유 카드·기초·복습은 주소와 뼈대, 데이터 자리만("자료 대기").
 - `server/`: FastAPI 진도 서버, `StorageAdapter` + `SqliteAdapter`, Alembic 첫 마이그레이션(DESIGN.md 5절 표 전부), 동기화 API, 테스트.
 - `content/ep01-micrograd/`: 단계 22개, 교사 문제 11개, 힌트, 재구성 과제 3개. `content/lectures.yaml`, `content/ep00-basics/units.yaml`(1편 선행 단위 목록).
-- `notebooks/ep01-micrograd/`: 학생용·정답용, Colab 안내(받기 + 올리기).
+- `notebooks/ep01-micrograd/`: 학생용·정답용, Colab 안내(받기 + 올리기). "Colab에서 열기" 링크는 설정값 자리만 두고, 값은 결정 질문 5의 답 뒤에 넣는다(보류).
 - `z2h_check/`: check, finish, 결과코드, 1편 채점 함수, 기준값.
 - `tests/verify_models.py`, `docs/PHONE_ACCESS_PLAN.md`(Tunnel·Access 초안만, 실행 금지), `NOTICE.md`, `third_party/licenses/`.
 
@@ -33,10 +33,16 @@
 - 같은 행을 두 기기에서 고친 경우 늦은 쪽이 남고 진 값이 `sync_conflicts`에 남는다(자동 테스트).
 - 마이그레이션 올리기 → 내리기 → 올리기 왕복 통과. 어댑터 공통 테스트 묶음 통과.
 - choice 문항 응답(`choice_index`)과 checkpoint 결과를 저장·조회할 수 있다(서버 테스트. 화면은 1편에 해당 없음).
-- 풀이는 제출 전에는 화면 문서 안에 보이지 않는다(자동 테스트).
-- 결과코드를 붙여넣으면 채점 결과가 반영되고, 글자가 틀리면 안내가 나온다.
-- 실습 시간: 자동 값과 고친 값이 둘 다 저장된다.
-- 글꼴: 굵기 4개 파일이 각각 연결되고 `document.fonts`가 모두 loaded(자동 검사. 스크린샷만으로 판정하지 않음).
+- 풀이(`answer_ko`, H4 정답)는 제출·열림 조건 전에는 화면 DOM에 없다(자동 테스트).
+- 힌트 열림 조건(hints.md 2절)과 점수 비율(1.0 / 0.8 / 0.5 / 0)이 단위 테스트로 확인된다.
+- 익힘 세 조건(단계 완료, 문제 점수 80%, 재구성 통과) 계산이 단위 테스트로 확인된다.
+- 서버가 다른 Host와 다른 Origin의 쓰기 요청을 거부한다(자동 테스트).
+- 노트북 준비 셀 안의 `z2h_check` 사본이 패키지와 같다(자동 테스트).
+- Colab 바로 열기 주소 설정이 비어 있으면 "Colab에서 열기" 버튼이 보이지 않고 받기 + 올리기 안내가 보인다(자동 테스트).
+- `docs/PHONE_ACCESS_PLAN.md`: 구성 그림, 단계별 스크립트 초안, 되돌리는 법, "CEO 사전 통보 뒤 CTO가 실행" 표시가 있고, 실제로 실행한 명령은 0건이다.
+- 결과코드를 붙여넣으면 채점 결과가 `grade_result`에 반영되고, 글자가 틀리면 안내 문구가 나온다(자동 테스트).
+- 실습 시간: 자동 값과 홈에서 고친 값이 둘 다 서버에 저장되고, "자동 기록으로 되돌리기"가 동작한다(자동 테스트).
+- 글꼴(자동 검사, 스크린샷만으로 판정하지 않음): Pretendard 굵기 4개 파일이 각각 연결되고 `document.fonts`가 모두 loaded, 400·500·600·700을 쓰는 요소의 computed `font-weight`가 맞음, JetBrains Mono 로딩, button·input·textarea·code의 computed `font-family` 확인. woff2를 받은 곳과 버전을 NOTICE.md에 적는다.
 
 범위 아님: 2~10편, 복습 기능, 기초 단위 내용과 진단, 누적 점검 화면, 가입·로그인, 폰 접속 설정 실행, 맛보기 노트북(결정 질문 1).
 
