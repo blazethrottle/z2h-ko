@@ -306,7 +306,7 @@ inputs/               팀 입력 자료(읽기 전용)
 
 ### 12.5 진도 서버
 - 실행 `python -m z2h_server`. 바인드는 `127.0.0.1`만, 다른 주소는 실행 거부. `Host`가 `127.0.0.1`·`localhost`일 때만 응답. 쓰기 요청은 `Origin`이 있으면 이 서버 주소일 때만, 없으면 받음. 본문 1MB 제한.
-- 개발용 로그인 잠금: 이 컴퓨터 안에서 직접 온 요청에만 동작. 전달 머리말(`CF-Connecting-IP`, `X-Forwarded-For` 등)이 있으면 거부. 허용 Host에 바깥 주소(터널 주소)를 넣거나 `Z2H_DEV_AUTH=0`이면 개발용 로그인이 통째로 꺼지고, 그때 기록 API는 로그인 수단이 없어 401이다. 그래서 실제 로그인(공개 승인 항목)이 생기기 전에는 터널을 붙여도 폰에서 진도를 읽고 쓸 수 없다. `docs/PHONE_ACCESS_PLAN.md`에서 다룬다.
+- 개발용 로그인 잠금: 이 컴퓨터 안에서 직접 온 요청에만 동작. 전달 머리말(`CF-Connecting-IP`, `X-Forwarded-For` 등)이 있으면 거부. 허용 Host에 바깥 주소(터널 주소)를 넣거나 `Z2H_DEV_AUTH=0`이면 개발용 로그인이 통째로 꺼지고, 그때 기록 API는 로그인 수단이 없어 401이다. 폰 접속은 Tailscale serve(tailnet 안, Funnel 금지)로 정해졌고(CTO 22:35), serve도 프록시라 같은 잠금이 걸린다. 그래서 로그인 장치가 생기기 전에는 폰에서 진도를 읽고 쓸 수 없다. 로그인 장치는 안만 적고 구현하지 않는다. `docs/PHONE_ACCESS_PLAN.md`에서 다룬다.
 - API: `GET /api/health`, `GET /api/state?since={server_seq}`, `POST /api/sync`, `POST /api/result-code`, `POST /api/grade`, `GET /api/export`, `GET·POST /api/me`, `/api/dev-auth/{accounts,login,logout}`. 요청·응답 모양의 정본은 `server/API.md`(문서와 코드가 어긋나면 테스트 실패).
 - 동기화: 모든 기록 표에 `updated_at`(기기 시각), `content_version`, `server_seq`(서버가 반영할 때마다 1씩 올리는 번호). 이어 받기는 기기 시각이 아니라 `server_seq`로 비교한다. 같은 행은 `updated_at`이 늦은 쪽이 이기고 진 값은 `sync_conflicts`에 남긴다(같은 기기의 연속 수정과 `base_updated_at`이 서버 값과 같은 수정은 충돌로 남기지 않음). `step_progress`는 진도가 뒤로 가지 않게 status는 done 우선, `max_hint_level`·`active_seconds_auto`·`attempts`는 큰 값.
 - 쌓이는 기록(`question_attempt`, `rebuild_attempt`, `checkpoint_attempt`, `diagnostic_result`)의 열쇠는 기기가 만든 `attempt_id`, 번호(`attempt_no`)는 서버가 도착 순서로 매긴다. 기기가 번호를 매기면 두 기기가 오프라인에서 같은 문제를 풀 때 하나가 사라지기 때문이다.
@@ -347,6 +347,6 @@ inputs/               팀 입력 자료(읽기 전용)
 4. `end_s` 빈 값: D49로 닫힘.
 5. Colab 바로 열기용 공개 노트북 주소: 공개 배포 승인 항목, 열림.
 6. 로컬 Jupyter 자동 전송의 계정 지정 방법(12.7절).
-7. 터널을 붙이면 개발용 로그인이 꺼지는 점과 폰 접속 계획(12.5절).
+7. 폰 접속(Tailscale serve)에서 쓸 로그인 장치: `docs/PHONE_ACCESS_PLAN.md` 2절의 A~D안 중 결정 필요(보안 변경이라 CTO 결정).
 8. 같은 구간을 쓰는 단계 사이 재생 위치 유지: YouTube 외부 스크립트(IFrame API) 없이는 안 되어 만들지 않음. 외부 스크립트를 허용할지 결정 필요.
 9. `taste_result`·`taster_result` 중복(12.5절).
