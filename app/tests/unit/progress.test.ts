@@ -107,6 +107,23 @@ describe('익힘 판정 (12.7절: 단계 완료 + 문제 80% + 재구성 H2 이�
     expect(m).toMatchObject({ state: 'mastered', steps_done_ratio: 1, question_score_ratio: 0.9, must_pass_ok: true, rebuild_ok: true });
   });
 
+  it('최소 점수(question_min_points)가 있으면 비율을 넘어도 점수가 모자라면 mastered 가 아니다', () => {
+    const input = {
+      stepIds,
+      questions,
+      rebuildIds: ['R1'],
+      stepRows: done,
+      attemptRows: [
+        { question_id: 'Q1', is_correct: true, points_awarded: 1 },
+        { question_id: 'Q2', is_correct: true, points_awarded: 0.8, max_hint_level: 2 },
+      ],
+      rebuildRows: [{ rebuild_id: 'R1', passed: true, max_hint_level: 1 }],
+      extraChecks: {},
+    };
+    expect(computeMastery({ ...input, rule: { ...rule, question_min_points: 1.9 } }).state).not.toBe('mastered');
+    expect(computeMastery({ ...input, rule: { ...rule, question_min_points: 1.8 } }).state).toBe('mastered');
+  });
+
   it('재구성을 H3 이상으로만 통과했으면 almost', () => {
     const m = computeMastery({
       stepIds,

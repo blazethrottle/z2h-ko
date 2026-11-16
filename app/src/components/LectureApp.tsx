@@ -28,7 +28,7 @@ interface Props {
   objectives: { objective_id: string; text_ko: string }[];
   prereq: { unit_id: string; title_ko: string | null }[];
   notebook: { name: string | null; url: string | null };
-  rule: { steps_complete_ratio: number; question_score_ratio: number; rebuild_max_hint_level: number; extra_checks: string[] };
+  rule: { steps_complete_ratio: number; question_score_ratio: number; question_min_points?: number; rebuild_max_hint_level: number; extra_checks: string[] };
   speak: { prompt_ko: string; rubric: string[] } | null;
   steps: StepItem[];
   questions: { question_id: string; max_points: number; must_pass: boolean }[];
@@ -238,7 +238,7 @@ export default function LectureApp(p: Props) {
               단계 완료: {Math.round(m.steps_done_ratio * 100)}% (기준 {Math.round(p.rule.steps_complete_ratio * 100)}%)
             </li>
             <li>
-              확인 문제 점수: {Math.round(m.question_score_ratio * 100)}% (기준 {Math.round(p.rule.question_score_ratio * 100)}%, 힌트 비율 반영)
+              확인 문제 점수: {Math.round(m.question_score_ratio * 100)}% (기준 {Math.round(p.rule.question_score_ratio * 100)}%{p.rule.question_min_points != null ? `, ${p.rule.question_min_points}점 이상` : ''}, 힌트 비율 반영)
             </li>
             <li>재구성 과제: {m.rebuild_ok ? '통과' : '아직'}</li>
           </ul>

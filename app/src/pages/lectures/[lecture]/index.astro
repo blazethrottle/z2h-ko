@@ -35,6 +35,7 @@ const nbName = L.notebook?.student ? String(L.notebook.student).split('/').pop()
     rule={{
       steps_complete_ratio: MR.steps_complete_ratio ?? 1,
       question_score_ratio: MR.question_score_ratio ?? config.questionScoreRatio,
+      question_min_points: MR.question_min_points ?? undefined,
       rebuild_max_hint_level: MR.rebuild_max_hint_level ?? 2,
       extra_checks: MR.extra_checks ?? [],
     }}
