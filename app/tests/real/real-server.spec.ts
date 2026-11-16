@@ -6,6 +6,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { config } from '../../src/config';
+import { formatHM, weekStartKst } from '../../src/lib/time';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '../..');
@@ -81,11 +83,16 @@ async function serverState(page: Page) {
 
 /** 앱이 처음 열 때 개발용 계정을 스스로 만들 때까지 기다린다 (server/API.md 1절, PM 결정 B) */
 async function appAccount(page: Page) {
+  // "저장됨"은 계정을 정하기 전에도 보이는 기본 표시라, /api/me 가 계정을 돌려줄 때까지 따로 기다린다
+  await expect.poll(async () => (await page.request.get(`${BASE}/api/me`)).status()).toBe(200);
   await expect(syncState(page, 'saved')).toBeVisible();
   const r = await page.request.get(`${BASE}/api/me`);
   expect(r.status(), await r.text()).toBe(200);
   return (await r.json()).user as { user_id: string; display_name: string };
 }
+
+/** client:load 부품이 모두 살아날 때까지 기다린다(그 전 클릭은 버려진다). tests/e2e/fixtures.ts 의 hydrated 와 같다 */
+const hydrated = (page: Page) => expect(page.locator('astro-island[ssr]')).toHaveCount(0);
 
 const syncState = (page: Page, s: string) => page.getByTestId('sync-status').locator(`[data-state="${s}"]`);
 
@@ -106,6 +113,7 @@ test('실제 서버: 모든 단계를 처음부터 끝까지 넘기면 서버에
   await appAccount(page);
   for (const s of steps) {
     await expect(page.getByTestId('step-position')).toContainText(s.step_id);
+    await hydrated(page);
     await page.getByTestId('start-practice').click();
     await page.getByTestId('finish-step').click();
     if (s.question_ids.length) await page.getByTestId('next-step').click();
@@ -171,6 +179,78 @@ test('실제 서버: 실습 시간 고친 값과 실행 장소가 서버에 남�
       };
     })
     .toEqual({ week: 3900, run: 'jupyter' });
+  await expect(syncState(page, 'saved')).toBeVisible();
+});
+
+test('실제 서버: 단계 화면의 실습 시간이 자동으로 서버에 쌓이고, 홈에서 고친 값과 "자동 기록으로 되돌리기"가 서버에 남는다', async ({ page }) => {
+  const m = await (await page.request.get('/data/manifest.json')).json();
+  const L = m.lectures[0];
+  const step = [...L.steps].sort((a: any, b: any) => a.order - b.order)[0];
+  const flushS = Math.round(config.activityFlushMs / 1000);
+
+  // 가짜 시계: 시간은 그대로 흐르고, runFor 로 앞당기면 1초 타이머가 그만큼 돈다(실제로 기다리지 않는다).
+  // 1분 넘게 앞당겨 홈의 시:분 표시가 0:00 이 아니게 한다
+  await page.clock.install();
+  await page.goto(`/lectures/${L.lecture_id}/${step.slug}/#practice`);
+  await appAccount(page);
+  await page.mouse.move(10, 10);
+  const ranS = Math.ceil(61 / flushS) * flushS + 1;
+  await page.clock.runFor(ranS * 1000);
+
+  // 자동 값: step_progress.active_seconds_auto 와 study_session(auto) 이 서버에 0 보다 크게 저장.
+  // 시계는 그 뒤에도 흐르므로 같은 값인 순간(한 번 보낸 뒤)을 기다리고, 앞당긴 만큼 이상인지 본다
+  const autoOnServer = async () => {
+    const st = await serverState(page);
+    const sp = st.tables.step_progress.find((r) => r.step_id === step.step_id);
+    const ss = st.tables.study_session.filter((r) => r.target_id === step.step_id && r.source === 'auto');
+    return { auto: Number(sp?.active_seconds_auto ?? 0), sessions: ss.length, sessionSeconds: ss.reduce((a, r) => a + Number(r.active_seconds ?? 0), 0) };
+  };
+  await expect
+    .poll(async () => {
+      const a = await autoOnServer();
+      return a.sessions === 1 && a.auto === a.sessionSeconds && a.auto >= ranS - 1 - ((ranS - 1) % flushS);
+    })
+    .toBe(true);
+
+  // 홈: 자동 값(이번 주 study_session 합)이 보이고, 고친 값이 서버의 practice_week:{주 시작일} 에 저장
+  await page.goto('/home/');
+  await appAccount(page);
+  const weekKey = `practice_week:${weekStartKst(await page.evaluate(() => Date.now()))}`;
+  const value = page.getByTestId('week-time-value');
+  // 단계 화면을 떠날 때 남은 초도 보낸다. 서버 값과 홈 표시가 같아질 때까지 기다린다
+  const homeShowsServerAuto = async () => {
+    const a = await autoOnServer();
+    return a.auto === a.sessionSeconds && formatHM(a.sessionSeconds) === (await value.textContent());
+  };
+  await expect.poll(homeShowsServerAuto).toBe(true);
+  const auto1 = await autoOnServer();
+  expect(auto1.auto).toBeGreaterThan(0);
+  expect(await value.textContent()).not.toBe('0:00');
+  const card = page.getByTestId('week-time');
+  await card.getByRole('button', { name: '이번 주 실습 시간 수정' }).click();
+  await card.getByLabel('시간').fill('2');
+  await card.getByLabel('분').fill('10');
+  await card.getByRole('button', { name: '저장' }).click();
+  await expect(value).toHaveText('2:10');
+  await expect(card).toContainText('수정됨');
+  const weekPref = async () => (await serverState(page)).tables.user_pref.find((r) => r.pref_key === weekKey);
+  await expect.poll(async () => (await weekPref())?.value?.edited_seconds).toBe(2 * 3600 + 10 * 60);
+
+  // 자동 기록으로 되돌리기: 서버의 그 주 값이 비고(null), 화면은 자동 값으로 돌아온다. 자동 값은 그대로 남는다
+  await card.getByRole('button', { name: '이번 주 실습 시간 수정' }).click();
+  await card.getByRole('button', { name: '자동 기록으로 되돌리기' }).click();
+  await expect(value).not.toHaveText('2:10');
+  await expect(card).not.toContainText('수정됨');
+  await expect.poll(homeShowsServerAuto).toBe(true);
+  await expect
+    .poll(async () => {
+      const r = await weekPref();
+      return r ? { has: true, value: r.value ?? null } : { has: false, value: 'missing' };
+    })
+    .toEqual({ has: true, value: null });
+  const auto2 = await autoOnServer();
+  expect(auto2.auto).toBeGreaterThanOrEqual(auto1.auto);
+  expect(auto2.sessions).toBe(1);
   await expect(syncState(page, 'saved')).toBeVisible();
 });
 

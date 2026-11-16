@@ -19,6 +19,8 @@ export class MockApi {
   current: string | null = null;
   /** true 면 개발용 로그인이 막힌 서버(예: 터널 뒤)처럼 /api/dev-auth/* 가 404 */
   devAuthBlocked = false;
+  /** /api/me 응답만 늦춘다(계정 목록이 화면의 계정 확인보다 먼저 오는 경우를 만든다) */
+  meDelayMs = 0;
   forwardedHeaders: string[] = [];
 
   async attach(page: Page) {
@@ -51,7 +53,10 @@ export class MockApi {
       if (url.pathname === '/api/health') return route.fulfill({ json: { ok: true, server_time: now, schema_version: 'test' } });
       const me = this.accounts.find((a) => a.user_id === this.current);
       if (!me) return route.fulfill({ status: 401, json: { ok: false, error: 'no_user', message_ko: '먼저 계정을 고르거나 만들어 주세요' } });
-      if (url.pathname === '/api/me') return route.fulfill({ json: { ok: true, user: me } });
+      if (url.pathname === '/api/me') {
+        if (this.meDelayMs) await new Promise((r) => setTimeout(r, this.meDelayMs));
+        return route.fulfill({ json: { ok: true, user: me } });
+      }
       if (url.pathname === '/api/sync') {
         this.syncCalls++;
         const body = route.request().postDataJSON();
@@ -129,6 +134,11 @@ export async function manifest(page: Page) {
 
 export async function syncState(page: Page) {
   return page.getByTestId('sync-status').locator('[data-state]').getAttribute('data-state');
+}
+
+/** client:load 부품(astro-island)이 모두 살아날 때까지(ssr 표시가 빠질 때까지) 기다린다. 그 전에 누른 클릭은 버려진다 */
+export async function hydrated(page: Page) {
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
 }
 
 export const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;

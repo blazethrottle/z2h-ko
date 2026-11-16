@@ -1,5 +1,5 @@
 // 1편 단계를 처음부터 끝까지 넘긴다 (P1 완료 기준). 콘텐츠가 몇 단계든 manifest 순서대로.
-import { test, expect, manifest } from './fixtures';
+import { test, expect, hydrated, manifest } from './fixtures';
 
 test('모든 단계를 처음부터 끝까지 넘기고, 진도가 서버로 간다', async ({ page, api }) => {
   test.setTimeout(180_000);
@@ -11,6 +11,7 @@ test('모든 단계를 처음부터 끝까지 넘기고, 진도가 서버로 간
     const s = steps[i];
     await expect(page).toHaveURL(new RegExp(`/lectures/${L.lecture_id}/${s.slug}/`));
     await expect(page.getByTestId('step-position')).toContainText(s.step_id);
+    await hydrated(page);
     await page.getByTestId('start-practice').click();
     await page.getByTestId('finish-step').click();
     if (s.question_ids.length) {

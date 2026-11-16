@@ -23,7 +23,8 @@ export default defineConfig({
   ],
   webServer: {
     // --ignore-lock: Astro 7은 자동 실행 환경에서 preview를 뒤로 돌리는데, 테스트는 앞에서 돌아야 끝날 때 함께 꺼진다
-    command: 'ASTRO_TELEMETRY_DISABLED=1 npx astro preview --host 127.0.0.1 --port 4329 --ignore-lock',
+    // Z2H_API_PROXY=off: /api 프록시를 끈다. 가짜 서버를 벗어난 요청이 켜 둔 진도 서버(8787)에 닿지 않고 404 로 끝난다
+    command: 'Z2H_API_PROXY=off ASTRO_TELEMETRY_DISABLED=1 npx astro preview --host 127.0.0.1 --port 4329 --ignore-lock',
     url: 'http://127.0.0.1:4329/home/',
     reuseExistingServer: false,
     timeout: 60_000,

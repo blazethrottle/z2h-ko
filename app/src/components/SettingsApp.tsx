@@ -1,6 +1,6 @@
 // 설정: 동기화 상태, 개발용 계정 바꾸기, 실행 장소, JSON 백업 내보내기 (12.3절, D43·D44).
 // 계정은 로컬 개발용 로그인만(127.0.0.1 전용). 이메일·Google 로그인은 자리 문구만, X 로그인은 없다.
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { API_PATHS, listDevAccounts, type Account } from '../lib/api';
 import { createAndUseDevAccount, switchDevAccount } from '../lib/runtime';
 import { config } from '../config';
@@ -34,19 +34,32 @@ export default function SettingsApp({ contentVersion }: { contentVersion: string
 
   const display = s?.display ?? 'saved';
   const [accounts, setAccounts] = useState<Account[] | null>(null);
+  const [serverCurrent, setServerCurrent] = useState<string | null>(null);
   const [acctErr, setAcctErr] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
-  const loadAccounts = () =>
-    listDevAccounts((u, i) => fetch(u, i))
+  // 목록은 화면을 열 때 한 번, 계정 확인(rt)이 끝난 뒤 한 번 더 받는다(처음 여는 기기는 그 사이에 계정이 생긴다).
+  // 늦게 도착한 앞 요청의 응답이 뒤 요청의 응답을 덮지 않게 번호를 붙인다
+  const loadSeq = useRef(0);
+  const loadAccounts = () => {
+    const seq = ++loadSeq.current;
+    return listDevAccounts((u, i) => fetch(u, i))
       .then((r) => {
+        if (seq !== loadSeq.current) return;
         setAccounts(r.accounts);
+        setServerCurrent(r.current_user_id);
         setAcctErr(null);
       })
-      .catch(() => setAcctErr('계정 목록을 불러오지 못했습니다. 맥미니 서버가 켜져 있는지 확인해 주세요.'));
+      .catch(() => {
+        if (seq === loadSeq.current) setAcctErr('계정 목록을 불러오지 못했습니다. 맥미니 서버가 켜져 있는지 확인해 주세요.');
+      });
+  };
   useEffect(() => {
     void loadAccounts();
-  }, []);
+  }, [rt]);
+  // 지금 계정: 화면의 계정 확인이 끝났으면 그 값, 아직이면 목록 응답의 current_user_id.
+  // 둘 다 모르면 목록을 그리지 않는다(모든 줄에 "이 계정으로 바꾸기"가 잠깐 보이지 않게)
+  const currentId = rt?.account?.user_id ?? serverCurrent;
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
     try {
@@ -75,13 +88,15 @@ export default function SettingsApp({ contentVersion }: { contentVersion: string
             {acctErr}
           </p>
         )}
-        {accounts && accounts.length > 0 && (
+        {accounts && accounts.length > 0 && (rt || currentId) && (
           <ul class="list" data-testid="account-list">
             {accounts.map((a) => (
               <li class="lrow">
                 <span class="main">{a.display_name ?? a.user_id}</span>
-                {a.user_id === rt?.account?.user_id ? (
-                  <span class="badge cur">사용 중</span>
+                {a.user_id === currentId ? (
+                  <span class="badge cur" data-testid="account-current">
+                    사용 중
+                  </span>
                 ) : (
                   <button type="button" class="btn sm" disabled={busy} onClick={() => act(() => switchDevAccount(a.user_id))}>
                     이 계정으로 바꾸기
