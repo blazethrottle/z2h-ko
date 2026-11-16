@@ -51,32 +51,56 @@
 - 보여야 하는 것: `vocab_size` 65, `decode(encode("hii there"))`가 원래 글자.
 - 뜻: 토큰(token, 모델이 다루는 글자 조각) 하나 = 글자 하나. 9편에서 더 큰 조각을 씁니다.
 
-**L07-S03 학습·검증 나누기와 get_batch**
+**L07-S03 학습·검증 나누기와 get_batch (긴 단계)**
+- 새 코드: 약 10줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
 - 입력: `data = torch.tensor(encode(text))`, 앞 90% train, 뒤 10% val. `block_size=8`, `batch_size=4`로 x는 `data[i:i+8]`, y는 `data[i+1:i+9]`.
 - 보여야 하는 것: x, y 모두 [4, 8], y가 x보다 한 칸 밀려 있음.
 - 뜻: 8칸 하나 안에 "앞 1글자로 다음", "앞 2글자로 다음" ... 8개 예시가 들어 있습니다.
 
-**L07-S04 바이그램 nn.Module**
-- 입력: `nn.Embedding(vocab_size, vocab_size)` 하나로 logits를 내는 `BigramLanguageModel`, `forward(idx, targets)`에서 logits를 [B*T, C]로 펴서 cross_entropy.
+**L07-S04 바이그램 nn.Module 뼈대 (긴 단계)**
+- 새 코드: 약 7줄 (긴 단계: 클래스 뼈대라 나누면 뜻이 끊깁니다)
+- 입력: `nn.Embedding(vocab_size, vocab_size)` 하나를 가진 `BigramLanguageModel` 클래스와, `forward(idx)`에서 logits를 돌려주는 부분까지.
+- 보여야 하는 것: `logits.shape`가 [4, 8, 65].
+- 뜻: 글자 번호마다 "다음 글자 점수표" 한 줄을 꺼내는 모델입니다(2편과 같은 생각).
+
+**L07-S04b 손실 계산 붙이기**
+- 새 코드: 약 6줄 (긴 단계)
+- 입력: `forward(idx, targets)`에서 logits를 [B*T, C], targets를 [B*T]로 펴서 cross_entropy. targets가 없으면 손실은 None.
 - 보여야 하는 것: 시작 손실 약 4.17 (= -ln(1/65)).
 - 뜻: 4편에서 배운 "시작 손실 기대값"이 여기서도 맞는지 확인합니다.
 
-**L07-S05 generate**
+**L07-S05 generate (긴 단계)**
+- 새 코드: 약 8줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
 - 입력: `idx`에 마지막 위치 logits로 softmax → multinomial → 이어 붙이기를 max_new_tokens번.
 - 보여야 하는 것: 학습 전엔 뒤죽박죽 글자.
 - 뜻: 생성은 "다음 글자 하나 뽑아 붙이기"의 반복입니다.
 
-**L07-S06 바이그램 학습**
+**L07-S06 바이그램 학습 (긴 단계)**
+- 새 코드: 약 8줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
 - 입력: `optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)`, 반복에서 `optimizer.zero_grad(set_to_none=True)`, `loss.backward()`, `optimizer.step()`.
 - 보여야 하는 것: 손실 약 2.5 근처, 생성 글이 조금 단어 같아짐.
 - 뜻: AdamW(기울기 크기를 스스로 조절해 주는 개선된 경사 하강)는 1편 갱신 줄의 고급판입니다.
 
 **L07-S07 스크립트로 옮기기와 장치**
-- 입력: 원본처럼 코드를 `bigram.py` 한 파일로 정리, `device = 'mps'`(맥미니) 또는 `'cuda'`(Colab), `estimate_loss()`로 train/val 손실을 평균 내어 출력.
-- 보여야 하는 것: 일정 간격마다 train, val 손실 한 줄. 생성 전에는 `model.eval()`, 학습 전에는 `model.train()`을 부릅니다(dropout 켜고 끄기).
+- 새 코드: 약 4줄 (나머지는 앞 셀들을 옮겨 붙이는 것)
+- 입력: 원본처럼 코드를 `bigram.py` 한 파일로 정리, `device = 'mps'`(맥미니) 또는 `'cuda'`(Colab), 모델과 배치에 `.to(device)`.
+- 보여야 하는 것: 스크립트가 끝까지 실행되고 손실이 출력됨.
 - 뜻: 장치를 모델과 데이터 양쪽에 맞춰야 합니다(`.to(device)`).
 
-**L07-S08 수학 트릭 1: 반복문으로 평균**
+**L07-S07b estimate_loss: 평가 반복 (긴 단계)**
+- 새 코드: 약 8줄 (긴 단계)
+- 입력: `@torch.no_grad()`가 붙은 `estimate_loss()`: `model.eval()`, train과 val 각각 eval_iters번 배치 손실을 모으기.
+- 보여야 하는 것: 함수가 두 숫자(train, val)를 담은 사전을 돌려줌.
+- 뜻: 미니배치 하나의 흔들리는 손실 대신 여러 배치 평균으로 봅니다.
+
+**L07-S07c 평가 결과 출력과 모드 되돌리기**
+- 새 코드: 약 4줄
+- 입력: 함수 끝에 `model.train()`과 return, 학습 반복에서 일정 간격마다 호출해 출력.
+- 보여야 하는 것: 일정 간격마다 train, val 손실 한 줄. 생성 전에는 `model.eval()`, 학습 전에는 `model.train()`을 부릅니다(dropout 켜고 끄기).
+- 뜻: 평가 모드와 학습 모드를 오가는 습관이 생깁니다.
+
+**L07-S08 수학 트릭 1: 반복문으로 평균 (긴 단계)**
+- 새 코드: 약 6줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
 - 입력: `B,T,C = 4,8,2; x = torch.randn(B,T,C)`, 위치 t마다 `x[b,:t+1].mean(0)`.
 - 보여야 하는 것: `xbow[0]`의 첫 행이 `x[0,0]`과 같고, 둘째 행은 앞 두 행 평균.
 - 뜻: 각 위치가 자기와 과거만 평균 내어 "대화"합니다.
@@ -91,22 +115,55 @@
 - 보여야 하는 것: S09와 같은 wei.
 - 뜻: -무한대는 softmax 뒤 0이 됩니다. 이제 0 대신 "배운 점수"를 넣으면 가중 평균이 됩니다.
 
-**L07-S11 한 개의 헤드**
-- 입력: `key = nn.Linear(C, head_size, bias=False)` (query, value도), `wei = q @ k.transpose(-2, -1) * head_size**-0.5`, 마스크, softmax, `out = wei @ v`.
+**L07-S11 한 개의 헤드: 질의·키·값 만들기 (긴 단계)**
+- 새 코드: 약 6줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
+- 입력: `key = nn.Linear(C, head_size, bias=False)` (query, value도), x에서 k, q 만들기, `wei = q @ k.transpose(-2, -1) * head_size**-0.5`.
+- 보여야 하는 것: `wei.shape`가 [B, T, T].
+- 뜻: 위치마다 "나는 이런 것을 찾는다(질의)"와 "나는 이런 것을 가졌다(키)"를 곱해 점수표를 만듭니다.
+
+**L07-S11b 마스크, softmax, 가중합**
+- 새 코드: 약 4줄
+- 입력: tril 마스크로 미래 칸을 -inf, softmax, `out = wei @ v`.
 - 보여야 하는 것: `wei[0]`이 아래 삼각 모양이고 행마다 합 1, 칸마다 크기가 다름.
 - 뜻: 각 위치가 "누구 말을 얼마나 들을지"를 내용에 따라 정합니다. √head_size로 나누지 않으면 softmax가 한 칸에 쏠립니다.
+
+**L07-S11c Head 클래스로 묶기 (긴 단계)**
+- 새 코드: 약 10줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
+- 입력: S11과 S11b를 `Head(nn.Module)`로 묶고, tril은 `register_buffer`로 등록. 모델에 헤드 하나를 넣어 학습.
+- 보여야 하는 것: val 손실이 바이그램보다 조금 낮아짐.
+- 뜻: `register_buffer`는 마스크를 모델과 함께 장치로 옮기려는 장치입니다.
 
 **L07-S12 주의에 대한 메모 6개 읽기**
 - 입력: 앱의 요약 카드 읽기(코드 없음). 주의는 소통 방식이다, 위치 정보가 없어 위치 임베딩이 필요하다, 배치끼리는 섞이지 않는다, 인코더는 마스크가 없다, 교차 주의는 키·값이 다른 곳에서 온다, 크기 보정의 이유.
 - 보여야 하는 것: 확인 문제 Q07, Q08로 연결.
 - 뜻: 영상의 해설 구간을 정리한 것입니다(구간: 1:11:38 ~ 1:16:56, research/07).
 
-**L07-S13 블록 쌓기**
-- 입력: 위치 임베딩 `nn.Embedding(block_size, n_embd)` 추가 → `MultiHeadAttention`(여러 헤드 결과를 이어 붙이고 투영) → `FeedForward`(Linear 4배, ReLU, Linear) → `Block`에 `x = x + self.sa(self.ln1(x))`, `x = x + self.ffwd(self.ln2(x))` → 드롭아웃.
-- 보여야 하는 것: 블록 몇 개로 바이그램보다 val 손실이 낮아짐.
-- 뜻: 소통(주의) 다음 계산(피드포워드). 잔차와 LayerNorm 덕분에 깊게 쌓아도 학습됩니다.
+**L07-S13 위치 임베딩과 멀티 헤드 (긴 단계)**
+- 새 코드: 약 9줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
+- 입력: 위치 임베딩 `nn.Embedding(block_size, n_embd)`를 토큰 임베딩에 더하기, `MultiHeadAttention`(헤드 여러 개 결과를 이어 붙이고 투영).
+- 보여야 하는 것: 헤드 4개로 val 손실이 헤드 1개보다 낮아짐.
+- 뜻: 여러 관점의 소통 채널을 동시에 둡니다.
 
-**L07-S14 축소 설정으로 학습**
+**L07-S13b FeedForward (긴 단계)**
+- 새 코드: 약 7줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
+- 입력: `FeedForward`(Linear로 4배 넓히기, ReLU, 다시 Linear) 클래스.
+- 보여야 하는 것: 손실이 조금 더 낮아짐.
+- 뜻: 소통(주의)으로 모은 정보를 위치마다 따로 "생각"하는 칸입니다.
+
+**L07-S13c Block과 잔차, LayerNorm (긴 단계)**
+- 새 코드: 약 9줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
+- 입력: `Block`에 `x = x + self.sa(self.ln1(x))`, `x = x + self.ffwd(self.ln2(x))`, 블록 여러 개를 `nn.Sequential`로 쌓고 마지막 LayerNorm.
+- 보여야 하는 것: 블록 몇 개로 바이그램보다 val 손실이 확실히 낮아짐.
+- 뜻: 소통 다음 계산. 잔차와 LayerNorm 덕분에 깊게 쌓아도 학습됩니다.
+
+**L07-S13d 드롭아웃**
+- 새 코드: 약 4줄
+- 입력: 주의 가중치, 멀티 헤드 출력, 피드포워드 출력에 `nn.Dropout(dropout)`.
+- 보여야 하는 것: train과 val 손실 차이가 줄어듦(크게 키운 설정일 때 두드러짐).
+- 뜻: 학습 때 무작위로 일부를 꺼서 외우기(과적합)를 막습니다.
+
+**L07-S14 축소 설정으로 학습 (긴 단계)**
+- 새 코드: 약 8줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
 - 입력: 앱 기본 축소 설정: `batch_size=12~32, block_size=64, n_embd=128, n_head=4, n_layer=4, dropout=0.1, max_iters=2000~5000`. nanoGPT README의 맥북용 축소 설정(block 64, batch 12, n_layer 4, n_head 4, n_embd 128, 2000스텝, CPU 약 3분, MPS는 2~3배 빠름)과 같은 크기입니다(research/07 6절). (원본 gpt.py 설정은 batch 64, block 256, n_embd 384, n_head 6, n_layer 6, 5000스텝입니다. M1 맥북 MPS에서 약 3시간이라는 사용자 보고가 있어 선택 과제로 둡니다. gpt.py는 MPS를 자동으로 고르지 않으므로 device를 'mps'로 바꿔야 합니다.)
 - 보여야 하는 것: val 손실이 바이그램(약 2.5)보다 확실히 낮아짐, 생성 글이 대본 모양(이름: 대사).
 - 뜻: 원본과 같은 구조를 작게 돌린 것입니다. 맥미니에서 대략 수십 분 이내 목표(실측은 CTO 확인 예정).

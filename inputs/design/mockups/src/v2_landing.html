@@ -1,0 +1,58 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Z2H 소개</title><link rel="stylesheet" href="z2h.css"><link rel="stylesheet" href="z2h_v2.css"><style>.hero{display:grid;gap:var(--s5);padding:var(--s6) 0 var(--s8)}
+.hero h1{font-size:30px;line-height:1.35;font-weight:700;letter-spacing:-0.4px}
+.cta{display:flex;gap:var(--s3);flex-wrap:wrap}
+.sec{padding:var(--s8) 0;border-top:1px solid var(--line)}
+.sec h2{margin-bottom:var(--s4)}
+.gets{display:grid;gap:var(--s3)}
+.get{display:flex;gap:var(--s3);align-items:flex-start}
+.get .ic2{flex:none;width:40px;height:40px;border-radius:var(--r-md);background:var(--paper-sunken);display:flex;align-items:center;justify-content:center;font-family:var(--font-code);font-size:13px;font-weight:600;color:var(--accent)}
+.aud{display:grid;gap:var(--s3)}
+.path{list-style:none;margin:0;padding:0;position:relative}
+.path li{display:grid;grid-template-columns:52px 1fr;gap:var(--s3);padding:var(--s2) 0;position:relative}
+.path li::before{content:"";position:absolute;left:25px;top:0;bottom:0;width:2px;background:var(--line)}
+.path .dot{position:relative;z-index:1;width:52px;height:32px;border-radius:var(--r-pill);background:var(--paper-raised);border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.path li.cp .dot{border-style:dashed;color:var(--ink-muted)}
+.path li.first .dot{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.path .t{font-weight:600}.path .m{font-size:13px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.ev{display:grid;gap:var(--s3)}
+.mini-code{border-radius:var(--r-md);overflow:hidden;border:1px solid var(--line)}
+.mini-code .r{display:grid;grid-template-columns:1fr}
+.mini-code .c{background:var(--code-bg);color:var(--code-text);font-family:var(--font-code);font-size:13px;padding:8px 12px;white-space:pre-wrap;font-variant-ligatures:none}
+.mini-code .e{background:var(--paper-raised);padding:8px 12px;font-size:14px;border-top:1px solid var(--line)}
+.no-list{margin:0;padding-left:1.2em}
+@media(min-width:1024px){.hero{grid-template-columns:1.1fr 1fr;align-items:center;padding:var(--s14) 0}.hero h1{font-size:40px}.gets{grid-template-columns:repeat(3,1fr)}.aud{grid-template-columns:repeat(4,1fr)}.ev{grid-template-columns:repeat(4,1fr)}.path{columns:2;column-gap:var(--s10)}.path li{break-inside:avoid}.mini-code .r{grid-template-columns:1.1fr 1fr}.mini-code .e{border-top:0;border-left:1px solid var(--line)}}
+</style></head><body>
+<header class="topbar lbar"><span class="brand">Z2H<small>제로 투 히어로 실습</small></span><span class="sp"></span><span class="sample">예시 화면</span><a class="btn ghost sm" href="#">로그인</a><a class="btn sm" href="#">30분 맛보기 시작</a></header>
+<main class="wide"><section class="hero"><div class="stack">
+<span class="tmp">임시 문구 · 교사 VALUE_CURRICULUM 대기</span>
+<h1>코드를 몰라도, 한 줄씩 직접 쳐 보며<br>GPT를 처음부터 만들어 봅니다</h1>
+<p class="muted">Andrej Karpathy의 강의 "Neural Networks: Zero to Hero" 10편을 한국어 줄별 풀이와 함께 따라 하는 실습 노트입니다. 영상은 YouTube 원본을 그대로 보여 드립니다.</p>
+<div class="cta"><a class="btn primary" href="#">30분 맛보기 시작</a><a class="btn" href="#">로그인</a></div>
+<p class="cap">맛보기는 가입 없이, 설치 없이 브라우저에서 바로 됩니다.</p>
+</div>
+<div class="mini-code" aria-label="실습 화면 예시"><div class="r"><div class="c">a = Value(2.0)</div><div class="e">숫자 2.0을 담은 상자 a를 만듭니다.</div></div><div class="r"><div class="c">c = a + b</div><div class="e">더하기를 하면서 a와 b가 재료라는 것을 기록합니다.</div></div><div class="r"><div class="c">c.backward()</div><div class="e">결과에서 거꾸로 가며 기울기를 채웁니다.</div></div><div class="r"><div class="c">print(a.grad)</div><div class="e">a를 조금 바꾸면 c가 얼마나 바뀌는지 봅니다.</div></div></div>
+</section>
+<section class="sec" aria-labelledby="g"><h2 id="g" class="t2">끝내면 얻는 것</h2><div class="gets">
+<div class="get"><span class="ic2">01</span><div><b>나만의 micrograd</b><p class="small muted">숫자의 기울기를 스스로 계산하는 작은 엔진과, 그것으로 학습하는 신경망</p></div></div>
+<div class="get"><span class="ic2">02</span><div><b>이름 짓는 언어 모델</b><p class="small muted">이름 수만 개를 읽고 새 이름을 지어 내는 모델. 바이그램부터 WaveNet 모양까지</p></div></div>
+<div class="get"><span class="ic2">07</span><div><b>나만의 작은 GPT</b><p class="small muted">셰익스피어 글을 읽고 비슷한 글을 써 내는 트랜스포머를 한 줄씩 직접</p></div></div>
+<div class="get"><span class="ic2">09</span><div><b>직접 만든 토크나이저</b><p class="small muted">글을 조각으로 나누는 BPE. 한글이 몇 조각이 되는지 내 눈으로 확인</p></div></div>
+<div class="get"><span class="ic2">10</span><div><b>GPT-2 축소판 학습 기록</b><p class="small muted">GPT-2와 같은 구조를 내 장비에서 학습하고 평가한 노트북</p></div></div>
+<div class="get"><span class="ic2">08</span><div><b>ChatGPT를 이해하는 눈</b><p class="small muted">사전학습부터 강화학습까지 4단계를 내 말로 정리한 카드</p></div></div>
+</div><p class="cap" style="margin-top:var(--s4)">원본 규모 GPT-2 재현은 유료 GPU가 필요해 넣지 않았습니다. 10편은 축소판으로 전 과정을 실습합니다.</p></section>
+<section class="sec" aria-labelledby="w"><h2 id="w" class="t2">이런 분께 맞습니다</h2><div class="aud">
+<div class="card"><b>AI를 매일 쓰지만 속이 궁금한 분</b><p class="small muted">ChatGPT가 어떻게 글을 만드는지 말이 아니라 손으로 확인하고 싶은 분</p></div>
+<div class="card"><b>코드를 처음 보는 기획자·마케터</b><p class="small muted">개발자와 AI 이야기를 같은 말로 하고 싶은 분</p></div>
+<div class="card"><b>AI 도입을 앞둔 팀장·대표</b><p class="small muted">무엇이 되고 무엇이 어려운지 직접 가늠하고 싶은 분</p></div>
+<div class="card"><b>천천히 오래 배우는 학습자</b><p class="small muted">하루 1~2시간, 내 속도로 끝까지 가고 싶은 분</p></div>
+</div></section>
+<section class="sec" aria-labelledby="j"><h2 id="j" class="t2">수료까지의 길</h2><p class="small muted" style="margin-bottom:var(--s4)">하루 1~2시간, 주 5일이면 약 4~5개월입니다. 시간은 교사 몽키 학습 설계의 예상치입니다.</p><ol class="path"><li class=""><span class="dot">00</span><div><span class="t">사전 기초</span> <span class="m">· 약 8~12시간</span><br><span class="small">파이썬과 수학을 읽는 눈</span></div></li><li class="first"><span class="dot">01</span><div><span class="t">micrograd</span> <span class="m">· 약 8~12시간</span><br><span class="small">내가 만든 자동 미분 엔진과 작은 신경망</span></div></li><li class=""><span class="dot">02</span><div><span class="t">makemore 1</span> <span class="m">· 약 6~10시간</span><br><span class="small">새 이름을 지어 내는 첫 언어 모델</span></div></li><li class=""><span class="dot">03</span><div><span class="t">makemore 2</span> <span class="m">· 약 5~8시간</span><br><span class="small">더 그럴듯한 이름을 짓는 신경망 (MLP)</span></div></li><li class="cp"><span class="dot">CP1</span><div><span class="t">누적 점검 1</span> <span class="m">· 약 약 1시간</span><br><span class="small">01~03편 확인</span></div></li><li class=""><span class="dot">04</span><div><span class="t">BatchNorm</span> <span class="m">· 약 6~10시간</span><br><span class="small">신경망 건강 진단 그래프</span></div></li><li class=""><span class="dot">05</span><div><span class="t">Backprop Ninja</span> <span class="m">· 약 8~12시간</span><br><span class="small">손으로 쓴 역전파로 학습한 모델</span></div></li><li class=""><span class="dot">06</span><div><span class="t">WaveNet</span> <span class="m">· 약 4~6시간</span><br><span class="small">8글자 문맥을 보는 이름 생성기</span></div></li><li class="cp"><span class="dot">CP2</span><div><span class="t">누적 점검 2</span> <span class="m">· 약 약 1.5시간</span><br><span class="small">01~06편 확인</span></div></li><li class=""><span class="dot">07</span><div><span class="t">GPT 만들기</span> <span class="m">· 약 8~12시간</span><br><span class="small">셰익스피어 흉내 글을 쓰는 나만의 작은 GPT</span></div></li><li class=""><span class="dot">08</span><div><span class="t">State of GPT</span> <span class="m">· 약 2~3시간</span><br><span class="small">ChatGPT가 만들어지는 4단계 정리 카드</span></div></li><li class=""><span class="dot">09</span><div><span class="t">토크나이저</span> <span class="m">· 약 8~12시간</span><br><span class="small">한글도 쪼개는 직접 만든 BPE 토크나이저</span></div></li><li class=""><span class="dot">10</span><div><span class="t">GPT-2 축소판</span> <span class="m">· 약 14~20시간</span><br><span class="small">GPT-2 구조를 내 장비에서 학습·평가한 기록</span></div></li><li class="cp"><span class="dot">CP3</span><div><span class="t">누적 점검 3</span> <span class="m">· 약 약 2시간</span><br><span class="small">수료</span></div></li></ol></section>
+<section class="sec" aria-labelledby="e"><h2 id="e" class="t2">코드를 몰라도 할 수 있는 이유</h2><div class="ev">
+<div class="card stack"><b>코드 한 줄마다 한국어 풀이</b><p class="small muted">모든 줄 옆에 쉬운 말 설명이 붙습니다. 풀이 없는 코드는 내보내지 않습니다.</p></div>
+<div class="card stack"><b>4단계 힌트</b><p class="small muted">질문 → 볼 곳 → 빈칸 코드 → 정답과 풀이. 필요한 만큼만 하나씩 엽니다.</p></div>
+<div class="card stack"><b>사전 기초 15단위</b><p class="small muted">파이썬 읽기 9단위, 수학 6단위. 진단 5문제로 어디서 시작할지 추천합니다.</p></div>
+<div class="card stack"><b>한 번에 한 걸음</b><p class="small muted">단계마다 새 코드 몇 줄과 새 개념 하나. 입력할 것, 보여야 하는 것, 그 뜻 세 칸으로 갑니다.</p></div>
+</div></section>
+<section class="sec stack" aria-labelledby="s"><h2 id="s" class="t2">먼저 30분만 해 보세요</h2><p class="muted">숫자 상자를 만들고, 더하기의 기울기를 직접 구해 봅니다. 가입은 끝나고 원할 때만 하면 됩니다.</p><div class="cta"><a class="btn primary" href="#">30분 맛보기 시작</a><a class="btn" href="#">로그인</a></div></section>
+<footer class="sec cap">영상: Andrej Karpathy, YouTube 원본 임베드와 링크. 이 앱은 영상을 다시 올리지 않습니다. · 이용약관 · 개인정보 처리방침</footer></main></body></html>

@@ -7,7 +7,7 @@ async def main():
     b=await p.chromium.launch()
     for w in (390,1280):
       pg=await b.new_page(viewport={'width':w,'height':900})
-      for f in sorted(SRC.glob('s*.html')):
+      for f in sorted([x for x in SRC.glob('*.html')]):
         await pg.goto(f.as_uri()); await pg.evaluate('document.fonts.ready')
         cdp=await pg.context.new_cdp_session(pg); await cdp.send('DOM.enable'); await cdp.send('CSS.enable')
         doc=await cdp.send('DOM.getDocument',{'depth':-1})

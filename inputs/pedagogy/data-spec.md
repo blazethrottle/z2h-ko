@@ -14,6 +14,9 @@
 | 기초 단위 문제 | `{unit_id}-Q{번호}` | `F-P9-Q4` |
 | 복습 카드 | `RC-{원본 id}-{번호}` | `RC-L01-Q06-1` |
 | 누적 점검 | `CP1`, `CP2`, `CP3` | `CP2` |
+| 누적 점검 문항 | `{checkpoint_id}-Q{두 자리}` | `CP1-Q03` |
+| 기초 진단 문항 | `F-D{번호}` | `F-D2` |
+| 쪼갠 단계 | 기존 `step_id` 뒤에 `b`, `c` | `L01-S14b` |
 
 ## 2. 콘텐츠(읽기 전용, 문서에서 생성)
 
@@ -22,7 +25,9 @@
 {
   "lecture_id": "L01",
   "title_ko": "micrograd: 신경망과 역전파를 손으로 만들기",
-  "video_url": "https://www.youtube.com/watch?v=VMj-3S1tku0",
+  "video_url": "https://www.youtube.com/watch?v=VMj-3S1tku0",   // "유튜브에서 열기" 대체 링크
+  "youtube_video_id": "VMj-3S1tku0",   // 임베드용. video-segments.json과 같은 값
+  "video_seconds": 8752,               // research 기준 영상 길이(2:25:52)
   "video_minutes": 146,
   "source_repos": ["karpathy/micrograd", "karpathy/nn-zero-to-hero"],
   "env": ["cpu"],                      // cpu | mps | colab_gpu
@@ -41,7 +46,10 @@
   "lecture_id": "L01",
   "order": 12,
   "title_ko": "같은 값을 두 번 쓰는 버그",
-  "video_segment": {"start": "1:22:28", "end": "1:27:05", "source": "research/01_micrograd.md"},   // 시각이 없으면 null과 note_ko "리서치 반영 예정",
+  "video_segments": [{"start_s": 4948, "end_s": 5225}],   // 초 단위. 1:22:28 ~ 1:27:05. end_s는 int 또는 null(영상 끝까지). 구간이 여럿이면 여러 개, 영상이 없는 단계는 []
+  "long_step": false,                  // 새 코드 6~10줄이면 true, 제목에 "(긴 단계)". 10줄 초과는 허용하지 않음
+  "new_code_lines": 2,                 // 새로 치는 코드 줄 수(준비 코드 제외)
+  "prepared_code": null,               // 준비 코드(붙여 넣기만, 예: draw_dot). 있으면 줄별 풀이도 함께
   "kind": "code",                      // code | read | reflect | optional
   "input_ko": "입력할 것 설명",
   "code": "a = Value(3.0)\nb = a + a",
@@ -59,11 +67,11 @@
 {
   "question_id": "L01-Q06",
   "lecture_id": "L01",
-  "type": "fix_bug",                   // predict | explain | fix_bug | apply
+  "type": "fix_bug",                   // predict | explain | fix_bug | apply | choice
   "prompt_ko": "...",
   "code": "...",
   "answer_ko": "...",
-  "auto_grade": {"type": "exact", "value": "2.0"},   // exact | numeric_range | keywords | manual
+  "auto_grade": {"type": "exact", "value": "2.0"},   // exact | numeric_range | keywords | manual | choice
   "rubric": [{"point": 0.5, "criterion_ko": "누적이라는 말"}, {"point": 0.5, "criterion_ko": "+= 위치"}],
   "max_points": 1,
   "must_pass": false,                  // 익힘 판정 때 반드시 정답이어야 하는 문항
@@ -71,6 +79,24 @@
   "hint_ids": ["L01-Q06-H1", "L01-Q06-H2"]
 }
 ```
+
+### question: 객관식(choice) 예
+객관식은 `type: "choice"`, 보기 `choices`(글자 배열), 정답 `answer_index`(0부터 세는 정수)를 씁니다. 채점은 `auto_grade.type: "choice"`로, 고른 번호가 `answer_index`와 같으면 정답입니다. "모르겠어요" 보기는 감점 없이 오답으로 기록하고 추천에만 씁니다.
+```json
+{
+  "question_id": "F-D1",
+  "unit_id": "F-DIAG",
+  "type": "choice",
+  "prompt_ko": "`x = 3` 다음 `x = x + 2`를 실행하면 `x`는?",
+  "choices": ["3", "5", "32", "모르겠어요"],
+  "answer_index": 1,
+  "auto_grade": {"type": "choice"},
+  "recommend_units_if_wrong": ["F-P1", "F-P2"],
+  "max_points": 1,
+  "hint_ids": []                       // 진단 문항에는 힌트 없음
+}
+```
+진단 5문항의 구조: F-D1, F-D2, F-D4, F-D5는 `choice`, F-D3은 단답(`type: "predict"`, `auto_grade: {"type": "exact", "value": "8"}`).
 
 ### hint
 ```json
@@ -154,6 +180,34 @@
 ```
 간격 규칙: pass → 다음 간격, shaky → 같은 간격, miss → 1일. 하루 분량 25분 초과 시 간격 긴 카드부터 하루 미룸.
 
+### checkpoint (누적 점검, 콘텐츠)
+```json
+{
+  "checkpoint_id": "CP1",              // CP1 | CP2 | CP3
+  "covers": ["L01", "L02", "L03"],
+  "unlocks_lecture": "L04",            // CP2 → "L07", CP3 → null(수료)
+  "items": [
+    {"type": "explain", "count": 6},   // CP1 6+4+1, CP2 8+4+1, CP3 10+5+1
+    {"type": "predict", "count": 4},
+    {"type": "hand_task", "count": 1}
+  ],
+  "question_ids": ["CP1-Q01", "CP1-Q02"],   // review.md 4절의 문항표
+  "pass_ratio": 0.8,                   // 힌트 점수 반영 뒤
+  "max_hint_level": 2,                 // H2까지만 열림
+  "time_limit_min": null,              // 시간 제한 없음
+  "hand_task_format": {
+    "start": "blank_notebook",         // 빈 노트북에서 시작
+    "own_words_comment_per_line": true,   // 줄마다 자기 말 주석
+    "compare_with": "original_or_torch_output",   // 원본 저장소 또는 torch 결과와 비교
+    "self_check_rubric": ["...", "..."]   // 자가 점검 체크 목록(review.md 4절)
+  },
+  "fail_action": {
+    "reset_review_cards_of_missed_lectures_to_days": 1,
+    "retry_after_days": 3
+  }
+}
+```
+
 ### checkpoint_attempt
 ```json
 {"checkpoint_id": "CP1", "covers": ["L01", "L02", "L03"], "score_ratio": 0.82, "passed": true, "max_hint_level_allowed": 2, "at": "..."}
@@ -170,6 +224,8 @@
 1. 모든 `step`의 `code` 줄 수와 `code_line_notes_ko` 개수가 같아야 합니다(비개발자 원칙 1).
 2. 모든 `question`에는 `answer_ko`와 `rubric`이 있어야 합니다.
 3. 모든 화면 글에 긴 줄표 기호가 없어야 합니다.
-4. `video_segment.start`가 비어 있으면 화면에 "구간 준비 중"으로 보이고, 영상 링크만 제공합니다.
+4. 영상은 공식 YouTube 임베드 플레이어(`https://www.youtube-nocookie.com/embed/{youtube_video_id}?start={start_s}&end={end_s}`, 자동 재생 없음)로 그 단계 구간만 재생하고, 늘 "유튜브에서 열기" 대체 링크(`video_url`에 `&t={start_s}s`)를 함께 둡니다. 영상 파일은 다시 올리지 않습니다(design/decisions.md D16, 얼큰이님 결정 2026-11-16 19:43 KST). `video_segments`가 비어 있으면 "구간 준비 중"으로 보이고 영상 처음부터 엽니다. 단계별 구간 값은 `video-segments.json`에서 읽습니다.
 5. 시각은 모두 `+09:00`(KST)로 저장합니다.
 6. 진도는 맥미니에 저장하고, 실습 시간은 앱이 단계 시작과 완료 시각으로 자동으로 잽니다(CEO 결정 2026-11-16). 저장 방식은 CTO가 정합니다.
+7. `long_step`은 `new_code_lines`가 6~10이면 true, 1~5면 false여야 하고, 10을 넘는 단계는 오류로 봅니다.
+8. 객관식은 `choices`가 2개 이상이고 `0 <= answer_index < len(choices)`여야 합니다.

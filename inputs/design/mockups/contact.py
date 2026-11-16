@@ -7,7 +7,7 @@ DW,MW,H,G=600,183,760,24
 cellw=DW+G+MW; cols=4; rows=3
 W=cols*cellw+(cols+1)*48; HH=180+rows*(H+90)+40
 sheet=Image.new('RGB',(W,HH),'#F6F1E7'); d=ImageDraw.Draw(sheet)
-d.text((48,40),'Z2H 학습앱 UX/UI 목업 v1.2 · 예시 화면 (내용은 예시)',font=F('Bold',40),fill='#1E2430')
+d.text((48,40),'Z2H 학습앱 UX/UI 목업 v1.3 · 예시 화면 (내용은 예시)',font=F('Bold',40),fill='#1E2430')
 d.text((48,100),'2026-11-16 KST · 디자이너 몽키 · 각 칸 왼쪽 데스크톱 1280px, 오른쪽 모바일 390px · Pretendard + JetBrains Mono 실제 로딩 확인',font=F('Regular',24),fill='#565C68')
 for i,(k,label) in enumerate(NAMES):
     c,r=i%cols,i//cols; x=48+c*(cellw+48); y=180+r*(H+90)

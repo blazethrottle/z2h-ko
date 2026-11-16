@@ -1,6 +1,6 @@
 ---
 name: z2h-builder
-description: Z2H 앱(Astro/Preact), 콘텐츠 스키마, z2h_check 채점 패키지, 테스트를 구현한다.
+description: Z2H 앱(Astro/Preact), 진도 서버(FastAPI·어댑터·Alembic), 콘텐츠 스키마, z2h_check 채점 패키지, 테스트를 구현한다.
 model: claude-opus-5-5
 effort: xhigh
 tools: Read, Write, Edit, Bash, Glob, Grep

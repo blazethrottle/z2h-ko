@@ -1,149 +1,119 @@
-# Z2H 기술 설계 초안 (CTO 몽키)
+# Z2H 기술 설계 v2 (프로토타입 우선)
 
-- 작성: 2026-11-16 KST, 상태: CEO 승인(초안 그대로 진행), 얼큰이 결정 2건 반영(11/16 19:43~44 KST, CEO 전달), M0 진행 중
-- 근거: BRIEF.md, 얼큰이 원문(t826u 2026-11-16 19:31 KST), 공개 원본 저장소·공식 문서(아래 출처)
-- 표시 규칙: [확인됨] 이번에 문서·저장소로 확인 / [가정] 근거 있는 추정 / [맥확인] 맥미니에서 실제로 봐야 함
+- 작성: 2026-11-16 20:10 KST, CTO 몽키. v1(10편 전체, 개인 학습앱)은 DESIGN_DRAFT_v1.md 로 보관.
+- 바뀐 이유: 얼큰이 방향 전환(t833u, 2026-11-16 20:06 KST, CEO 전달). 일반인 대상 제품, 프로토타입 먼저.
+- 갱신: 20:20 KST pedagogy v1.1·VALUE_CURRICULUM.md·video-segments.json 반영(5절, 4절, 1절).
+- 표시: [확인됨] 문서·실측으로 확인 / [가정] 근거 있는 추정 / [자리] 교사·디자이너 자료가 오면 채울 곳
 
-## 얼큰이 결정 반영 (2026-11-16 19:43~44 KST)
-1. 영상: 앱 단계 화면에 YouTube 공식 삽입(youtube-nocookie.com iframe embed). 해당 구간부터 재생(start=초, 필요 시 end=초). 영상 파일 재배포는 여전히 금지.
-2. 저장소: 비공개 blazethrottle/z2h-ko로 시작, 완성 후 공개 전환. 공개 전에 docs/PUBLIC_RELEASE_CHECKLIST.md(gitleaks 전체 이력 검사, MIT 원본 5개 LICENSE 전문·저작권자 NOTICE, build-nanogpt는 링크만) 확인. 공개 전환 자체는 그때 얼큰이 승인.
-
-## 얼큰이 결정 추가 반영 (2026-11-16 19:52 KST, CEO 전달)
-3. 진도는 맥미니에 저장해 폰과 맥에서 이어 보기. 맥미니에 작은 진도 저장 서버(localhost 전용), 브라우저 저장은 오프라인 임시 캐시와 동기화용. 폰 접속은 Cloudflare Tunnel + Cloudflare Access(얼큰이 이메일 한정) 같은 잠긴 주소로만, 공개 노출 없음.
-4. 실습 시간은 자동 측정하고 얼큰이님이 고칠 수 있게.
-5. 한국어 자막 기본 켜기(embed 매개변수 `cc_load_policy=1&cc_lang_pref=ko&hl=ko`).
-6. 10편 원본 규모 재현은 앱에 안내 한 줄만.
-
-### 네트워크·보안 게이트 (실행 전 CEO 사전 통보 필수)
-터널 생성, Access 정책, 방화벽, 포트 개방, DNS 등 네트워크·보안 설정을 바꾸는 단계는 실행 전에 CEO에게 먼저 알린다. PM·서브는 이런 설정을 바꾸지 않고 설계와 스크립트 초안까지만 쓴다. M0 단계에서 터널·Access는 만들지 않는다.
-
-## 한 줄 요약
-폰에서 읽는 한국어 웹앱(맥미니의 작은 진도 서버가 진도 보관) + 맥미니에서 돌리는 편별 실습 노트북(자동 채점 셀 포함). 10편 GPT-2는 맥에서 수십 분짜리 축소판이 기본. 유료 비용 0이 기본.
-
----
-
-## (a) 앱 구조
-
-### 1. 추천 스택: 정적 웹앱 + 맥미니 진도 서버 (얼큰이 결정 3 반영)
-| 항목 | 추천 | 이유 |
+## 0. 확정된 결정 (모두 반영)
+| # | 결정 | 시각(KST) |
 |---|---|---|
-| 프레임워크 | Astro + Preact 작은 부품(퀴즈·진도·힌트) | 글이 대부분인 강의 앱에 맞음. 콘텐츠 묶음(content collections)이 스키마 검사를 해 줘서 10편 자료 형식 오류를 빌드 단계에서 잡음. Preact는 BFB에서 이미 쓰는 기술 |
-| 대안 | Vite + Preact (BFB와 동일) | Astro가 낯설면 이쪽. 대신 스키마 검사를 따로 짜야 함 |
-| 진도 서버 | 맥미니의 작은 Python 서버(표준 라이브러리 또는 FastAPI 하나) + SQLite 파일 하나. `127.0.0.1`에만 바인드, 앱 정적 파일도 같이 제공 | 폰·맥 이어 보기. 외부 포트 개방 없음. 비밀번호·키를 앱에 넣지 않음(외부 접근 통제는 Access가 담당) |
-| 진도 저장 | 정본은 맥미니 SQLite. 브라우저(IndexedDB 또는 localStorage)는 오프라인 임시 캐시: 변경을 대기열에 쌓았다가 연결되면 서버로 보냄. 같은 항목 충돌은 `updated_at` 늦은 쪽 + 기록 보존. JSON 내보내기는 백업용 | 얼큰이 결정 3. data-spec.md 필드 그대로 저장 |
-| 폰 접속 | Cloudflare Tunnel(맥미니에서 바깥으로만 연결) + Cloudflare Access(얼큰이 이메일 한 명만 허용) | 공개 노출 없음. **설정은 네트워크·보안 게이트 대상(CEO 사전 통보), M0에서 만들지 않음** |
-| 실습 시간 | 단계 화면 열림~완료 사이 실제 머문 시간을 자동 측정(탭이 가려지거나 5분 이상 입력이 없으면 멈춤), 단계·편 화면에서 얼큰이님이 숫자를 고칠 수 있음(고친 값과 자동 값 둘 다 저장) | 얼큰이 결정 4 |
-| 노트북 실행 | 앱 밖: 맥미니 Jupyter(기본) 또는 Colab | 브라우저 안 파이썬(Pyodide)은 1편 일부만 가능하고 PyTorch가 안 돌아서 기본에서 제외, 선택 기능으로만 검토 |
-| 영상 | 단계 화면에 YouTube 공식 삽입: `https://www.youtube-nocookie.com/embed/{videoId}?start={초}&end={초}&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=ko&hl=ko` (iframe, 지연 로딩, 자동 재생 없음, 폰 폭 16:9) + "YouTube에서 열기" 링크(&t=초). 한국어 자막 기본 켬(결정 5, 매개변수는 YouTube 공식 문서 확인). 한국어 자막 트랙이 없으면 플레이어가 다른 자막을 고를 수 있음(자동 번역 품질은 리서치가 표본 확인) | 얼큰이 결정 1. 공식 embed라 재배포 아님. 영상 파일·자막 전문은 저장 안 함 |
+| 1 | 영상은 youtube-nocookie 공식 embed, 단계 구간부터 재생(start 초), 자동 재생 없음 | 11/16 19:43 |
+| 2 | 저장소는 비공개 blazethrottle/z2h-ko로 시작, 완성 후 공개 전환(체크리스트 통과 + 얼큰이 승인) | 11/16 19:44 |
+| 3 | 진도는 서버에 저장해 폰과 컴퓨터에서 이어 보기. 브라우저는 오프라인 임시 캐시와 동기화 | 11/16 19:52 |
+| 4 | 실습 시간 자동 측정 + 사용자가 고칠 수 있음 | 11/16 19:52 |
+| 5 | 한국어 자막 기본 켬(`cc_load_policy=1&cc_lang_pref=ko&hl=ko`) | 11/16 19:52 |
+| 6 | 10편 원본 규모 재현은 앱에 안내 한 줄만 | 11/16 19:52 |
+| 7 | 일반인 대상 제품: 랜딩, 첫 30분 맛보기, 성취 배지, 공유 카드 추가 | 11/16 20:06 |
+| 8 | 프로토타입 범위: 랜딩, 맛보기, 1편 micrograd 전 과정, 진도 저장. 2~10편은 뒤로 | 11/16 20:06 |
+| 9 | 프로토타입은 맥미니 저장(작은 서버 + SQLite), 나중에 여러 사용자·계정 서버 DB(예: Postgres)로 옮기기 쉽게: user_id 처음부터, 저장 계층 어댑터, 마이그레이션 파일, 배지·공유 카드 테이블 | 11/16 20:06 |
+| 10 | 실습 환경: "내 맥" 가정 버림. Colab 열기 링크가 기본, 로컬 Jupyter는 선택. 맛보기는 설치 없이 브라우저에서 | 11/16 20:06 |
 
-화면 흐름(디자이너 확정 전 가안): 홈(10편 지도·진도) → 편 개요(목표·선행지식·예상시간) → 단계 화면(영상 구간 → 개념 → 코드 한 줄씩 풀이 → 따라하기 → 확인 문제 → 막힘 힌트) → 편 마무리(채점 결과 붙여넣기·체크).
+승인 게이트
+- 얼큰이 승인: main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제(GPU 등).
+- CEO 사전 통보: 네트워크·보안 설정 변경(Cloudflare Tunnel, Access 정책, 방화벽, 포트 개방, DNS). PM·서브는 설계·스크립트 초안까지만.
 
-채점 결과 연결: 진도 서버가 켜져 있으면 노트북 채점 셀이 `http://127.0.0.1` 진도 서버로 결과를 바로 보냄. 서버가 꺼져 있을 때의 예비 방법: 노트북 마지막 채점 셀이 "Z2H-결과코드"(편·단계별 통과 목록을 담은 짧은 문자열, 비밀 아님)를 출력. 얼큰이님이 앱에 붙여넣으면 진도에 반영. 서버 없이 노트북과 앱을 잇는 가장 단순한 방법.
+## 1. 프로토타입 범위
+| 부분 | 내용 | 지금 자료로 시작? |
+|---|---|---|
+| 앱 뼈대 | 상단 바·하단 탭·카드·버튼, 디자인 토큰, 글꼴, 영상 플레이어 부품, 동기화 상태 표시 | 예 (design v1.2 HANDOFF) |
+| 진도 저장 | 맥미니 진도 서버 + SQLite + 브라우저 임시 캐시·동기화, 실습 시간 측정·수정 | 예 (data-spec.md) |
+| 1편 micrograd 전 과정 | 단계·코드 풀이·확인 문제·힌트 4단계·노트북(Colab 기본)·자동 채점 | 예 (research/01, pedagogy/01, hints.md) |
+| 0편 기초 중 1편에 필요한 단위 | 1편 선행 단위만 (추천 표시, 잠금 아님) | 예 (00-foundations.md) |
+| 랜딩 | 제품 소개, 맛보기 시작 버튼 | [자리] 교사·디자이너 설계 중 |
+| 첫 30분 맛보기 | 설치 없이 브라우저에서. 교사 VALUE_CURRICULUM.md 3절의 Colab 맛보기 코드(이름 지어내기, CPU 약 6초, 손실 3.84 → 2.47, 교사 실행 확인) | 예 (내용 확정, 화면은 design v2_taste 목업) |
+| 성취 배지 | 규칙·화면 | [자리] 테이블은 지금 설계(5절) |
+| 공유 카드 | 이미지 카드 | [자리] 테이블은 지금 설계, 프로토타입은 내 기기에 이미지 저장만(공개 공유 주소 없음) |
+| 2~10편 | 프로토타입 뒤 | 아님 (자료는 inputs/에 보관) |
 
-### 2. 콘텐츠 형식 (편별 단계 파일)
-- 편마다 폴더 1개: `content/ep01-micrograd/episode.yaml` + 단계별 `steps/NN-이름.mdx`
-- 단계 파일 앞머리(frontmatter) 스키마 초안:
+## 2. 앱 구조
+| 층 | 프로토타입 | 나중(승인 후) |
+|---|---|---|
+| 화면 | Astro + Preact 부품, 정적 빌드 | 같음 (CDN 배포) |
+| 진도 서버 | Python FastAPI, 맥미니 127.0.0.1 바인드, 정적 파일도 제공 | 같은 코드를 서버 호스팅에 올림 |
+| 저장 | SQLite 파일 1개 (`StorageAdapter` 뒤) | Postgres 어댑터로 교체 |
+| 스키마 관리 | Alembic 마이그레이션 파일(SQLite·Postgres 둘 다 지원) | 같은 마이그레이션을 Postgres에 적용 |
+| 사용자 | 고정 단일 사용자 `user_id = 00000000-0000-4000-8000-000000000001`, 로그인 없음 | 계정·로그인 추가(인증 방식은 그때 결정, 승인 항목) |
+| 폰 접속 | Cloudflare Tunnel + Access(얼큰이 이메일 한정) 초안만, 실행은 CEO 사전 통보 후 | 공개 운영은 얼큰이 승인 |
+| 콘텐츠 | 저장소 안 파일(YAML/MDX), 빌드 때 스키마 검사, `content_version` 표시 | 같음 |
 
-```yaml
-id: ep01-s03                # 편-단계
-title: "Value 클래스에 덧셈 넣기"
-video: { videoId: VMj-3S1tku0, start: 1520, end: 1935 }   # 필수: videoId+start(초), end는 선택. 리서치 자료로 확정
-goal: "덧셈 결과가 어느 두 값에서 왔는지 기억하게 만든다"
-prereq: [ep00-python-class]  # 0편 기초 모듈 연결
-concepts:
-  - term: "연산 그래프"
-    plain: "계산 순서를 화살표로 이은 지도"
-code:                        # 코드 한 줄씩 한국어 풀이
-  - line: "def __add__(self, other):"
-    ko: "두 Value를 + 로 더할 때 파이썬이 이 함수를 부른다"
-steps:                       # 따라하기
-  - do: "노트북 3번 셀을 실행하세요 (Shift+Enter)"
-    expect: "Value(data=5.0) 가 보이면 성공"
-check:                       # 확인 문제 (교사 몽키 기준)
-  - type: choice | number | order | explain
-    q: "a=2, b=3 일 때 (a+b)._prev 에 들어 있는 것은?"
-    answer: ...
-    why: "정답 풀이"
-hints:                       # 막힘 힌트, 단계별로 점점 자세히
-  - level: 1
-    text: "오류 메시지 마지막 줄만 먼저 읽어 보세요"
-  - level: 2
-    text: "NameError 면 위쪽 셀을 먼저 실행했는지 확인"
-notebook: { file: ep01/ep01_student.ipynb, cells: [3, 4], grader: ep01-s03 }
-sources: [karpathy/nn-zero-to-hero lectures/micrograd]
-```
+동기화 상태 표시(design v1.2 HANDOFF 6-1): 저장됨 / 동기화 중 / 오프라인. 브라우저 IndexedDB 대기열에 변경을 쌓고, 연결되면 `POST /api/sync`로 보냄. 같은 행 충돌은 `updated_at` 늦은 쪽이 이기고 진 값은 `sync_conflicts`에 남김.
 
-- 편 파일 `episode.yaml`: 제목, 영상 ID, 길이, 학습 목표(교사), 선행지식, 예상 학습 시간, 실습 환경 기본값, 단계 순서.
-- 검사: 빌드 때 스키마 검사(모든 단계에 video.videoId·video.start 필수, start<end<영상 길이) + "모든 코드 줄에 ko 풀이 있음" + "모든 단계에 확인 문제 1개 이상, 힌트 2단계 이상" + "타임스탬프가 영상 길이 안" 자동 테스트.
+실습 시간(HANDOFF 6-2): 단계 화면이 보이는 동안만 셈(탭 숨김, 5분 무입력이면 멈춤). `active_seconds_auto`와 사용자가 고친 `active_seconds_user`를 둘 다 저장, 화면은 고친 값 우선.
 
-### 3. 저장소 (비공개 새 저장소)
-- 이름 제안: `blazethrottle/z2h-ko` (비공개). 생성은 다음 단계에서 CTO가 함, 지금은 안 만듦.
-- 폴더 구조:
+## 3. 실습 실행 환경 (결정 10)
+| 방식 | 역할 | 메모 |
+|---|---|---|
+| Colab 열기 (기본) | 1편 노트북 실행 | 1편은 CPU로 충분 [확인됨: 맥 실측과 원본 구조]. "Colab에서 열기" 링크는 `colab.research.google.com/github/{owner}/{repo}/blob/{branch}/{path}` 형식이 공개 저장소에서만 바로 열림. 프로토타입 기간(비공개 저장소)에는 얼큰이 계정 GitHub 권한 연결로 열거나, 앱에서 .ipynb 받기 + Colab 업로드 안내. 일반인 공개 때는 노트북만 담은 공개 저장소 또는 공개 주소가 필요(공개 배포 승인 항목) |
+| 로컬 Jupyter (선택) | 설치할 수 있는 사람용 | `requirements.txt` + 환경 점검 노트북. 맥 MPS는 7편 이후에만 의미 있음 |
+| 브라우저 안 (맛보기) | 설치 없이 30분 | 4절 후보 |
 
-```
-z2h-ko/
-  app/                 웹앱 (Astro)
-    src/content/       편별 episode.yaml + steps/*.mdx
-    src/components/    퀴즈·진도·힌트·코드풀이 부품
-  notebooks/
-    ep00-basics/       0편 사전 기초 (교사 자료 기반)
-    ep01-micrograd/    ep01_student.ipynb (빈칸), ep01_solution.ipynb (정답)
-    ...
-    ep10-gpt2-mini/
-  z2h_check/           자동 채점 파이썬 패키지 (check(), 결과코드 생성)
-  data/                작은 데이터만 (names.txt, tiny shakespeare 등, 출처·라이선스 표기)
-  env/                 requirements-mac.txt, requirements-colab.txt, 환경 점검 노트북
-  tests/               스키마 테스트, 노트북 실행 테스트, 채점기 테스트
-  docs/                DESIGN.md, 마일스톤 기록, 모델 검증 기록
-  .claude/agents/      서브 에이전트 정의 (아래 c)
-  CLAUDE.md            저장소 규칙
-```
+graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것이 일반적 경험이나 [가정, Colab 실측 아님]. 맥 로컬은 brew graphviz 16.1.1 + 파이썬 graphviz 0.21로 렌더 성공 [확인됨, MEASURE_M0.md ⑤].
 
-- 원본 코드 사용: micrograd·makemore·nn-zero-to-hero·nanoGPT·minbpe는 MIT [확인됨]. build-nanogpt는 GitHub에 라이선스 표기가 없음 [확인됨] → 코드 복사 없이 링크만(설명은 우리말 재작성).
-- 공개 전환(얼큰이 결정 2): 비공개로 시작, 완성 후 공개. 전환 전 docs/PUBLIC_RELEASE_CHECKLIST.md 전 항목 통과 + 얼큰이 승인.
+## 4. 맛보기(설치 없이 브라우저)
+결정(pedagogy v1.1 근거): 기본은 **Colab 맛보기 노트북**(VALUE_CURRICULUM.md 3절 T1~T7, 02편 S01~S16 압축판). Colab도 설치 없이 브라우저에서 돌고, PyTorch가 필요해 Pyodide로는 같은 코드를 못 돌림. 교사 실측 CPU 약 6초, 손실 3.84 → 2.47(환경에 따라 조금 다름). 앱 검수: 맥 .venv에서 같은 코드를 nbconvert로 돌려 손실 범위(시작 3.7~4.0, 끝 2.6 이하 [가정: 교사 값 기준 허용오차, 실행 후 확정])를 확인.
+예비: Colab을 못 여는 사람용으로 앱 안에 "미리 계산한 결과 보기"(손실 그래프·지어낸 이름 10개 그림, 아래 C안). 맛보기 완료는 배지가 아니라 "맛보기 완료" 표시(VALUE_CURRICULUM 2절).
 
-### 4. 배포: 비공개 미리보기만 (폰 접속은 위 Tunnel + Access, 게이트 대상)
-- 기본: 맥미니에서 로컬 미리보기(`npm run preview`). 이것만으로 M1 검수 가능.
-- 폰 미리보기가 필요하면: Cloudflare Pages 미리보기 + Cloudflare Access(이메일 로그인 제한, 무료 범위) [가정: 무료 한도는 설정 시 재확인]. 주의: pages.dev 미리보기 주소는 Access를 켜지 않으면 누구나 열 수 있어 사실상 공개 배포임. Access 없이 올리지 않음.
-- 공개 배포는 얼큰이 승인 항목.
+이전 후보 비교(참고):
+| 후보 | 장점 | 단점 | 폰에서 |
+|---|---|---|---|
+| A. Pyodide(브라우저 파이썬) | 진짜 파이썬 코드가 돎. micrograd는 순수 파이썬이라 그대로 실행 가능 | 첫 로딩 수 MB~10MB대 다운로드 [가정: 공식 배포 크기 확인 필요], 저사양 폰 느림, PyTorch 불가 | 느릴 수 있음 |
+| B. 자바스크립트로 다시 만든 작은 micrograd + 슬라이더 시각화 | 즉시 반응, 가벼움, 그래프 직접 그림 | 사용자가 파이썬을 직접 치는 경험은 아님 | 좋음 |
+| C. 미리 계산한 시각화(애니메이션·단계 그림) | 가장 가볍고 안정 | 상호작용 적음 | 좋음 |
+→ v1.1에서 교사가 Colab 기반 맛보기를 확정해 A·B는 보류. C는 Colab 예비 화면으로 사용.
 
----
+## 5. 데이터 구조 (확장 대비)
+원칙: 모든 학습 기록 테이블에 `user_id`. 시간은 ISO 문자열 `+09:00`(SQLite), Postgres에서는 TIMESTAMPTZ로 같은 마이그레이션에서 매핑. SQLite 전용 기능(동적 타입 의존, `INSERT OR REPLACE` 등) 쓰지 않고 표준 SQL + 어댑터에서 upsert 처리. 필드 이름은 pedagogy/data-spec.md(snake_case)가 정본, 화면 이름은 design HANDOFF 6절 대응표로 변환.
 
-## (b) 편별 실습 방식
+| 테이블 | 주요 칼럼 | 비고 |
+|---|---|---|
+| users | user_id(UUID PK), display_name, created_at, locale | 프로토타입은 1행 고정 |
+| step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, updated_at | PK(user_id, step_id) |
+| question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, at | PK(user_id, question_id, attempt_no) |
+| rebuild_attempt | user_id, rebuild_id, passed, max_hint_level, at | |
+| mastery_state | user_id, target_id, state, steps_done_ratio, question_score_ratio, must_pass_ok, rebuild_ok, extra_checks_ok, mastered_at, updated_at | |
+| review_card | user_id, card_id, source_id, kind, interval_days, due_at, last_result, history_json, updated_at | |
+| checkpoint_attempt | user_id, checkpoint_id(CP1~CP3), attempt_no, covers_json, score_ratio, passed, max_hint_level, hand_task_self_check_json, started_at, at | 문항별 응답은 question_attempt에 checkpoint_attempt 번호를 달아 저장(checkpoint_attempt_no 칼럼). 잠금 동작(C5)은 설정값으로 |
+| diagnostic_result | user_id, attempt_no, answers_json, recommended_units_json, at | 기초 진단 F-D1~F-D5 |
+| taste_result | user_id, done_at, loss_start, loss_end, names_json, source(colab/precomputed) | 맛보기 완료 표시용, 사용자가 붙여넣은 값만 |
+| help_note | user_id, target_id, goal_ko, last_cell_code, error_last_line, env_json, hints_seen_json, created_at | 사용자 화면에만, 자동 발송 없음 |
+| study_session | user_id, session_id, target_id, started_at, ended_at, active_seconds, source(auto/manual) | 실습 시간 원자료 |
+| badge_def | badge_id, name_ko, rule_json, icon, version | 규칙은 교사·디자이너 [자리] |
+| user_badge | user_id, badge_id, earned_at, evidence_json | PK(user_id, badge_id) |
+| share_card | share_id(추측 불가 임의 값), user_id, kind, payload_json, image_path, visibility(기본 private), created_at, revoked_at | 공개 공유 주소는 공개 배포 승인 뒤 |
+| sync_conflicts | user_id, table_name, row_key, losing_json, at | 동기화 충돌 기록 |
+| schema_migrations | Alembic 관리 | |
 
-공통: 기본 실행 환경은 맥미니 M4 32GB 로컬 Jupyter. Colab 무료는 "맥이 안 될 때" 예비. 시간은 정답 노트북을 한 번 끝까지 실행하는 데 드는 대략치 [가정: 원본 설정과 nanoGPT README의 CPU/MPS 안내 기준, M1~M6에서 맥 실측으로 교체].
+콘텐츠(lecture, step, question, hint, rebuild_task, mastery_rule, checkpoint)는 DB가 아니라 저장소 파일. pedagogy v1.1 반영:
+- step: `long_step`(새 코드 6~10줄이면 true, 10줄 초과 오류), `new_code_lines`, `prepared_code`(+줄별 풀이), `video_segments: [{start_s, end_s|null}]`(여러 개 가능, 없으면 []). 전체 165단계. 나눈 단계는 `L01-S14b`처럼 접미 글자라 **step_id는 늘 문자열**, 정렬은 `order` 필드로(문자열 정렬 금지).
+- lecture: `youtube_video_id`, `video_seconds`, `video_url`(대체 링크).
+- question: `type`에 `choice` 추가, `choices`(2개 이상), `answer_index`(0부터), `auto_grade.type: choice`, `recommend_units_if_wrong`.
+- checkpoint: CP1~CP3, 문항 40개, `covers`, `unlocks_lecture`, `items`, `question_ids`, `pass_ratio` 0.8, `max_hint_level` 2, `hand_task_format`, `fail_action`.
+- 영상 구간 정본은 `inputs/pedagogy/video-segments.json`(영상 ID·길이·챕터·단계별 구간). 빌드 때 단계 파일과 합치고 어긋나면 빌드 실패.
+- 빌드 검사 추가: long_step ↔ new_code_lines 규칙, choice의 answer_index 범위, video_segments의 end_s ≤ video_seconds. 이유: 버전 관리·검수가 쉬움. 각 기록에 `content_version`을 붙여 내용이 바뀌어도 기록이 깨지지 않게.
 
-| 편 | 기본 환경 | 예상 실행 시간(정답 노트북) | 데이터 | 정답 대조 방식 |
-|---|---|---|---|---|
-| 0 사전 기초 | CPU | 몇 분 | 없음 | 파이썬·수학 확인 문제 assert (교사 몽키 자료 기반) |
-| 1 micrograd | CPU | 1~3분 | 없음 | 내가 만든 Value의 기울기를 PyTorch 기울기와 비교(원본 micrograd 테스트 방식), 작은 신경망 손실 감소 확인 |
-| 2 makemore 바이그램 | CPU | 1~5분 | names.txt (makemore 저장소, MIT) | 바이그램 표 합계·확률 합 1 확인, 손실값을 정답 노트북 값과 소수점 허용오차로 비교 |
-| 3 MLP | CPU (MPS 선택) | 5~15분 | names.txt | 고정 시드로 텐서 모양·첫 손실 일치, 검증 손실이 기준선 이하 |
-| 4 활성화·BatchNorm | CPU 또는 MPS | 10~30분 (학습 횟수 축소판 기본) | names.txt | 초기 손실이 이론값(-ln(1/27) 근처)인지, BN 출력 평균 0·분산 1 근처인지, 활성화 포화 비율 범위 assert |
-| 5 Backprop Ninja | CPU | 몇 분 | names.txt | 원본의 cmp() 방식: 손으로 구한 기울기와 PyTorch 기울기가 정확/근사 일치하는지 항목별 표시 |
-| 6 WaveNet | MPS (CPU 가능) | 15~40분 | names.txt | 층별 출력 모양 assert, 검증 손실이 기준선 이하 |
-| 7 GPT 만들기 | MPS | 축소판 10~30분 (원본 크기는 MPS에서 1시간 이상 예상) | tiny shakespeare | 어텐션 마스크 모양·인과성 assert, 손실 감소 곡선, 기준 손실 이하 |
-| 8 State of GPT (강연) | 코드 거의 없음, CPU | 몇 분 | 없음 | 개념 지도 + 확인 문제 중심. 작은 실습: 토큰 세기, 사전학습/미세조정/RLHF 단계 순서 맞히기 |
-| 9 토크나이저 | CPU | 5~15분 | 작은 텍스트 + tiktoken GPT-2 사전 | 내 BPE의 인코드→디코드 왕복 일치, 같은 문장에서 tiktoken(GPT-2)과 토큰 일치(minbpe 테스트 방식) |
-| 10 GPT-2 축소판 | MPS | 30~60분 이내 목표 | 작은 텍스트 조각(예: FineWeb-Edu 일부 수천만 토큰 이하 또는 tiny shakespeare) | (1) 공개 GPT-2 124M 가중치를 불러와 내 모델 출력이 기준 라이브러리 출력과 일치(추론만, 맥 가능) (2) 작은 모델(수천만 파라미터 이하) 학습 손실 감소 (3) 학습률 스케줄·기울기 누적 결과 assert (4) HellaSwag 일부 문항 평가 실습 |
+영상 구간: v1.1에서 초 단위 `video_segments`로 정해짐. 임베드 `https://www.youtube-nocookie.com/embed/{youtube_video_id}?start={start_s}&end={end_s}&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=ko&hl=ko`(end_s가 null이면 end 생략), 자동 재생 없음, 늘 "유튜브에서 열기"(`video_url&t={start_s}s`). 구간이 여럿이면 구간 버튼 여러 개. decisions.md C8이 바뀌면 플레이어 부품 한 곳만 고침.
 
-10편 메모
-- 영상의 전 과정(모델 코드, 가중치 불러오기, 학습률 스케줄, 기울기 누적, 혼합 정밀도, 분산 학습 개념, 평가)을 축소판에서 모두 손으로 해 봄. 분산 학습(DDP)은 프로세스 1개로 구조만 실습 [맥확인: torchrun 1프로세스 동작].
-- MPS 주의 [맥확인]: torch.compile·bf16·fused AdamW 일부가 MPS에서 안 되거나 느릴 수 있음 → 노트북에 "맥에서는 이 줄을 끄세요" 분기와 이유 풀이.
-- 원본 124M 재현(영상 기준 8xA100급)은 앱에 안내 한 줄만 둠(결정 6). 실제로 할 경우 유료 GPU라 결제 승인 항목(아래 g, h).
+어댑터: `StorageAdapter` 인터페이스(진도 읽기·쓰기, 동기화, 배지 부여, 공유 카드 기록) → `SqliteAdapter`(지금), `PostgresAdapter`(나중). 같은 테스트 묶음을 두 어댑터에 돌리게 설계(Postgres는 나중에 로컬 컨테이너로).
 
-공통 채점 방식
-- 학생 노트북 = 빈칸(`# 여기에 작성`) + 채점 셀 `z2h_check.check("ep03-s05", 변수)`. 틀리면 한국어로 "무엇이 다른지 + 힌트 번호" 출력.
-- 정답 노트북은 검수용으로 맥에서 끝까지 실행 통과해야 함. 학생 노트북은 정답을 넣은 상태로도 채점 셀이 모두 통과해야 함(채점기 자체 검사).
-- 기준값(손실 등)은 고정 시드로 정답 노트북을 맥에서 돌려 정함. 원본 영상 수치는 참고만 (기기·버전 차이로 다를 수 있음).
+## 6. 확장 경로 (프로토타입 → 일반인 서비스)
+1. 계정·로그인 추가, 고정 user_id를 실제 계정에 연결(마이그레이션 1개).
+2. Postgres로 이전: 같은 Alembic 이력 적용 + SQLite 데이터 내보내기·가져오기 스크립트.
+3. 서버 호스팅·공개 배포·공개 공유 주소: 얼큰이 승인 항목, 비용은 그때 견적.
+4. 노트북 공개 저장소(Colab 바로 열기): 공개 배포 승인 항목, PUBLIC_RELEASE_CHECKLIST 적용.
+5. 2~10편 콘텐츠 추가(입력 자료는 이미 inputs/에 있음).
 
-0편 사전 기초: 교사 몽키 pedagogy/ 자료가 정본. CTO 쪽은 노트북 틀(파이썬 변수·리스트·함수·클래스, 미분 감각, 행렬 곱, 확률 합)과 환경 설치 점검 노트북(맥 MPS 사용 가능 여부 출력)을 준비.
-
-Colab 메모: 비공개 저장소의 노트북은 Colab "바로 열기" 링크가 GitHub 권한 연결을 요구함 → 기본은 맥, Colab은 노트북 파일 내려받아 올리기 방식 안내.
-
----
-
-## (c) Claude Code 운영 설계
+## 7. Claude Code 운영 (v1 그대로 유지)
 
 ### 모델 규칙
 - PM(메인 세션) = Fable 5.2, effort medium
@@ -204,7 +174,10 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 
 ---
 
-## (d) 검수
+
+추가 규칙(v2): 서버는 127.0.0.1 바인드, 네트워크·보안 설정 변경 금지(초안만). 서버 공개 운영·유료 서버·DB 생성 금지.
+
+## 8. 검수
 | 누가 | 무엇을 | 합격 기준 |
 |---|---|---|
 | CTO B검토 | PR 전체 | 테스트 먼저 실행, 위험 점검표(외부 쓰기·비밀값·폴더 밖 쓰기·꼬리표·main 접근) 통과, 모델 검증 표 합격 |
@@ -219,77 +192,35 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 
 ---
 
-## (e) 입력 의존성
-| 시점 | 할 수 있는 일 |
-|---|---|
-| research/·pedagogy/·design/ 오기 전 | 저장소 뼈대, 콘텐츠 스키마, 채점 패키지 z2h_check, 노트북 실행 테스트 틀, 환경 점검 노트북, 모델 검증 스크립트, 1편 정답 노트북(원본 MIT 코드 기반) 실행 확인, 기본 화면(임시 스타일) |
-| research/ 도착 후 | 편별 타임스탬프, 개념 지도, 코드 단계 나누기, 자주 막히는 지점 → 힌트 |
-| pedagogy/ 도착 후 | 학습 목표, 확인 문제·채점 기준, 0편 기초 모듈, 난이도 조정 |
-| design/ 도착 후 | 디자인 토큰·화면 적용, 모바일 배치, 진도 화면 |
 
-PM은 입력을 기다리지 않고 설계 초안부터 시작하고, 입력이 오면 반영 목록을 PR에 적음.
+추가 검수(v2): 진도 서버 테스트(동기화 충돌, 오프라인 대기열, user_id 누락 0), 마이그레이션 왕복(올리기·내리기), 어댑터 공통 테스트, 글꼴 굵기별 연결(computed weight + document.fonts).
 
----
-
-## (f) 일정 (KST, 현실 기준) [가정]
-가정: 하루 PM 세션 1~2회, 사용량 한도로 끊기는 날 있음, 얼큰이 검토는 하루 이내. 아래는 "앱 제작" 일정이고 얼큰이님 학습 시간은 별도.
-
-| 마일스톤 | 내용 | 목표일 |
+## 9. 일정 (KST) [가정]
+가정: 하루 PM 세션 1~2회, 한도로 끊기는 날 있음, 교사·디자이너 랜딩·맛보기 자료가 11/18까지 도착.
+| 단계 | 내용 | 목표일 |
 |---|---|---|
-| M0 설계 확정 | 이 초안 + 입력 3종 반영, 맥 환경·모델 ID·과금 표시 확인, 저장소 생성 | 11/18(수) |
-| M1 뼈대 + 1편 수직 슬라이스 | 앱 뼈대·스키마·진도·채점 패키지 + 0편 틀 + 1편 전체(단계·풀이·노트북·채점) + 모델 검증 1회 | 11/22(일) |
-| (얼큰이 1편 체험) | 막힌 곳 기록 → 형식 조정 | 11/23~24 |
-| M2 | 2~3편 (makemore 바이그램, MLP) | 11/28(토) |
-| M3 | 4~5편 (BatchNorm, Backprop Ninja) | 12/3(목) |
-| M4 | 6~7편 (WaveNet, GPT 만들기) | 12/8(화) |
-| M5 | 8~9편 (State of GPT, 토크나이저) | 12/12(토) |
-| M6 | 10편 GPT-2 축소판 | 12/17(목) |
-| M7 | 전체 검수·다듬기·비공개 미리보기 | 12/20(일) |
+| P0 | 설계 v2 확정, PM 새 지시서로 재시작 | 11/17(화) |
+| P1 | 앱 뼈대 + 진도 서버(SQLite·어댑터·마이그레이션) + 1편 전 과정 + Colab 연결 | 11/21(금) |
+| P2 | 랜딩 + 맛보기(자료 도착 후) | 11/25(화) |
+| P3 | 배지·공유 카드 화면 + 통합 검수 + 비공개 시연 | 11/28(금) |
+| 그다음 | 얼큰이 시연 피드백 → 2~10편 일정 재수립 | 12월 |
 
-얼큰이님 학습 시간 참고 [가정]: 영상 약 19.6시간 + 실습·확인 문제로 영상의 2~4배 → 약 40~80시간.
+## 10. 예상 사용량 (재추정)
+- 실측 단서 [확인됨, 1회 관찰]: Fable 5.2 PM이 입력 읽기·설계 확정본 작성 약 6분 동안 Claude 화면의 5시간 한도 표시가 4% → 9%로 올랐음(같은 계정의 다른 세션 사용이 섞였을 수 있음). 7일 표시는 10% 그대로.
+- 해석 [가정]: Fable PM을 쉬지 않고 돌리면 5시간 창을 약 2시간 안에 다 쓸 수 있음. 그래서 PM은 오케스트레이션만 하고, 긴 구현은 서브(Opus 5.5 xhigh)에 맡기는 규칙을 유지. 한도에 닿으면 일정을 늘리고 유료 크레딧은 쓰지 않음.
+- 세션 수 [가정]: 프로토타입 P0~P3 합계 PM 대화형 세션 6~10회, 서브 작업 15~25건(서브 1건 20~60분 가정, 측정값 없음). P1 끝나고 실제 % 변화로 다시 추정.
+- 맥 연산: 1편 노트북 실행 수 분, 검수 재실행 포함 프로토타입 기간 합계 1~2시간 이하 [가정]. Colab 기본이라 사용자 쪽 비용 0.
+- 유료 비용: 0원 기본. 서버 호스팅·DB는 승인 후 견적. 10편 원본 재현은 안내 한 줄(실행 계획 없음).
 
----
-
-## (g) 예상 사용량 [가정, 숫자는 근거와 함께만]
-
-Claude Max (이 계정은 Max 5x로 기록됨, 위키 기준 [맥확인])
-- 세션 수 가정: 마일스톤마다 PM(Fable 5.2 medium) 대화형 세션 1~3회, 서브(Opus 5.5 xhigh) 작업 4~8건 (구현 1~2, 콘텐츠 2~4, 검수 1~2). M0~M7 합계 PM 약 10~20회, 서브 약 35~60건.
-- 시간: 서브 1건 20~60분 가정 → 서브 합계 약 15~60시간. 범위가 넓은 이유는 측정값이 없어서임.
-- 근거: 팀 위키 실측(2026-09, Claude-5-5-Model-Effort-Task-Fit): Fable은 같은 일에 시간·비용 3~5배, xhigh는 코딩에서 모델 시간 3~4배. 같은 실측에서 Fable max 세션이 세션 한도로 끊긴 일이 있었음. 그래서 한도에 걸릴 가능성이 높음.
-- 대응: M1 끝나고 실제 사용량(주간 한도 %)을 재서 M2~M7 예측을 다시 씀. 한도에 닿으면 일정을 늘리지, 유료 크레딧을 쓰지 않음.
-- Fable 5.2의 Max 요금제 조건(한도 내 포함 여부)은 미확인 [맥확인: /model 표시]. 2026-09 기준 Fable 5.1은 Max에서 주간 한도 50%까지 추가 비용 없음(위키 기록).
-
-맥미니 연산 시간 [가정]: 정답 노트북 전체 1회 실행 약 2~4시간(10편 축소판 포함), 마일스톤마다 재실행 → 제작 기간 합계 약 15~30시간. 전기료 외 비용 없음.
-
-유료 비용: 기본 0원.
-- 선택 1, Colab Pro: 월 $9.99 (Pro+ $49.99) [확인됨: colab.research.google.com/signup, 미국 가격 표시]. 기본 계획엔 필요 없음.
-- 선택 2, 10편 원본 124M 재현(앱에는 "원본 규모 재현은 유료 클라우드 GPU가 필요해 이 앱에서는 축소판으로 전 과정을 실습합니다" 안내 한 줄만, 결정 6): Karpathy는 "약 1시간, 약 $10"이라 적음(2024년 가격) [확인됨: github.com/karpathy/build-nanogpt README]. 현재 Lambda 8x A100 80GB 단가 $3.19/GPU/시간 → 시간당 약 $25.5, 8x H100 $4.59/GPU/시간 → 시간당 약 $36.7 [확인됨: lambda.ai/pricing, 2026-11-16 표시, 세금 별도]. 데이터 준비·설치·평가 포함 2~3시간 가정 시 약 $50~$110 [가정]. 얼큰이 승인 없이는 안 함.
-
----
-
-## (h) 위험·결정 필요 항목
-얼큰이 승인 필요
-1. main 병합 (마일스톤 PR마다)
-2. 공개 배포 (Access 없는 pages.dev 미리보기도 사실상 공개라 포함), 저장소 공개 전환(체크리스트 통과 후)
-3. 결제: 유료 GPU(124M 재현), Colab 유료, Fable 사용량 크레딧
-
-CTO가 정하되 보고할 것
-4. 스택: Astro(추천) vs Vite+Preact
-5. 폰 접속: Cloudflare Tunnel + Access로 확정(결정 3). 만드는 시점·방법은 네트워크·보안 게이트(CEO 사전 통보). Cloudflare 쓰기 권한 필요, 현재 계정 토큰은 읽기만 검증됨
-6. 10편 축소판 데이터: FineWeb-Edu 일부 vs tiny shakespeare
-
-위험
-- Fable이 사용량 크레딧으로 청구될 수 있음(위 c). 발사 전 확인 필수.
-- 사용량 한도로 일정 지연 (가장 가능성 높음).
-- 서브 모델 혼입(fork·호출 인자·EFFORT 환경변수) → FORCE + 검증 스크립트로 막음.
-- MPS 호환 문제(10편 일부 기능) → CPU 분기·개념 실습으로 대체.
-- build-nanogpt 라이선스 표기 없음 → 재작성·링크.
-- 비개발자 학습 난도: 1편 체험 후 형식 조정 구간을 일정에 넣음.
+## 11. 위험·결정 필요
+- 승인 필요(얼큰이): main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제.
+- CEO 사전 통보: 폰 접속용 Tunnel·Access 생성.
+- 조율 중: decisions.md C1~C10(특히 C5 누적 점검 잠금, C8 영상 초 필드), 랜딩·맛보기·배지·공유 카드 내용.
+- 위험: Colab 바로 열기는 공개 저장소가 필요(프로토타입은 우회), Fable 한도 소모가 빠름, 맛보기 Pyodide 로딩 크기, 공유 카드의 개인정보(이름·진도 노출 범위는 기본 비공개).
+- 라이선스: MIT 5개 출처 표기, build-nanogpt는 링크만(PUBLIC_RELEASE_CHECKLIST).
 
 ## 출처
-- https://code.claude.com/docs/en/model-config (모델 우선순위, effort 우선순위, Fable 과금)
-- https://code.claude.com/docs/en/sub-agents (서브 모델 우선순위, FORCE, effort 필드, /tasks)
-- https://code.claude.com/docs/en/cli-reference (--model, --effort, --settings, --agents)
-- https://github.com/karpathy/nn-zero-to-hero, micrograd, makemore, nanoGPT, minbpe, build-nanogpt (라이선스: 앞 5개 MIT, build-nanogpt 표기 없음)
-- https://lambda.ai/pricing , https://colab.research.google.com/signup
-- 영상 ID 10개: YouTube oEmbed로 제목 확인 (VMj-3S1tku0, PaCmpygFfXo, TCH_1BHY58I, P6sfmUTpUmc, q8SA3rM6ckI, t3YJ5hKiMQ0, kCc8FmEb1nY, bZQun8Y4L2A, zduSFxRajkE, l8pRSuU81PU)
+- Claude Code 문서: model-config, sub-agents, cli-reference, settings-reference(attribution), env-vars(CLAUDE_CODE_DISABLE_ADVISOR_TOOL)
+- YouTube 플레이어 매개변수: developers.google.com/youtube/player_parameters (cc_load_policy, cc_lang_pref, hl)
+- 원본 저장소: karpathy/micrograd, makemore, nn-zero-to-hero, nanoGPT, minbpe(MIT), build-nanogpt(라이선스 표기 없음)
+- 맥 실측: MEASURE_M0.md

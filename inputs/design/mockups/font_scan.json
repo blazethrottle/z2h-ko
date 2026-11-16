@@ -1,4 +1,37 @@
 {
+ "c1_cp_intro@390": {
+  "Pretendard": 601,
+  "Pretendard SemiBold": 73,
+  "Pretendard Medium": 92
+ },
+ "c2_cp_item@390": {
+  "Pretendard": 217,
+  "Pretendard SemiBold": 82,
+  "Pretendard Medium": 300
+ },
+ "c3_cp_hands@390": {
+  "Pretendard": 718,
+  "Pretendard SemiBold": 167,
+  "Pretendard Medium": 130,
+  "JetBrains Mono": 530
+ },
+ "c4_cp_result@390": {
+  "Pretendard": 635,
+  "Pretendard SemiBold": 84,
+  "Pretendard Medium": 96
+ },
+ "card_gpt@390": {
+  "Pretendard": 266,
+  "JetBrains Mono": 88
+ },
+ "card_grad@390": {
+  "Pretendard": 226,
+  "JetBrains Mono": 35
+ },
+ "card_names@390": {
+  "Pretendard": 262,
+  "JetBrains Mono": 65
+ },
  "s10_l08@390": {
   "Pretendard": 657,
   "Pretendard SemiBold": 122,
@@ -27,9 +60,9 @@
   "JetBrains Mono": 586
  },
  "s5_quiz@390": {
-  "Pretendard": 509,
-  "Pretendard SemiBold": 242,
-  "Pretendard Medium": 236,
+  "Pretendard": 700,
+  "Pretendard SemiBold": 345,
+  "Pretendard Medium": 428,
   "JetBrains Mono": 34
  },
  "s6_hints@390": {
@@ -39,20 +72,81 @@
   "JetBrains Mono": 58
  },
  "s7_review@390": {
-  "Pretendard": 665,
-  "Pretendard SemiBold": 90,
+  "Pretendard": 711,
+  "Pretendard SemiBold": 94,
   "Pretendard Medium": 456,
   "JetBrains Mono": 20
  },
  "s8_basics@390": {
-  "Pretendard": 822,
+  "Pretendard": 878,
   "Pretendard SemiBold": 179,
   "Pretendard Medium": 20
  },
  "s9_states@390": {
-  "Pretendard": 746,
-  "Pretendard SemiBold": 517,
-  "Pretendard Medium": 478
+  "Pretendard": 858,
+  "Pretendard SemiBold": 568,
+  "Pretendard Medium": 522
+ },
+ "v2_auth@390": {
+  "Pretendard": 699,
+  "Pretendard SemiBold": 356,
+  "Pretendard Medium": 68
+ },
+ "v2_badges@390": {
+  "Pretendard": 389,
+  "Pretendard SemiBold": 35,
+  "Pretendard Medium": 554
+ },
+ "v2_landing@390": {
+  "Pretendard": 3039,
+  "Pretendard SemiBold": 305,
+  "Pretendard Medium": 344,
+  "JetBrains Mono": 108
+ },
+ "v2_taste_done@390": {
+  "Pretendard": 623,
+  "Pretendard SemiBold": 143,
+  "JetBrains Mono": 62,
+  "Pretendard Medium": 72
+ },
+ "v2_taste_step@390": {
+  "Pretendard": 608,
+  "Pretendard SemiBold": 96,
+  "Pretendard Medium": 262,
+  "JetBrains Mono": 180
+ },
+ "c1_cp_intro@1280": {
+  "Pretendard": 604,
+  "Pretendard SemiBold": 69,
+  "Pretendard Medium": 114
+ },
+ "c2_cp_item@1280": {
+  "Pretendard": 220,
+  "Pretendard SemiBold": 78,
+  "Pretendard Medium": 326
+ },
+ "c3_cp_hands@1280": {
+  "Pretendard": 729,
+  "Pretendard SemiBold": 163,
+  "Pretendard Medium": 152,
+  "JetBrains Mono": 530
+ },
+ "c4_cp_result@1280": {
+  "Pretendard": 638,
+  "Pretendard SemiBold": 80,
+  "Pretendard Medium": 118
+ },
+ "card_gpt@1280": {
+  "Pretendard": 266,
+  "JetBrains Mono": 88
+ },
+ "card_grad@1280": {
+  "Pretendard": 226,
+  "JetBrains Mono": 35
+ },
+ "card_names@1280": {
+  "Pretendard": 262,
+  "JetBrains Mono": 65
  },
  "s10_l08@1280": {
   "Pretendard": 660,
@@ -82,9 +176,9 @@
   "JetBrains Mono": 586
  },
  "s5_quiz@1280": {
-  "Pretendard": 516,
-  "Pretendard SemiBold": 242,
-  "Pretendard Medium": 258,
+  "Pretendard": 701,
+  "Pretendard SemiBold": 341,
+  "Pretendard Medium": 450,
   "JetBrains Mono": 34
  },
  "s6_hints@1280": {
@@ -94,19 +188,47 @@
   "JetBrains Mono": 310
  },
  "s7_review@1280": {
-  "Pretendard": 669,
-  "Pretendard SemiBold": 86,
+  "Pretendard": 715,
+  "Pretendard SemiBold": 90,
   "Pretendard Medium": 480,
   "JetBrains Mono": 20
  },
  "s8_basics@1280": {
-  "Pretendard": 832,
+  "Pretendard": 890,
   "Pretendard SemiBold": 175,
   "Pretendard Medium": 42
  },
  "s9_states@1280": {
-  "Pretendard": 744,
-  "Pretendard SemiBold": 513,
-  "Pretendard Medium": 500
+  "Pretendard": 856,
+  "Pretendard SemiBold": 562,
+  "Pretendard Medium": 544
+ },
+ "v2_auth@1280": {
+  "Pretendard": 699,
+  "Pretendard SemiBold": 366,
+  "Pretendard Medium": 90
+ },
+ "v2_badges@1280": {
+  "Pretendard": 387,
+  "Pretendard SemiBold": 31,
+  "Pretendard Medium": 550
+ },
+ "v2_landing@1280": {
+  "Pretendard": 3041,
+  "Pretendard SemiBold": 315,
+  "Pretendard Medium": 370,
+  "JetBrains Mono": 108
+ },
+ "v2_taste_done@1280": {
+  "Pretendard": 637,
+  "Pretendard SemiBold": 153,
+  "Pretendard Medium": 96,
+  "JetBrains Mono": 62
+ },
+ "v2_taste_step@1280": {
+  "Pretendard": 614,
+  "Pretendard SemiBold": 106,
+  "Pretendard Medium": 288,
+  "JetBrains Mono": 180
  }
 }

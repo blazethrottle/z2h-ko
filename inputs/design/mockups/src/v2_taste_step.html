@@ -1,0 +1,23 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>30분 맛보기</title><link rel="stylesheet" href="z2h.css"><link rel="stylesheet" href="z2h_v2.css"><style>.tsteps{display:flex;gap:6px;list-style:none;padding:0;margin:0}.tsteps li{flex:1;height:6px;border-radius:3px;background:var(--paper-sunken)}.tsteps li.d{background:var(--correct)}.tsteps li.c{background:var(--accent)}
+.lay{display:grid;gap:var(--s5)}@media(min-width:1024px){.lay{grid-template-columns:1.4fr 1fr;align-items:start}}
+.ed{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line)}.ed .top{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4);background:var(--code-bg);color:var(--code-comment);font-size:13px}.ed .top .btn{background:transparent;color:var(--code-text);border-color:#4A5470}
+.ln2{display:grid;grid-template-columns:1fr}.ln2 .c{background:var(--code-bg);color:var(--code-text);font-family:var(--font-code);font-size:13.5px;padding:10px 14px;white-space:pre-wrap;font-variant-ligatures:none;border-top:1px solid #262C3E}.ln2 .e{background:var(--paper-raised);padding:10px 14px;font-size:15px;border-top:1px solid var(--line)}
+@media(min-width:1024px){.ln2{grid-template-columns:1.1fr 1fr}.ln2 .e{border-left:1px solid var(--line)}}
+.run{display:flex;gap:var(--s2);flex-wrap:wrap}.prep{font-size:14px}</style></head><body>
+<header class="topbar lbar"><span class="brand">Z2H<small>제로 투 히어로 실습</small></span><span class="sp"></span><span class="sample">예시 화면</span><a class="btn ghost sm" href="#">로그인</a></header>
+<main class="wide"><div class="stack"><div class="row"><p class="kicker">30분 맛보기 · 가입 없이</p><span class="sp"></span><span class="cap num">4 / 5 · 약 8분</span></div>
+<ol class="tsteps" aria-label="맛보기 5단계 중 4단계"><li class="d"></li><li class="d"></li><li class="d"></li><li class="c"></li><li></li></ol>
+<h1 class="t1">더하기의 기울기 구하기</h1>
+<p><b>무엇을 하는 단계인지:</b> 두 숫자를 더한 결과에서 거꾸로 가며, 각 숫자가 결과에 주는 영향(기울기)을 구합니다.</p></div>
+<div class="lay" style="margin-top:var(--s5)"><div class="stack">
+<p class="prep cap">앞 단계에서 만든 Value 상자(덧셈과 backward 포함)가 이미 준비되어 있습니다. <a href="#">준비된 코드 보기</a></p>
+<section class="ed" aria-labelledby="ed"><div class="top"><span id="ed">코드 5줄 · 브라우저에서 바로 실행</span><span class="sp"></span><button class="btn sm"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg> 복사</button></div><div class="ln2"><div class="c"><span class="ln">1</span>a = Value(<span class="n">2.0</span>)</div><div class="e">숫자 2.0을 담은 상자 a</div></div><div class="ln2"><div class="c"><span class="ln">2</span>b = Value(<span class="n">-3.0</span>)</div><div class="e">숫자 -3.0을 담은 상자 b</div></div><div class="ln2"><div class="c"><span class="ln">3</span>c = a + b</div><div class="e">더하기. c는 a와 b가 재료라는 것을 기억합니다</div></div><div class="ln2"><div class="c"><span class="ln">4</span>c.backward()</div><div class="e">c에서 거꾸로 가며 기울기를 채웁니다</div></div><div class="ln2"><div class="c"><span class="ln">5</span><span class="k">print</span>(a.grad, b.grad)</div><div class="e">a와 b의 기울기를 봅니다</div></div></section>
+<div class="run"><button class="btn primary" style="flex:1">▶ 실행</button><a class="btn" href="#">Colab에서 열기 ↗</a></div>
+<section class="card stack" aria-labelledby="o"><h2 id="o" class="t3">실행 결과</h2><pre class="out" style="margin:0">1.0 1.0</pre>
+<div class="result ok" role="status"><span class="sym" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span><div><b>맞음</b><p>보여야 하는 것과 같습니다. 더하기는 받은 기울기를 두 재료에게 그대로 나눠 줍니다.</p></div></div></section>
+</div>
+<aside class="stack"><section class="card stack" aria-labelledby="ex"><h2 id="ex" class="t3">보여야 하는 것</h2><pre class="out" style="margin:0">1.0 1.0</pre><p class="small">a를 아주 조금 올리면 c도 똑같이 그만큼 오릅니다. 그래서 기울기가 1입니다.</p></section>
+<section class="card stack"><h2 class="t3">막혔나요?</h2><button class="btn block">1단계 힌트 열기</button><p class="cap">맛보기는 점수가 없습니다.</p></section>
+<div class="next small"><b>다음:</b><span>5 / 5 · 곱하기의 기울기 (약 6분)</span></div>
+<p class="cap">실행 환경을 불러오지 못하면 "Colab에서 열기"로 같은 노트북을 열 수 있습니다.</p></aside></div></main></body></html>

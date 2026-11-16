@@ -42,7 +42,7 @@ def player(state="ready", collapsed=False, compact=False, rng="19:09–32:10", n
 LECT = [("01","micrograd","2:26"),("02","makemore","1:58"),("03","makemore MLP","1:16"),("04","Activations·BatchNorm","1:56"),("05","Backprop Ninja","1:55"),("06","WaveNet","0:56"),("07","Let's build GPT","1:56"),("08","State of GPT (강연)","0:43"),("09","GPT Tokenizer","2:14"),("10","Reproduce GPT-2 124M","4:01")]
 
 # ---------- 1 홈·진도 ----------
-STEPS={"01":16,"02":16,"03":11,"04":12,"05":11,"06":11,"07":15,"08":8,"09":13,"10":18}
+STEPS={"01":22,"02":16,"03":12,"04":18,"05":13,"06":12,"07":23,"08":8,"09":13,"10":28}
 EXTRA["s1_home"] = """
 .home{display:grid;gap:var(--s5)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
@@ -72,14 +72,14 @@ s1 = f'''<div class="home">
  <section class="card current stack" aria-labelledby="cont">
   <p class="kicker">이어서 하기</p>
   <h1 id="cont" class="t1">01 micrograd</h1>
-  <p class="num"><b>단계 4 / 16</b> · Value 클래스 뼈대 <span class="cap">L01-S04</span></p>
-  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="16" aria-valuenow="3" aria-label="01 micrograd 진도 16단계 중 3단계 완료"><i style="width:18.75%"></i></div>
+  <p class="num"><b>단계 4 / 22</b> · Value 클래스 뼈대 <span class="cap">L01-S04</span></p>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="16" aria-valuenow="3" aria-label="01 micrograd 진도 16단계 중 3단계 완료"><i style="width:18.2%"></i></div>
   <p class="small muted">이 단계: 영상 구간 보기 → 코드 8줄 입력 → 결과 비교</p>
   <a class="btn primary block" href="#">단계 4 이어서 하기</a>
   <div class="next small"><b>다음:</b><span>단계 5 · 덧셈과 곱셈 기록하기</span></div>
  </section>
  <section class="card" aria-labelledby="lecs">
-  <div class="row"><h2 id="lecs" class="t3">강의 10편 · 133단계</h2><span class="sp"></span><span class="cap num">영상 합계 약 19.6시간</span></div>
+  <div class="row"><h2 id="lecs" class="t3">강의 10편 · 165단계</h2><span class="sp"></span><span class="cap num">영상 합계 약 19.6시간</span></div>
   <div style="margin-top:var(--s2)">{lec_rows}</div>
  </section>
 </div>
@@ -107,8 +107,9 @@ s1 = f'''<div class="home">
 (OUT/"s1_home.html").write_text(page("s1_home","홈·진도",s1,"home",wide=True))
 
 # ---------- 2 강의 개요 ----------
-CH = ["함수 그래프 그리기","숫자 기울기","입력이 여러 개일 때","Value 클래스 뼈대","덧셈과 곱셈 기록하기","계산 그래프 그림","손으로 기울기 채우기","한 걸음 움직여 보기","뉴런과 tanh","_backward를 노드 안에 넣기","위상 정렬과 backward()","같은 값을 두 번 쓰는 버그","더 많은 연산과 PyTorch 비교","Neuron, Layer, MLP","학습 반복","grad 비우기를 빼먹는 버그"]
-SUM = ["신경망도 입력에서 출력으로 가는 큰 함수입니다.","x를 아주 조금 올리면 f가 몇 배로 오르는지 잽니다.","입력마다 따로 조금씩 바꿔 각각의 영향을 잽니다.","숫자에 기울기 칸과 재료 기록을 붙입니다.","계산할 때마다 누가 누구로 만들어졌는지 남깁니다.","계산 과정을 상자와 화살표 그림으로 봅니다.","끝에서부터 거꾸로 기울기를 손으로 채웁니다.","기울기 방향으로 값을 조금 움직여 결과를 바꿉니다.","뉴런 하나의 계산을 거꾸로 따라갑니다.","거꾸로 계산하는 방법을 각 노드에 넣어 둡니다.","backward() 한 줄로 기울기를 모두 채웁니다.","한 값이 두 길로 쓰이면 기울기를 더해야 합니다.","같은 계산을 PyTorch로 해서 답을 맞춰 봅니다.","조절 손잡이(파라미터) 41개짜리 신경망을 만듭니다.","신경망 학습의 전부인 4줄 반복을 돌립니다.","기울기를 매번 비우지 않으면 생기는 일을 봅니다."]
+L01=[('S01', '함수 그래프 그리기', '신경망도 결국 입력에서 출력으로 가는 큰 함수입니다.', False, False), ('S02', '숫자 기울기', 'x를 아주 조금 올리면 f는 약 14배로 오릅니다.', False, False), ('S03', '입력이 여러 개일 때', 'd를 a로 미분하면 b. 같은 방법으로 b에 대해서는 2.0, c에 대해서는 1.0이 나오는지 직접 바꿔 봅니다.', True, False), ('S04', 'Value 클래스 뼈대', '숫자에 "기울기 칸"과 "족보(재료 기록)"를 붙였습니다.', True, False), ('S05', '덧셈과 곱셈 기록하기', '계산할 때마다 "누가 누구로 만들어졌는지"가 그물(계산 그래프)로 남습니다.', True, False), ('S06', '계산 그래프 그림', '역전파는 이 그림을 오른쪽에서 왼쪽으로 거슬러 가는 일입니다.', False, True), ('S07', '손으로 기울기 채우기', '+ 노드는 기울기를 그대로 나눠 주고, * 노드는 상대 값을 곱해 줍니다(F-M2).', True, False), ('S08', '한 걸음 움직여 보기', '기울기 방향으로 가면 결과가 커집니다. 줄이려면 반대로 갑니다(F-M6).', True, False), ('S09', '뉴런 하나 계산하기', '뉴런은 "입력마다 가중치를 곱해 더하고 편향을 더한 값"입니다.', False, False), ('S09b', 'tanh 붙이기', 'tanh(활성화 함수, 값을 -1~1로 눌러 주는 함수)의 기울기는 1 - o² 입니다.', False, False), ('S10', '_backward를 + 와 * 안에 넣기', '노드마다 "내 기울기를 재료에게 나눠 주는 방법"을 스스로 압니다.', True, False), ('S10b', 'tanh의 _backward', 'S09b에서 말로 배운 tanh 기울기를 코드로 옮겼습니다.', False, False), ('S11', '위상 정렬', '거꾸로 돌면 결과부터 재료 쪽으로 차례대로 갈 수 있습니다.', True, False), ('S11b', 'backward() 메서드', '역전파 자동화 완성.', False, False), ('S12', '같은 값을 두 번 쓰는 버그', '한 값이 여러 길로 영향을 주면 기울기를 더해야 합니다.', False, False), ('S13', '더 많은 연산', '연산을 얼마나 잘게 쪼개든 역전파 결과는 같습니다.', True, False), ('S13b', 'PyTorch로 비교', '우리가 만든 것이 PyTorch가 하는 일의 핵심(스칼라 판)입니다.', True, False), ('S14', 'Neuron 클래스', 'S09의 뉴런을 재사용할 수 있는 설계도로 만들었습니다.', True, False), ('S14b', 'Layer 클래스', '층은 같은 입력을 보는 뉴런 묶음입니다.', False, False), ('S14c', 'MLP 클래스와 parameters()', '3→4 (16개), 4→4 (20개), 4→1 (5개), 합 41개의 조절 손잡이(파라미터)입니다.', True, False), ('S15', '학습 반복', '신경망 학습의 전부가 이 4줄 반복입니다.', True, False), ('S16', 'grad 비우기를 빼먹는 버그', '기울기가 반복마다 쌓여 버립니다(S12의 `+=` 때문). 매번 비워야 합니다.', False, False)]
+CH=[t for _,t,_,_,_ in L01]
+SUM=[m for _,_,m,_,_ in L01]
 EXTRA["s2_lecture"] = """
 .ch{display:flex;gap:var(--s3);padding:var(--s3) var(--s4);border-top:1px solid var(--line);min-height:64px;align-items:flex-start;text-decoration:none;color:inherit}
 .ch:first-child{border-top:0}
@@ -121,17 +122,20 @@ EXTRA["s2_lecture"] = """
 .ch.now .no,.ch.now .st{color:var(--accent)}
 .ch.todo .st{color:var(--ink-muted)}
 .list{padding:0;overflow:hidden}
+.ch .tg{display:inline-block;margin-left:6px;font-size:13px;font-weight:600;color:var(--ink-muted);border:1px solid var(--line-strong);border-radius:var(--r-pill);padding:0 8px;vertical-align:1px}
+.ch .no{width:2.4em}
 """
 rows=""
-for i,(c,s) in enumerate(zip(CH,SUM),1):
+for i,(sid,c,s,lg,prep) in enumerate(L01,1):
     cls,st = ("done","✓ 완료") if i<4 else (("now","● 지금") if i==4 else ("todo","○ 아직"))
-    rows+=f'<a href="#" class="ch {cls}"><span class="no">{i:02d}</span><span class="bd"><span class="nm">{c}</span><br><span class="small muted">{s}</span></span><span class="st">{st}</span></a>'
+    tags=('<span class="tg">긴 단계</span>' if lg else '')+('<span class="tg">준비 코드</span>' if prep else '')
+    rows+=f'<a href="#" class="ch {cls}"><span class="no">{sid[1:]}</span><span class="bd"><span class="nm">{c}</span>{tags}<br><span class="small muted">{s}</span></span><span class="st">{st}</span></a>'
 s2=f'''<div class="stack">
 <p class="cap">강의 01 · 영상 <span class="num">2:26</span> · 학습 예상 8~12시간</p>
 <h1 class="t1">micrograd: 신경망과 역전파를 손으로 만들기</h1>
 <p class="muted">숫자 하나를 담는 상자부터 시작해, 작은 신경망이 스스로 맞혀 가게 만드는 데까지 갑니다.</p>
-<div class="row" style="flex-wrap:wrap"><span class="badge num">16단계</span><span class="badge num">확인 문제 11개</span><span class="badge num">재구성 과제 3조각</span><span class="badge ok num">✓ 3 완료</span></div>
-<div class="bar" aria-hidden="true"><i style="width:18.75%"></i></div>
+<div class="row" style="flex-wrap:wrap"><span class="badge num">22단계</span><span class="badge num">긴 단계 12</span><span class="badge num">확인 문제 11개</span><span class="badge num">재구성 과제 3조각</span><span class="badge ok num">✓ 3 완료</span></div>
+<div class="bar" aria-hidden="true"><i style="width:13.6%"></i></div>
 <p class="small muted">먼저 보면 좋은 기초: F-P6 클래스와 객체, F-M2 연쇄 법칙 감각 (추천)</p>
 <div class="next small"><b>다음:</b><span>단계 4 · Value 클래스 뼈대</span></div>
 <section class="card list" aria-label="단계 목록">{rows}</section>
@@ -158,9 +162,9 @@ EXTRA["s3_segment"] = """
 .mini a .no{font-variant-numeric:tabular-nums;color:var(--ink-muted);width:1.6em}
 .mini a.done .no{color:var(--correct)}
 """
-mini="".join(f'<a href="#" class="{"done" if i<4 else ("now" if i==4 else "")}"><span class="no">{"✓" if i<4 else f"{i:02d}"}</span>{c}</a>' for i,c in enumerate(CH,1))
+mini="".join(f'<a href="#" class="{"done" if i<4 else ("now" if i==4 else "")}"><span class="no">{"✓" if i<4 else L01[i-1][0][1:]}</span>{c}</a>' for i,c in enumerate(CH,1))
 s3=f'''<div class="lay"><div class="stack">
-<p class="cap">01 micrograd · <span class="num">단계 4 / 16</span> · L01-S04</p>
+<p class="cap">01 micrograd · <span class="num">단계 4 / 22</span> · L01-S04</p>
 <h1 class="t1">Value 클래스 뼈대</h1>
 {player(note=True)}
 <p class="cap">이 영상 구간(유튜브 공식 챕터 19:09–32:10)은 단계 4~6이 함께 씁니다.</p>
@@ -219,7 +223,7 @@ EXTRA["s4_practice"] = """
  .lay{grid-template-columns:1fr 340px;align-items:start}
  .cells{grid-template-columns:repeat(3,1fr)}
  .line{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);border-top:0}
- .line .cd{border-top:1px solid #262C3E;cursor:default;min-height:48px;align-items:flex-start;padding-top:12px}
+ .line .cd{border-top:1px solid #262C3E;cursor:default;min-height:48px;align-items:flex-start;padding-top:12px;white-space:pre-wrap;overflow-wrap:anywhere}
  .line .ex{display:block;background:var(--paper-raised);border-left:0;border-top:1px solid var(--line);padding:12px var(--s5);font-size:15px}
  .line.open .ex{background:var(--accent-tint);box-shadow:inset 3px 0 0 var(--accent)}
  .line .tog{display:none}
@@ -239,8 +243,8 @@ for i,(c,e) in enumerate(CODE,1):
     aria = f' role="button" aria-expanded="{"true" if i==4 else "false"}" aria-controls="ex{i}" tabindex="0"'
     lines += f'<div class="{cls}"><div class="cd"{aria}><span class="ln">{i}</span><span>{c}</span><span class="tog">{tog}</span></div><div class="ex" id="ex{i}">{e}</div></div>'
 s4=f'''<div class="stack">
-<p class="cap">01 micrograd · <span class="num">단계 4 / 16</span> · L01-S04 · 따라 하기</p>
-<h1 class="t1">Value 클래스 뼈대</h1>
+<p class="cap">01 micrograd · <span class="num">단계 4 / 22</span> · L01-S04 · 따라 하기</p>
+<h1 class="t1">Value 클래스 뼈대 <span class="badge">긴 단계</span></h1>
 <ol class="cells" aria-label="이 단계의 세 칸">
  <li aria-current="step"><span class="n">1</span><div><b>입력할 것</b><span class="small">아래 코드 8줄을 노트북 단계 4 칸에 붙여 넣고 실행합니다. 이어서 <code>Value(2.0)</code>을 실행합니다.</span></div></li>
  <li><span class="n">2</span><div><b>보여야 하는 것</b><span class="small"><code>Value(data=2.0)</code></span></div></li>
@@ -280,8 +284,8 @@ s4=f'''<div class="stack">
   <p class="cap num">이 단계 힌트 사용: 0 / 4</p>
  </section>
  <section class="card stack">
-  <p class="cap num">단계 4 / 16 · 01 micrograd</p>
-  <div class="bar" aria-hidden="true"><i style="width:18.75%"></i></div>
+  <p class="cap num">단계 4 / 22 · 01 micrograd</p>
+  <div class="bar" aria-hidden="true"><i style="width:18.2%"></i></div>
   <div class="next small"><b>다음:</b><span>단계 5 · 덧셈과 곱셈 기록하기</span></div>
   <div class="row"><a class="btn" href="#">이전</a><a class="btn primary" style="flex:1" href="#">단계 4 마치기</a></div>
  </section>
@@ -299,13 +303,34 @@ EXTRA["s5_quiz"] = """
 .score{display:flex;gap:var(--s2);align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
 .typ{display:flex;gap:var(--s2);flex-wrap:wrap}
 textarea.long{font-family:var(--font-ui);font-size:16px;min-height:120px}
+.opts{display:grid;gap:var(--s2);list-style:none;padding:0;margin:0}
+.opt{display:flex;gap:var(--s3);align-items:center;min-height:52px;padding:var(--s2) var(--s4);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--paper-raised);width:100%;text-align:left;font:inherit;color:inherit}
+.opt .mk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.opt.sel{border:2px solid var(--accent);background:var(--accent-tint)}
+.opt.sel .mk{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.opt .tag{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent)}
+@media(min-width:1024px){.qs{grid-template-columns:repeat(3,1fr)}}
 """
 s5='''<div class="stack">
-<p class="cap">01 micrograd · 확인 문제 · 단계 3~7 범위</p>
+<p class="cap">01 micrograd · 확인 문제 · 단계 1~7 범위 · 5유형 중 3개 예시</p>
 <h1 class="t1">확인 문제</h1>
 <p class="muted small">답을 내면 풀이가 열립니다. 틀린 문제는 복습 카드로 다시 나옵니다.</p>
 </div>
 <div class="qs" style="margin-top:var(--s5)">
+<section class="card stack" aria-labelledby="q0">
+ <div class="typ"><span class="badge cur">고르기</span><span class="cap">확인 문제 · type: choice · 예시 문항</span></div>
+ <h2 id="q0" class="t3">f(x) = 3x² - 4x + 5 에서 x = 2/3 의 숫자 기울기는 대략 얼마일까요?</h2>
+ <ul class="opts" role="radiogroup" aria-labelledby="q0">
+  <li><button class="opt sel" role="radio" aria-checked="true"><span class="mk">1</span><span>약 0</span><span class="tag">고름</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">2</span><span>약 14</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">3</span><span>약 -4</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">4</span><span>약 5</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">5</span><span>모르겠어요</span></button></li>
+ </ul>
+ <button class="btn block">제출</button>
+ <div class="result ok" role="status"><span class="sym" aria-hidden="true">✓</span><div><b>맞음</b><p>x = 2/3은 포물선의 가장 낮은 점이라 조금 움직여도 f가 거의 변하지 않습니다. 그래서 기울기가 0에 가깝습니다.</p></div></div>
+ <p class="cap">고른 뒤 "제출"을 눌러야 채점됩니다. "모르겠어요"는 감점 없이 기록만 하고 복습 추천에 씁니다.</p>
+</section>
 <section class="card stack" aria-labelledby="q1">
  <div class="typ"><span class="badge cur">결과 예측</span><span class="cap">L01-Q03 · 정확히 맞추기</span></div>
  <h2 id="q1" class="t3"><code>d = a*b + c</code>, a=2, b=-3, c=10일 때 d에 대한 <code>b.grad</code>는?</h2>
@@ -328,7 +353,7 @@ s5='''<div class="stack">
   <li><label><input type="checkbox" checked><span>+는 기울기를 그대로 전한다</span><span class="pt">0.5점</span></label></li>
   <li><label><input type="checkbox"><span>*는 상대 값을 곱해서 전한다</span><span class="pt">0.5점</span></label></li>
  </ul></div>
- <div class="result ng" role="status"><span class="sym" aria-hidden="true">✕</span><div><b>절반</b><p>모범 설명: +는 그대로 전하고, *는 상대 값을 곱해 전합니다. 곱하기 쪽은 단계 7에서 손으로 채운 값을 다시 보면 확인할 수 있습니다.</p></div></div>
+ <div class="result part" role="status"><span class="sym" aria-hidden="true">△</span><div><b>절반 (흔들림)</b><p>모범 설명: +는 그대로 전하고, *는 상대 값을 곱해 전합니다. 곱하기 쪽은 단계 7에서 손으로 채운 값을 다시 보면 확인할 수 있습니다.</p></div></div>
  <p class="score"><span class="badge">점수</span>0.5 / 1 · 복습 카드로 다시 나옵니다</p>
 </section>
 </div>
@@ -416,6 +441,7 @@ s7='''<div class="stack">
 <section class="card flash stack" aria-labelledby="fc">
  <div class="row"><span class="badge">개념 카드</span><span class="cap">RC-L01-Q07-1 · 지금 간격 3일</span></div>
  <h2 id="fc" class="t2"><code>backward()</code>가 노드를 거꾸로 도는 이유를 내 말로 설명해 보세요.</h2>
+ <p class="small"><span class="badge">내 설명</span> 결과부터 거꾸로 가야 기울기가 다 모여서</p>
  <div class="ans" role="region" aria-label="모범 설명"><p><b>모범 설명:</b> 결과 쪽 기울기가 다 모인 뒤에야 재료에게 나눠 줄 수 있기 때문입니다.</p></div>
  <p class="small muted">스스로 떠올린 것과 비교해 하나를 고르세요. 다음 복습 날짜만 바뀝니다.</p>
  <div class="three">
@@ -473,7 +499,7 @@ s8=f'''<div class="stack">
 <p class="kicker">강의 전에 권장</p>
 <h1 class="t1">사전 기초: 파이썬 9단위 · 수학 6단위</h1>
 <p class="muted">코드를 쓰는 법이 아니라 읽는 법부터 익힙니다. 예상 8~12시간.</p>
-<div class="card stack"><p class="small"><b>시작 전 진단 5문제</b> · 맞힌 결과로 어디서 시작하면 좋을지 추천합니다. 단위를 건너뛰게 하지는 않습니다.</p><a class="btn primary" href="#">진단 5문제 풀기</a>
+<div class="card stack"><p class="small"><b>시작 전 진단 5문제</b> · 맞힌 결과로 어디서 시작하면 좋을지 추천합니다. 자동으로 건너뛰지 않음: 결과는 추천일 뿐이고, 강의 01은 언제든 열 수 있습니다.</p><a class="btn primary" href="#">진단 5문제 풀기</a>
 <div class="result ok" role="status"><span class="sym" aria-hidden="true">✓</span><div><b>예시 결과: 3 / 5 맞음</b><p>추천 시작 단위: F-P3. F-P7 에러 메시지 읽기와 F-P9 torch 텐서 기초는 꼭 보시길 권합니다.</p></div></div></div>
 </div>
 <div class="lay" style="margin-top:var(--s5)">
@@ -513,6 +539,7 @@ s9=f'''<h1 class="t1" style="margin-bottom:var(--s5)">빈 화면·불러오는 �
 <div class="stack"><p class="kicker">저장됨</p><div class="card row"><span class="sync">✓ 저장됨</span><span class="cap">휴대폰과 맥에서 이어집니다</span></div></div>
 <div class="stack"><p class="kicker">동기화 중</p><div class="card row"><span class="sync busy">↻ 동기화 중</span><span class="cap">잠시만요</span></div></div>
 <div class="stack"><p class="kicker">오프라인</p><div class="card stack err" role="alert"><span class="sync off">✕ 오프라인</span><p class="small">맥미니 서버에 연결하지 못했습니다. 이 기기에 먼저 저장해 두었고, 연결되면 자동으로 다시 보냅니다.</p><button class="btn primary block">지금 다시 시도</button></div></div>
+<div class="stack"><p class="kicker">예측 칸 (보여야 하는 것 가림)</p><div class="card stack"><p class="small"><b>2 · 보여야 하는 것</b></p><p class="small">실행 전에 무엇이 나올지 적어 보세요. 점수에 들어가지 않습니다.</p><input type="text" aria-label="내 예측" placeholder="예: Value(data=2.0)"><div class="row"><button class="btn">모르겠어요</button><button class="btn primary" style="flex:1">예측 저장하고 보기</button></div><p class="cap">모르겠어요를 누르면 바로 보여 드립니다.</p></div></div>
 <div class="stack"><p class="kicker">실습 시간 수정</p><div class="card stack"><p class="cap">이번 주 실습 시간 · 자동 기록 2:25</p><div class="row"><label class="tf"><input type="text" value="2" aria-label="시간" inputmode="numeric"><span>시간</span></label><label class="tf"><input type="text" value="40" aria-label="분" inputmode="numeric"><span>분</span></label></div><div class="row"><button class="btn">취소</button><button class="btn primary" style="flex:1">저장</button></div><button class="btn ghost sm">자동 기록으로 되돌리기</button></div></div>
 </div>
 <h2 class="t2" style="margin:var(--s8) 0 var(--s4)">영상 플레이어 상태</h2>

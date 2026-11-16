@@ -88,7 +88,7 @@ ink 계열 남색 바탕이라 종이 배경과 따로 놀지 않는다. 색은 
 4. D2Coding은 한글이 들어 있는 장점이 있지만, 이 앱은 한글 풀이를 코드 옆 칸에 Pretendard로 따로 쓰므로 코드 안 한글이 거의 없다. 코드 안 한글 주석이 생기면 `font-code` 대체 순서에서 D2Coding → Pretendard가 받는다.
 5. 합자(ligature)는 끈다 (`font-variant-ligatures: none`). `!=`가 `≠`처럼 보이면 비개발자가 그대로 칠 수 없다.
 
-**숫자**: 진도·시간·타임스탬프·"단계 4 / 12"에는 `font-variant-numeric: tabular-nums`.
+**숫자**: 진도·시간·타임스탬프·"단계 4 / 16"에는 `font-variant-numeric: tabular-nums`.
 
 ## 5. 글자 크기
 
@@ -113,6 +113,15 @@ ink 계열 남색 바탕이라 종이 배경과 따로 놀지 않는다. 색은 
 - 크기 `size`: touch-min 44, button-h 48, tabbar-h 64, content-max 720, practice-max 1200
 - 분기점 `breakpoint`: mobile 0~767, tablet 768~1023, desktop 1024+, wide 1280+. 실습 2단은 1024 이상에서만.
 - 움직임 `motion`: 150ms ease-out. `prefers-reduced-motion`이면 0ms. 축하 효과 없음.
+
+## 6-1. v2 추가 (2026-11-16 20:06 지시 반영)
+
+- **새 색 없음.** 배지·공유 카드·랜딩은 기존 `paper`, `paper-raised`, `paper-sunken`, `ink`, `ink-muted`, `accent`, `accent-tint`, `line-strong`, `code-*`, `correct`만 쓴다. 허용된 "강조 1개 추가"는 쓰지 않았다 (배지가 색으로 경쟁하면 차분함이 깨짐).
+- 받은 배지 = 2px `accent` 테두리 + `accent-tint` 바탕. 아직 = 2px 점선 `line-strong`, 글자 `ink-muted` (대비 3절 표의 기존 쌍 그대로).
+- 글자 `promise`: 랜딩 약속 한 줄 30 / 1024 이상 40, 700, 줄높이 1.35.
+- 크기 `size.option-h` 52 (고르기 보기 행), `size.badge` 52 (배지 원).
+- `share-card` 묶음: 1200x675, 여백 64/56, 배지 원 56, 제목 30, 설명 20, 출력 40 (JetBrains Mono, 줄높이 1.55, 모서리 18), 바닥 20. 카드 위 글자 대비: `ink`/`paper` 13.82:1, `ink-muted`/`paper` 5.97:1, `code-text`/`code-bg` 12.85:1 (3절 표와 같은 쌍).
+- 맛보기 진행 막대: 끝난 칸 `correct`, 지금 `accent`, 남은 칸 `paper-sunken`.
 
 ## 7. 토큰 파일 쓰는 법
 

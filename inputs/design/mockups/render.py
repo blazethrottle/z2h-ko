@@ -1,11 +1,13 @@
 import asyncio, json, pathlib
 from playwright.async_api import async_playwright
 SRC=pathlib.Path(__file__).parent/'src'; PNG=pathlib.Path(__file__).parent/'png'
-SCREENS=['s1_home','s2_lecture','s3_segment','s4_practice','s5_quiz','s6_hints','s7_review','s8_basics','s9_states','s10_l08']
+import sys
+ALL=['s1_home','s2_lecture','s3_segment','s4_practice','s5_quiz','s6_hints','s7_review','s8_basics','s9_states','s10_l08','c1_cp_intro','c2_cp_item','c3_cp_hands','c4_cp_result','v2_landing','v2_taste_step','v2_taste_done','v2_auth','v2_badges']
+SCREENS=sys.argv[1:] or ALL
 CHECK_JS="""async()=>{await document.fonts.ready;
 const faces=[...document.fonts].map(f=>({family:f.family,weight:f.weight,status:f.status}));
 const vw=document.documentElement.clientWidth, sw=document.documentElement.scrollWidth;
-const small=[...document.querySelectorAll('a.btn,button,.chip,[role=button],.tabbar a,.ch,.mod,.lec,.mini a,.opt')].filter(e=>{const r=e.getBoundingClientRect();const cs=getComputedStyle(e);return r.width>0&&cs.display!=='none'&&cs.visibility!=='hidden'&&(r.height<44||r.width<44)&&!e.closest('.line.blank')}).map(e=>e.className+':'+e.textContent.trim().slice(0,20)+':'+Math.round(e.getBoundingClientRect().height));
+const small=[...document.querySelectorAll('a.btn,button,.chip,[role=button],.tabbar a,.ch,.mod,.lec,.mini a,.opt,.chk,.rub label,input,textarea')].filter(e=>{const r=e.getBoundingClientRect();const cs=getComputedStyle(e);return r.width>0&&cs.display!=='none'&&cs.visibility!=='hidden'&&(r.height<44||r.width<44)&&!e.closest('.line.blank')&&!(e.type==='checkbox'&&e.closest('label'))}).map(e=>e.className+':'+e.textContent.trim().slice(0,20)+':'+Math.round(e.getBoundingClientRect().height));
 const em=document.body.innerText.includes('\\u2014');
 return {faces,overflow:sw>vw,vw,sw,small,em,checkUI:document.fonts.check('600 16px "Z2H Pretendard"'),checkCode:document.fonts.check('400 14px "Z2H JetBrains Mono"')}}"""
 async def platform_fonts(page, cdp, selector):
@@ -32,6 +34,10 @@ async def main():
                 hh=await pg.evaluate('document.documentElement.scrollHeight'); await pg.set_viewport_size({'width':w,'height':max(h,hh)}); await pg.screenshot(path=str(PNG/f'{s}_{tag}.png'),full_page=True)
                 report[f'{s}_{tag}']=res; await pg.close()
             await ctx.close()
+        ctx=await b.new_context(viewport={'width':1200,'height':675},device_scale_factor=1)
+        for c in ['card_names','card_gpt','card_grad']:
+            pg=await ctx.new_page(); await pg.goto((SRC/f'{c}.html').as_uri()); res=await pg.evaluate(CHECK_JS); res['platformFonts']={}
+            await pg.screenshot(path=str(PNG/f'{c}.png')); report[c]=res; await pg.close()
         await b.close()
     (pathlib.Path(__file__).parent/'font_check.json').write_text(json.dumps(report,ensure_ascii=False,indent=1))
     for k,v in report.items():
