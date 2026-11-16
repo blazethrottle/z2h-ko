@@ -1,6 +1,6 @@
 # 초안(정본 아님). 교사 정본 inputs/pedagogy/content/L01.json(26단계)에 없는 앱 전용 칸 가운데
 # research 근거가 있는 것만 단계 id별로 모았습니다. 정본 JSON은 고치지 않고, 앱이 덧붙일지 PM·교사가 정합니다.
-# 대조한 정본: ~/MonkeyHub/scratch/z2h-m0 사본(단계 26, 문제 11, 힌트 144, 재구성 3이 c6d3e72 설명과 같음).
+# 대조한 정본: 저장소 밖 작업 사본(단계 26, 문제 11, 힌트 144, 재구성 3이 c6d3e72 설명과 같음).
 #   git show origin/m0-setup:... 는 이 작업에 셸 도구가 없어 실행하지 못했습니다. 커밋 일치는 미확인.
 # 근거: R1 = research/01_micrograd.md 1절(개념 순서), R2 = 2절(챕터), R5 = 5절(이슈·댓글), RH = 머리말(저장소 위치)
 # 넣지 않은 칸: expected_output(정본 expected_check.value와 겹침), notebook_cell·check_id(step_id로 만들 수 있음),

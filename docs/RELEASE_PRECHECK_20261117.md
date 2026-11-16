@@ -6,11 +6,11 @@
 |---|---|---|
 | 1. gitleaks 전체 이력 | 유출 0건 | `gitleaks git --log-opts="--all" .` → no leaks found |
 | 1. gitleaks 작업 폴더 | 저장소 파일 0건 | `gitleaks dir .`가 3건을 냈으나 모두 git에 올라가지 않는 `.venv` 안 Jupyter 묶음 파일(외부 패키지). 저장소에 올라간 파일에서는 0건 |
-| 1. .env·토큰·개인 경로·이메일 | 이메일·실명 0건 | `git grep`으로 이메일·계정 이름 검색 0건. `docs/MEASURE_M0.md`에 맥의 작업 폴더 경로(`~/MonkeyHub/scratch/...`)가 있음: 공개본에 남길지 결정 필요 |
+| 1. .env·토큰·개인 경로·이메일 | **결정 필요** | (1) 모든 커밋의 작성자 칸에 개인 이메일 주소가 들어 있다(`git log --format=%ae`). 공개 전환하면 그대로 보인다. 그대로 둘지, 이력을 정리할지(이력 재작성은 강제 푸시라 얼큰이 승인 항목) 결정 필요. (2) GitHub 계정 이름이 `docs/DESIGN.md`, `docs/PUBLIC_RELEASE_CHECKLIST.md`에 있다(저장소 주소라 공개되면 어차피 보임). (3) 맥의 작업 폴더 경로가 `docs/MEASURE_M0.md`에 있다: 공개본에 남길지 결정 필요. (4) 테스트 파일의 이메일은 예시 주소(`example.com` 등)뿐. `.env`·토큰 파일 0건 |
 | 2. MIT 5개 LICENSE 전문 | 있음 | `third_party/licenses/` 5개, GitHub 원문과 같은지 `tests/test_notice_licenses.py`가 검사 |
 | 2. NOTICE.md | 있음 | 원본·저작권자·쓴 위치 표, 글꼴 받은 곳 |
 | 2. 원본 코드 파일 머리 출처 | 있음 | `tests/reference_impl/micrograd_ref.py`, `z2h_check/graders/l01.py`, `z2h_check/_bundle.py`, 노트북 첫 셀 |
-| 2. build-nanogpt 코드 복사 0건 | 0건 | 이름이 나오는 곳은 규칙 문서와 금지 검사 코드, 그 테스트뿐. 10편 콘텐츠는 아직 없음 |
+| 2. build-nanogpt 코드 복사 0건 | 코드 복사 0건 | 이름이 나오는 곳은 규칙 문서, 금지 검사 코드와 그 테스트, `NOTICE.md`(링크만 한다는 안내), `docs/MEASURE_M0.md`와 `inputs/`의 10편 자료(링크·이슈 언급)다. 코드 구간은 없음. 10편 콘텐츠는 아직 없음 |
 | 3. 영상 파일·자막 전문 | 0건 | 영상·자막 확장자 파일 0건. 앱은 youtube-nocookie embed와 링크만 |
 | 3. 데이터 출처·라이선스 | names.txt는 저장소에 없음 | 맛보기 실행 때 내려받음. 출처는 NOTICE.md와 노트북 첫 셀 |
 | 3-1. 글꼴 OFL 사본 | 있음 | `third_party/licenses/Pretendard-OFL.txt`, `JetBrainsMono-OFL.txt` |

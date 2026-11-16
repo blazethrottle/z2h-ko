@@ -57,6 +57,8 @@ describe('카드 입력 열쇠 화이트리스트 (계정 이름·이메일이 �
   it('개인 정보 열쇠를 섞어 넣어도 화이트리스트 열쇠만 남는다', () => {
     const t = sanitizeCardInput({ kind: 'ART-TASTER', names: NAMES, loss_start: 3.839, loss_end: 2.472, taste_complete: true, ...PERSONAL })!;
     expect(Object.keys(t)).toEqual([...CARD_INPUT_KEYS['ART-TASTER']]);
+    const long = sanitizeCardInput({ kind: 'ART-TASTER', names: ['abc', 'a'.repeat(21), 'a'.repeat(20)] })!;
+    expect((long as any).names).toEqual(['abc', 'a'.repeat(20)]);
     const l = sanitizeCardInput({ kind: 'ART-L01', losses: [4.8, 0.05], ...PERSONAL })!;
     expect(Object.keys(l)).toEqual([...CARD_INPUT_KEYS['ART-L01']]);
     const all = JSON.stringify([t, l, cardSpec(t, TT), cardSpec(l, LT)]);

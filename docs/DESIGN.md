@@ -311,7 +311,7 @@ inputs/               팀 입력 자료(읽기 전용)
 - 동기화: 모든 기록 표에 `updated_at`(기기 시각), `content_version`, `server_seq`(서버가 반영할 때마다 1씩 올리는 번호). 이어 받기는 기기 시각이 아니라 `server_seq`로 비교한다. 같은 행은 `updated_at`이 늦은 쪽이 이기고 진 값은 `sync_conflicts`에 남긴다(같은 기기의 연속 수정과 `base_updated_at`이 서버 값과 같은 수정은 충돌로 남기지 않음). `step_progress`는 진도가 뒤로 가지 않게 status는 done 우선, `max_hint_level`·`active_seconds_auto`·`attempts`는 큰 값.
 - 쌓이는 기록(`question_attempt`, `rebuild_attempt`, `checkpoint_attempt`, `diagnostic_result`)의 열쇠는 기기가 만든 `attempt_id`, 번호(`attempt_no`)는 서버가 도착 순서로 매긴다. 기기가 번호를 매기면 두 기기가 오프라인에서 같은 문제를 풀 때 하나가 사라지기 때문이다.
 - `user_pref` 키: `run_place`(실행 장소), `resume`(이어서 하기 위치), `practice_week:{주 시작일}`(홈에서 고친 실습 시간 `{edited_seconds, edited_at}`, 비우면 자동 기록으로 되돌아감). 말하기 질문 자가 표시는 `mastery_state.extra_checks_ok`.
-- 요약 경로(CP 점수 기준, gate)와 배지 계산은 스키마·자리만 있고 계산 코드는 없다.
+- 요약 경로(CP 점수 기준, gate)와 단계 배지 계산은 스키마·자리만 있고 계산 코드는 없다. 서버는 동기화로 온 `user_badge` 행을 그대로 받는다(badge_id를 검증하지 않음). 단계 배지를 누가 계산하고 검증할지는 누적 점검을 만들 때 정한다.
 
 5절과 다르게 둔 곳(확인 대기)
 | 5절 | 구현 | 이유 |
@@ -319,7 +319,10 @@ inputs/               팀 입력 자료(읽기 전용)
 | `question_attempt` PK(user_id, question_id, attempt_no) | PK(user_id, question_id, attempt_id), attempt_no는 서버가 매김. `rebuild_attempt`·`checkpoint_attempt`·`diagnostic_result`도 같은 방식, `help_note`는 note_id | 두 기기 오프라인 충돌 방지 |
 | `schema_migrations` | Alembic 기본 표 `alembic_version` | Alembic이 스스로 관리하는 표를 따로 만들지 않음 |
 | 표에 없음 | `grade_result`(노트북 채점 결과), `user_pref`, `step_progress.prediction`, `question_attempt.checkpoint_attempt_id`, 공통 칼럼 `server_seq`·`content_version`·`last_client_id`, `applied_ops`, `sync_counter` | 채점 결과 저장, 설정 동기화, 예측 칸, 동기화 판정 |
-| `taste_result`와 `taster_result` 둘 다 있음 | 둘 다 만듦 | 5절에 둘 다 적혀 있음. 하나로 합칠지 확인 필요 |
+| `taste_result`와 `taster_result` 둘 다 있음 | 둘 다 만듦. 앱은 `taster_result`만 씀 | 5절에 둘 다 적혀 있음. 하나로 합칠지 확인 필요 |
+| 이름 카드: 20글자 넘는 이름은 앞 20글자 + … (taster.md 4절, spec 13.5) | 20글자 넘는 줄과 a~z 밖 글자가 있는 줄은 저장·카드에서 뺌 | 개인 정보를 붙여 넣는 경우 대비(P2 검수). 교사·디자이너 확인 대기 |
+| 맛보기 완료는 배지가 아닌 표시(VALUE 2절) | 화면은 표시로만 보이고, 저장은 `user_badge`에 `TASTER-DONE` 행 | 완료 기록을 둘 표가 따로 없어서. 교사 확인 대기 |
+| 단계 배지 3개(1절·5절) / 화면은 4장(spec 13.4: 0 첫 셀 완주 포함) | 화면 4장. 0번 id `BADGE-S0`은 앱이 임시로 붙임 | spec 13.4. id는 교사 확인 대기 |
 
 ### 12.6 바꾸기 쉽게 둔 설정값
 | 항목 | 지금 값 | 두는 곳 |
@@ -329,7 +332,7 @@ inputs/               팀 입력 자료(읽기 전용)
 | 숫자 비교 허용 오차 | 상대 1e-4 | `app/src/config.ts` |
 | 영상 없는 단계 목록 | L08-S01·S04·S08, 맛보기 | `app/src/content-config.mjs` |
 | 공유 카드 크기 | 1200x675 | `app/src/config.ts` |
-| 배지 규칙 | 자리만 | `badge_rules` 설정 |
+| 배지 규칙 | 편 도장(그 편 익힘)과 맛보기 완료 표시는 앱이 계산해 `user_badge`에 저장. 단계 배지(CP 통과)와 요약 경로 변형은 자리만 | `app/src/badge-rules.ts` |
 | 익힘 문턱 | 교사 정본 `mastery_rule` 값을 읽음 | 콘텐츠 |
 
 ### 12.7 채점

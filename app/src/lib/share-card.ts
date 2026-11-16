@@ -42,7 +42,7 @@ export function sanitizeCardInput(raw: unknown): CardInput | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
   if (r.kind === 'ART-TASTER') {
-    const names = Array.isArray(r.names) ? r.names.filter((n): n is string => typeof n === 'string' && ONLY_AZ.test(n)).slice(0, config.taste.maxNames) : [];
+    const names = Array.isArray(r.names) ? r.names.filter((n): n is string => typeof n === 'string' && ONLY_AZ.test(n) && n.length <= config.taste.maxNameChars).slice(0, config.taste.maxNames) : [];
     return { kind: 'ART-TASTER', names, loss_start: lossNum(r.loss_start), loss_end: lossNum(r.loss_end), taste_complete: r.taste_complete === true };
   }
   if (r.kind === 'ART-L01') {
