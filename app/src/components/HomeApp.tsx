@@ -4,6 +4,7 @@ import { config } from '../config';
 import { parsePref, practicePrefKey, PREF_RESUME, setPref, STEP_DONE, weeklySeconds } from '../lib/progress';
 import { formatDateKo, formatHM, nowKst, weekStartMs } from '../lib/time';
 import { useNow, useRuntime, useTables } from './hooks';
+import { gated } from './Gate';
 
 interface LectureRow {
   lecture_id: string;
@@ -18,7 +19,7 @@ interface Props {
   prereq: { unit_id: string; title_ko: string | null }[];
 }
 
-export default function HomeApp(p: Props) {
+function HomeAppView(p: Props) {
   const rt = useRuntime();
   const now = useNow(60_000);
   const t = useTables(rt, ['step_progress', 'study_session', 'user_pref']);
@@ -255,3 +256,6 @@ export default function HomeApp(p: Props) {
     </div>
   );
 }
+
+/** 마운트 전에는 안의 버튼·입력칸이 눌리지 않게 감싼다(Gate.tsx) */
+export default gated(HomeAppView, 'HomeApp');

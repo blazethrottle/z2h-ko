@@ -7,8 +7,9 @@ import { config } from '../config';
 import { parsePref, PREF_RUN_PLACE, setPref } from '../lib/progress';
 import { useRuntime, useSyncState, useTables } from './hooks';
 import { IconCheck, IconCross, IconSync } from './Icons';
+import { gated } from './Gate';
 
-export default function SettingsApp({ contentVersion }: { contentVersion: string | null }) {
+function SettingsAppView({ contentVersion }: { contentVersion: string | null }) {
   const rt = useRuntime();
   const s = useSyncState(rt);
   const t = useTables(rt, ['user_pref']);
@@ -32,7 +33,7 @@ export default function SettingsApp({ contentVersion }: { contentVersion: string
     setExported(`기록 ${n}건, 보낼 변경 ${data.pending_ops.length}건을 내려받았습니다.`);
   };
 
-  const display = s?.display ?? 'saved';
+  const display = s?.display ?? 'checking';
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [serverCurrent, setServerCurrent] = useState<string | null>(null);
   const [acctErr, setAcctErr] = useState<string | null>(null);
@@ -124,8 +125,8 @@ export default function SettingsApp({ contentVersion }: { contentVersion: string
       <section class="card stack-sm" aria-label="동기화 상태" data-testid="settings-sync">
         <h2 class="t3">동기화 상태</h2>
         <p class="label" style={display === 'offline' ? 'color:var(--retry)' : display === 'saved' ? 'color:var(--correct)' : 'color:var(--ink-muted)'}>
-          {display === 'offline' ? <IconCross /> : display === 'syncing' ? <IconSync /> : display === 'account' ? null : <IconCheck />}{' '}
-          {display === 'offline' ? '오프라인' : display === 'syncing' ? '동기화 중' : display === 'account' ? '계정을 골라 주세요' : '저장됨'}
+          {display === 'offline' ? <IconCross /> : display === 'syncing' ? <IconSync /> : display === 'saved' ? <IconCheck /> : null}{' '}
+          {display === 'offline' ? '오프라인' : display === 'syncing' ? '동기화 중' : display === 'account' ? '계정을 골라 주세요' : display === 'saved' ? '저장됨' : '확인 중'}
         </p>
         <ul class="small num">
           <li>보낼 변경: {s ? `${s.pending}건` : '–'}</li>
@@ -170,3 +171,6 @@ export default function SettingsApp({ contentVersion }: { contentVersion: string
     </div>
   );
 }
+
+/** 마운트 전에는 안의 버튼·입력칸이 눌리지 않게 감싼다(Gate.tsx) */
+export default gated(SettingsAppView, 'SettingsApp');

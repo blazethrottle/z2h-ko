@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import { NOTEBOOKS } from '../../content-config.mjs';
+import { NOTEBOOKS, TASTER } from '../../content-config.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const APP_DIR = path.resolve(HERE, '../../..');
@@ -31,7 +31,13 @@ export function resolvePaths(env = process.env) {
     : fs.existsSync(path.join(REPO_ROOT, 'content/lectures.yaml'))
       ? path.join(REPO_ROOT, 'content')
       : path.join(APP_DIR, 'tests/fixtures/extras');
-  return { source, contentDir, segmentsPath, extrasDir, licensesDir: path.join(REPO_ROOT, 'third_party/licenses'), repoRoot: REPO_ROOT };
+  // 맛보기: 강의 콘텐츠 폴더에 taster.json 이 있으면 그 폴더, 없으면(사본 폴더 등) 교사 정본 폴더
+  const tasterDir = env.Z2H_TASTER_DIR
+    ? path.resolve(env.Z2H_TASTER_DIR)
+    : fs.existsSync(path.join(contentDir, TASTER.file))
+      ? contentDir
+      : merged;
+  return { source, contentDir, segmentsPath, extrasDir, tasterDir, licensesDir: path.join(REPO_ROOT, 'third_party/licenses'), repoRoot: REPO_ROOT };
 }
 
 const rel = (p) => path.relative(REPO_ROOT, p);
@@ -97,6 +103,19 @@ export function readBundle(paths = resolvePaths()) {
     bundle.parseErrors.push({ path: rel(paths.segmentsPath), message: `영상 구간 파일을 읽지 못했습니다: ${e?.message ?? e}` });
   }
   for (const nb of Object.values(NOTEBOOKS)) bundle.notebookExists[nb.student] = fs.existsSync(path.join(paths.repoRoot, nb.student));
+  return bundle;
+}
+
+/** 맛보기 묶음 (검사 전): taster.json + 교사 실행 출력 taster_outputs.json + 노트북 있는지 */
+export function readTasterBundle(paths = resolvePaths()) {
+  const bundle = { file: null, outputsFile: null, notebookPath: TASTER.notebook, notebookExists: false, rawTexts: [], parseErrors: [] };
+  const f = path.join(paths.tasterDir, TASTER.file);
+  if (fs.existsSync(f)) bundle.file = readJson(f, bundle);
+  else bundle.parseErrors.push({ path: rel(f), message: '맛보기 콘텐츠(taster.json)가 없습니다' });
+  const o = path.join(paths.tasterDir, TASTER.outputsFile);
+  if (fs.existsSync(o)) bundle.outputsFile = readJson(o, bundle);
+  else bundle.parseErrors.push({ path: rel(o), message: '교사 실행 출력(taster_outputs.json)이 없습니다' });
+  bundle.notebookExists = fs.existsSync(path.join(paths.repoRoot, TASTER.notebook));
   return bundle;
 }
 

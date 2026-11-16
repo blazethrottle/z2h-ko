@@ -1,32 +1,21 @@
 ---
-// B 30분 맛보기 (뼈대와 데이터 자리, 내용은 P2). Colab 노트북 + 본인 확인("비슷해요/달라요") + 결과 붙여넣기.
-// 저장은 taster_result {self_reported, pasted_names_text, pasted_loss_start, pasted_loss_end}. 붙여넣은 값은 검증하지 않은 값.
+// B 30분 맛보기 첫 화면 (spec 13.2, flow.md 6절). 가입·로그인 없이 시작. 단계 수·시간은 콘텐츠(taster.json)에서 센다.
+// 기록은 taster_result(self_reported, 붙여 넣은 값은 검증 안 된 값). 계정이 없으면 이 기기에 먼저 두고 계정이 생기면 올린다(P1 방식).
 import Base from '../../layouts/Base.astro';
+import TasteIntro from '../../components/TasteIntro.tsx';
+import { loadTaster } from '../../lib/content/taster.mjs';
+import { LANDING } from '../../content/landing.mjs';
+
+const t: any = loadTaster();
+const steps = t.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, minutes: s.minutes }));
 ---
-<Base title="30분 맛보기" nav={null} back="/">
-  <div class="stack">
-    <p class="kicker">30분 맛보기 · 가입 없이</p>
-    <h1 class="t1">30분 맛보기</h1>
-    <span class="waiting">자료 대기</span>
-    <section class="card stack-sm" aria-label="Colab에서 열기">
-      <h2 class="t3">Colab에서 맛보기 노트북 열기</h2>
-      <p class="small muted">맛보기 노트북과 단계 안내는 P2에서 넣습니다. 모든 맛보기 단계는 영상이 없습니다.</p>
-      <button type="button" class="btn" disabled aria-disabled="true">Colab에서 열기 (자료 대기)</button>
-    </section>
-    <section class="card stack-sm" aria-label="내 화면 확인">
-      <h2 class="t3">내 화면도 이렇게 나왔나요?</h2>
-      <p class="small muted">앱은 Colab 결과를 읽지 못해, 완료는 내가 누른 확인으로 기록합니다.</p>
-      <div class="row">
-        <button type="button" class="btn" disabled aria-disabled="true">비슷해요</button>
-        <button type="button" class="btn" disabled aria-disabled="true">달라요</button>
-      </div>
-    </section>
-    <section class="card stack-sm" aria-label="내 결과 붙여넣기">
-      <h2 class="t3">내 결과 붙여넣기</h2>
-      <p class="small muted">노트북이 출력한 손실 값과 지어낸 이름을 붙여 넣으면 공유 카드를 만들 수 있습니다. 붙여 넣은 값만 저장합니다.</p>
-      <textarea class="input code-input" disabled aria-label="맛보기 결과 (자료 대기)"></textarea>
-      <p class="small">첫 모델이라 아직 서툴러요</p>
-    </section>
-    <a class="btn block" href="/taste/precomputed/">Colab을 못 열면: 미리 계산한 결과 보기</a>
-  </div>
+<Base title="30분 맛보기" tabs={false} back="/">
+  <TasteIntro
+    client:load
+    title={t.lecture.title_ko}
+    promise={LANDING.hero.caption}
+    steps={steps}
+    requiredSteps={t.lecture.requires_steps}
+    totalMinutes={t.total_minutes}
+  />
 </Base>

@@ -3,11 +3,10 @@ import { test, expect, hydrated, manifest } from './fixtures';
 
 test('처음 열면 개발용 계정이 자동으로 생기고, 설정에 "개발용" 표시와 함께 보인다', async ({ page, api }) => {
   await page.goto('/settings/');
-  // "저장됨"은 계정을 정하기 전에도 보이는 기본 표시라, 계정이 생길 때까지 따로 기다린다
-  await expect.poll(() => api.accounts.length).toBe(1);
-  await expect(page.getByTestId('current-account')).toHaveText(api.accounts[0].display_name);
+  // "저장됨"은 계정과 첫 서버 확인이 끝난 뒤에만 보인다(그 전에는 checking). 그래서 따로 기다리지 않고 이 표시를 기다린다
   await expect(page.getByTestId('sync-status').locator('[data-state="saved"]')).toBeVisible();
   expect(api.accounts).toHaveLength(1);
+  await expect(page.getByTestId('current-account')).toHaveText(api.accounts[0].display_name);
   const acct = page.getByTestId('settings-account');
   await expect(acct).toContainText('개발용');
   // 처음 연 기기: 계정이 생긴 뒤의 목록에 그 계정이 "사용 중", 바꾸기 버튼은 없다

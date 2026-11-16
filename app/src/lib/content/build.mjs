@@ -192,6 +192,9 @@ export function buildSite(bundle) {
       code_lines: Object.fromEntries(steps.map((s) => [s.step_id, codeLines(s.code)])),
     };
   }
+  // 편별 단계 수: 영상 구간 정본(video-segments.json steps)에서 센다 (랜딩 "수료까지의 길", 단계 수 하드코딩 금지)
+  const stepCounts = {};
+  for (const e of Object.values(segSteps)) if (e?.lecture_id) stepCounts[e.lecture_id] = (stepCounts[e.lecture_id] ?? 0) + 1;
   const byId = new Map(lectureList.map((l) => [l.lecture_id, l]));
   for (const lid of Object.keys(details)) if (!byId.has(lid)) byId.set(lid, { lecture_id: lid, title_ko: details[lid].lecture.title_ko, video_seconds: details[lid].lecture.video_seconds });
   return {
@@ -201,6 +204,7 @@ export function buildSite(bundle) {
       .sort((a, b) => a.lecture_id.localeCompare(b.lecture_id)),
     units,
     details,
+    stepCounts,
   };
 }
 

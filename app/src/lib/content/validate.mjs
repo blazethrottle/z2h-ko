@@ -27,6 +27,8 @@ export const RULES = {
   8: '원본 코드 출처와 라이선스',
   9: '힌트 개수 (코드 단계·설명·버그·적용 H1~H4 모두, 예측 0개)',
   10: 'new_code_lines 0 단계는 long_step false',
+  11: '맛보기 출력 예 = 교사 실행 출력(taster_outputs.json)',
+  12: '맛보기 문항·완료 조건·공유 결과물',
 };
 
 /** 끝 줄바꿈은 빼고 센다. 가운데 빈 줄도 한 줄 */
@@ -63,11 +65,11 @@ export function hasPythonComment(code) {
   return false;
 }
 
-function zodIssues(res) {
+export function zodIssues(res) {
   return res.success ? [] : res.error.issues.map((i) => `${i.path.join('.') || '(전체)'}: ${i.message}`);
 }
 
-function* strings(v, at = '') {
+export function* strings(v, at = '') {
   if (typeof v === 'string') yield [at, v];
   else if (Array.isArray(v)) for (let i = 0; i < v.length; i++) yield* strings(v[i], `${at}[${i}]`);
   else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) yield* strings(x, at ? `${at}.${k}` : k);

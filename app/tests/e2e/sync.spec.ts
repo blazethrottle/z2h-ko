@@ -46,6 +46,7 @@ test('연결이 1초 안에 끝나면 동기화 중을 보이지 않는다', asy
   await page.goto(`/lectures/${L.lecture_id}/${L.steps[0].slug}/#practice`);
   await page.getByTestId('finish-step').click();
   await expect.poll(() => api.opsFor('step_progress').some((o) => o.data.status === 'done')).toBe(true);
-  expect(await syncState(page)).toBe('saved');
+  // 서버가 받은 뒤 응답을 처리하면 저장됨으로 바뀐다(첫 확인 전에는 checking 이라 한 번 읽기가 아니라 기다려서 본다)
+  await expect.poll(() => syncState(page)).toBe('saved');
   expect([...seen]).not.toContain('syncing');
 });

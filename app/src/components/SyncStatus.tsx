@@ -1,19 +1,25 @@
 // 상단 바 동기화 표시 (spec 0.6): ✓ 저장됨 / ↻ 동기화 중(1초 넘을 때만) / ✕ 오프라인 + 지금 다시 시도
 // 서버가 계정 없음(401)이면 오프라인과 구분해 "계정을 골라 주세요" (설정의 개발용 계정으로 이동)
+// 계정·첫 서버 확인이 끝나기 전(정적 HTML 포함)은 checking: 화면에는 비워 두고 읽기 프로그램에만 "동기화 상태 확인 중"
 import { useState } from 'preact/hooks';
 import { useRuntime, useSyncState } from './hooks';
 import { IconCheck, IconCross, IconSync } from './Icons';
+import { gated } from './Gate';
 
-export default function SyncStatus() {
+function SyncStatusView() {
   const rt = useRuntime();
   const s = useSyncState(rt);
   const [open, setOpen] = useState(false);
-  const display = s?.display ?? 'saved';
+  const display = s?.display ?? 'checking';
 
   return (
     <div class="sync" data-testid="sync-status">
       <span role="status" aria-live="polite">
-        {display === 'account' ? (
+        {display === 'checking' ? (
+          <span class="sync-btn checking" data-state="checking">
+            <span class="sr-only">동기화 상태 확인 중</span>
+          </span>
+        ) : display === 'account' ? (
           <a class="sync-btn account" href="/settings/#account" data-state="account">
             계정을 골라 주세요
           </a>
@@ -50,3 +56,6 @@ export default function SyncStatus() {
     </div>
   );
 }
+
+/** 마운트 전에는 안의 버튼·입력칸이 눌리지 않게 감싼다(Gate.tsx) */
+export default gated(SyncStatusView, 'SyncStatus');

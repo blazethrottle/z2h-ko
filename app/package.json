@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1 --port 4321",
-    "build": "node scripts/validate-content.mjs && ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "build": "node scripts/validate-content.mjs && ASTRO_TELEMETRY_DISABLED=1 astro build && node scripts/check-copy.mjs",
     "build:fixture": "Z2H_CONTENT_DIR=tests/fixtures/content npm run build",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --host 127.0.0.1 --port 4329",
     "check:content": "node scripts/validate-content.mjs",
@@ -13,7 +13,8 @@
     "tokens": "node scripts/gen-tokens.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:real": "playwright test -c playwright.real.config.ts"
+    "test:real": "playwright test -c playwright.real.config.ts",
+    "check:copy": "node scripts/check-copy.mjs"
   },
   "dependencies": {
     "@astrojs/preact": "6.1.6",

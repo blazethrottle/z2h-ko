@@ -173,6 +173,62 @@ export const lectureListItemSchema = z.looseObject({
 
 export const unitSchema = z.looseObject({ unit_id: z.string().regex(ID.unit), title_ko: str });
 
+// ---- 맛보기 (교사 정본 inputs/pedagogy/content/taster.json, data-spec v1.2 kind copy_run) ----
+export const TASTER_ID = {
+  lecture: 'TASTER',
+  step: /^T-S\d{2}$/,
+  question: /^T-Q\d{2}$/,
+};
+
+export const tasterLectureSchema = z.looseObject({
+  lecture_id: z.literal(TASTER_ID.lecture),
+  title_ko: str,
+  env: z.array(z.string()).optional(),
+  minutes: z.number().int().positive(),
+  video_segments: z.array(segmentSchema).max(0, '맛보기는 영상이 없습니다(D53)'),
+  notebook_ko: opt(z.string()),
+  verified_kst: opt(z.string()),
+  completion_rule: z.looseObject({
+    rule_id: str,
+    requires_steps: z.array(z.string().regex(TASTER_ID.step)).min(1),
+    step_done_when_ko: opt(z.string()),
+    questions_scored: z.boolean().optional(),
+    questions_ko: opt(z.string()),
+    result: opt(z.string()),
+    on_complete_ko: opt(z.string()),
+  }),
+  artifact: opt(
+    z.looseObject({
+      artifact_id: str,
+      name_ko: str,
+      unlock_after: z.string().regex(TASTER_ID.step),
+      input_ko: opt(z.string()),
+      card_fields: z.looseObject({ title_ko: str, credit_ko: str, humble_line_ko: str, disclaimer_ko: str }),
+    }),
+  ),
+  next_ko: opt(z.array(z.string())),
+});
+
+export const tasterStepSchema = stepSchema.extend({
+  step_id: z.string().regex(TASTER_ID.step, '맛보기 step_id 모양은 T-S01'),
+  lecture_id: z.literal(TASTER_ID.lecture),
+  kind: z.enum(['copy_run', 'read']),
+  minutes: z.number().int().positive(),
+  cell_code_lines: z.number().int().min(0),
+  code_alt_local: opt(z.string()),
+  code_alt_local_line_notes_ko: opt(z.array(z.string())),
+  expected_output_example: opt(z.string()),
+  aha_ko: str,
+  summary_ko: opt(z.string()),
+  question_ids: opt(z.array(z.string().regex(TASTER_ID.question))),
+});
+
+export const tasterQuestionSchema = questionSchema.extend({
+  question_id: z.string().regex(TASTER_ID.question, '맛보기 문항 id 모양은 T-Q01'),
+  lecture_id: z.literal(TASTER_ID.lecture),
+  after_step: z.string().regex(TASTER_ID.step),
+});
+
 /** 알려진 칸 (모르는 칸 경고용) */
 export const KNOWN = {
   step: new Set(Object.keys(stepSchema.shape)),
@@ -180,6 +236,9 @@ export const KNOWN = {
   hint: new Set(Object.keys(hintSchema.shape)),
   rebuild: new Set(Object.keys(rebuildSchema.shape)),
   lecture: new Set(Object.keys(lectureSchema.shape)),
+  tasterLecture: new Set(Object.keys(tasterLectureSchema.shape)),
+  tasterStep: new Set(Object.keys(tasterStepSchema.shape)),
+  tasterQuestion: new Set(Object.keys(tasterQuestionSchema.shape)),
 };
 
 /** 목록 파일은 맨 위가 배열이거나 {키: 배열} 둘 다 받는다 */

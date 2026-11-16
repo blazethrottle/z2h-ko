@@ -1,12 +1,13 @@
 // 동기화: 대기열을 POST /api/sync 로 보내고, 표시를 저장됨 / 동기화 중(1초 넘을 때만) / 오프라인 으로 바꾼다.
 // 재시도: 연결 복구 즉시, 그 밖에는 30초·1분·5분(그 뒤 5분마다). spec 0.6, DESIGN.md 12.5절.
 // 서버가 401(no_user)이면 오프라인이 아니라 "계정을 골라 주세요"(account) 상태로 두고 onUnauthorized 를 부른다.
+// 처음 상태는 checking: 계정과 첫 서버 확인(첫 flush)이 끝나기 전에는 "저장됨"을 보이지 않는다.
 
 import { config } from '../../config';
 import { NetworkError, getState, postSync, type FetchLike } from '../api';
 import type { LocalStore } from './store';
 
-export type SyncDisplay = 'saved' | 'syncing' | 'offline' | 'account';
+export type SyncDisplay = 'checking' | 'saved' | 'syncing' | 'offline' | 'account';
 
 export interface Timers {
   setTimeout: (fn: () => void, ms: number) => unknown;
@@ -34,7 +35,7 @@ export interface SyncOptions {
 }
 
 export class SyncManager {
-  state: SyncState = { display: 'saved', pending: 0, lastSyncedAt: null, lastError: null, nextRetryInMs: null, rejected: [] };
+  state: SyncState = { display: 'checking', pending: 0, lastSyncedAt: null, lastError: null, nextRetryInMs: null, rejected: [] };
   private listeners = new Set<(s: SyncState) => void>();
   private fetchImpl: FetchLike;
   private timers: Timers;

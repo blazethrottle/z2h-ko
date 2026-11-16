@@ -83,8 +83,7 @@ async function serverState(page: Page) {
 
 /** 앱이 처음 열 때 개발용 계정을 스스로 만들 때까지 기다린다 (server/API.md 1절, PM 결정 B) */
 async function appAccount(page: Page) {
-  // "저장됨"은 계정을 정하기 전에도 보이는 기본 표시라, /api/me 가 계정을 돌려줄 때까지 따로 기다린다
-  await expect.poll(async () => (await page.request.get(`${BASE}/api/me`)).status()).toBe(200);
+  // "저장됨"은 계정과 첫 서버 확인이 끝난 뒤에만 보인다(그 전에는 checking). 이 표시가 보이면 계정이 있다
   await expect(syncState(page, 'saved')).toBeVisible();
   const r = await page.request.get(`${BASE}/api/me`);
   expect(r.status(), await r.text()).toBe(200);

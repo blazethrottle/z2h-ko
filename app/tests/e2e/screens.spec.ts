@@ -1,10 +1,12 @@
 import { test, expect, manifest } from './fixtures';
+import { LANDING } from '../../src/content/landing.mjs';
 
-const PAGES = [
-  { path: '/', heading: /자료 대기/ },
+// sync: false = 동기화 표시가 없는 화면(랜딩 위 막대, spec 13.1)
+const PAGES: { path: string; heading: RegExp; sync?: boolean }[] = [
+  { path: '/', heading: new RegExp(LANDING.hero.promise.slice(0, 12)), sync: false },
   { path: '/home/', heading: /어디서부터 시작할까요|이어서 하기/ },
   { path: '/basics/', heading: /사전 기초/ },
-  { path: '/taste/', heading: /30분 맛보기/ },
+  { path: '/taste/', heading: /맛보기/ },
   { path: '/taste/precomputed/', heading: /미리 계산한 결과 보기/ },
   { path: '/badges/', heading: /배지/ },
   { path: '/share/', heading: /공유 카드/ },
@@ -18,7 +20,8 @@ test.describe('주요 화면이 열린다', () => {
       const res = await page.goto(p.path);
       expect(res?.status()).toBe(200);
       await expect(page.locator('h1').first()).toContainText(p.heading);
-      await expect(page.getByTestId('sync-status').locator('[data-state="saved"]')).toBeVisible();
+      if (p.sync === false) await expect(page.getByTestId('sync-status')).toHaveCount(0);
+      else await expect(page.getByTestId('sync-status').locator('[data-state="saved"]')).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow).toBeLessThanOrEqual(0);
       await page.screenshot({ path: `test-results/screens/${info.project.name}${p.path.replace(/\//g, '_') || '_root'}.png`, fullPage: true });

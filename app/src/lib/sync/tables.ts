@@ -10,6 +10,8 @@ export const TABLE_KEYS = {
   help_note: ['note_id'],
   mastery_state: ['target_id'],
   rebuild_attempt: ['rebuild_id', 'attempt_id'],
+  // 맛보기 단계별 자기 확인 + 붙여 넣은 값. attempt_no 는 이 표에서만 기기가 정하는 열쇠(1부터, server/API.md 3절)
+  taster_result: ['attempt_no', 'step_id'],
 } as const;
 
 export type TableName = keyof typeof TABLE_KEYS;

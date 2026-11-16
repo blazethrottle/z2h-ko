@@ -1,20 +1,83 @@
 ---
-// C 미리 계산한 결과 보기 (뼈대). 실제 실행 결과만 쓴다(P2). 지어낸 숫자 없음.
+// C 미리 계산한 결과 보기 (DESIGN.md 4절 C안): Colab 을 못 여는 사람용. 교사 실제 실행 출력(taster_outputs.json)만 쓴다. 지어낸 숫자 0.
+// 이 화면만 본 것은 맛보기 완료로 기록하지 않는다(아무것도 저장하지 않음). 손실 그림은 인라인 SVG(토큰 색만, 외부 차트 라이브러리 없음).
 import Base from '../../../layouts/Base.astro';
+import { loadTaster } from '../../../lib/content/taster.mjs';
+import { lossChart, parseLossLines, parseNameLines } from '../../../lib/taste';
+
+const t: any = loadTaster();
+const date = String(t.lecture.verified_kst ?? '').split(',')[0].trim() || '날짜 미확인';
+const W = 640;
+const H = 260;
+const PAD = 44;
+const blocks = t.steps
+  .filter((s: any) => typeof t.outputs[s.step_id] === 'string')
+  .map((s: any) => {
+    const out: string = t.outputs[s.step_id];
+    const lines = out.replace(/\n+$/, '').split('\n');
+    const loss = parseLossLines(out);
+    const names = parseNameLines(out);
+    const isLoss = loss.length >= 2 && loss.length === lines.length;
+    const isNames = !isLoss && names.length >= 2 && names.every((n: string) => /^[a-z]+$/.test(n));
+    return { s, out, lines, loss, names, isLoss, isNames, chart: isLoss ? lossChart(loss, { width: W, height: H, pad: PAD }) : null };
+  });
+const total = t.steps.length;
+const fmt = (v: number) => String(Math.round(v * 1000) / 1000);
 ---
-<Base title="미리 계산한 결과" nav={null} back="/taste/">
+<Base title="미리 계산한 결과" tabs={false} back="/taste/" wide>
   <div class="stack">
-    <p class="kicker">30분 맛보기</p>
-    <h1 class="t1">미리 계산한 결과 보기</h1>
-    <span class="waiting">자료 대기</span>
-    <section class="card stack-sm" aria-label="손실 그래프">
-      <h2 class="t3">손실이 줄어드는 모습</h2>
-      <p class="small muted">맛보기 노트북을 실제로 실행한 값이 오면 그립니다.</p>
-      <p class="num">–</p>
-    </section>
-    <section class="card stack-sm" aria-label="지어낸 이름">
-      <h2 class="t3">모델이 지어낸 이름</h2>
-      <p class="num">–</p>
+    <header class="stack-sm">
+      <p class="kicker">30분 맛보기 · 미리 계산한 결과</p>
+      <h1 class="t1">미리 계산한 결과 보기</h1>
+      <p class="card sunken" data-testid="precomputed-note">
+        교사가 실제로 실행한 결과입니다({date}, PyTorch CPU). 직접 실행하면 숫자가 조금 다를 수 있습니다.
+      </p>
+      <p class="small muted">Colab을 열 수 없을 때 보는 화면입니다. 이 화면만 본 것은 맛보기 완료로 기록하지 않습니다.</p>
+      {t.elapsed_s != null && <p class="cap num">교사 컴퓨터에서 전체 실행 약 {t.elapsed_s}초</p>}
+    </header>
+
+    {blocks.map((b: any) => (
+      <section class="card stack-sm" aria-labelledby={`pc-${b.s.slug}`} data-testid={`precomputed-${b.s.step_id}`}>
+        <p class="cap num">{b.s.order} / {total} · 약 {b.s.minutes}분</p>
+        <h2 class="t3" id={`pc-${b.s.slug}`}>{b.s.title_ko}</h2>
+        <p class="label">이렇게 나옵니다</p>
+        {b.isNames ? (
+          <ul class="names" style={`grid-template-rows:repeat(${Math.ceil(b.names.length / 2)},auto)`} data-testid={`names-${b.s.step_id}`} aria-label={`${b.s.title_ko}: 지어낸 이름 ${b.names.length}개`}>
+            {b.names.map((n: string) => <li>{n}</li>)}
+          </ul>
+        ) : (
+          <pre class="out" data-testid={`out-${b.s.step_id}`}>{b.lines.join('\n')}</pre>
+        )}
+        {b.isLoss && (
+          <figure class="stack-sm" data-testid="loss-chart" data-points={JSON.stringify(b.loss.map((p: any) => [p.step, p.loss]))}>
+            <svg class="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="loss-chart-t">
+              <title id="loss-chart-t">
+                손실 꺾은선: {b.loss[0].step}번에서 {fmt(b.loss[0].loss)}, {b.loss[b.loss.length - 1].step}번에서 {fmt(b.loss[b.loss.length - 1].loss)}
+              </title>
+              <line class="axis" x1={PAD} y1={H - PAD} x2={W - PAD} y2={H - PAD} />
+              <line class="axis" x1={PAD} y1={PAD} x2={PAD} y2={H - PAD} />
+              <line class="grid" x1={PAD} y1={b.chart.yTop} x2={W - PAD} y2={b.chart.yTop} />
+              <line class="grid" x1={PAD} y1={b.chart.yBottom} x2={W - PAD} y2={b.chart.yBottom} />
+              <polyline class="line" points={b.chart.points} />
+              {b.chart.dots.map((d: any) => <circle class="dot" cx={d.x} cy={d.y} r="4" />)}
+              <text x={PAD + 6} y={b.chart.yTop - 8}>{fmt(b.chart.yMax)}</text>
+              <text x={PAD + 6} y={b.chart.yBottom - 8}>{fmt(b.chart.yMin)}</text>
+              <text x={b.chart.xLeft} y={H - PAD + 20} text-anchor="middle">{b.chart.xMin}</text>
+              <text x={b.chart.xRight} y={H - PAD + 20} text-anchor="middle">{b.chart.xMax}</text>
+              <text x={W / 2} y={H - 8} text-anchor="middle">학습 횟수</text>
+              <text x={PAD + 6} y={PAD - 22}>손실</text>
+            </svg>
+            <figcaption class="cap">가로는 학습 횟수, 세로는 손실(틀린 정도)입니다. 오른쪽으로 갈수록 내려갑니다.</figcaption>
+          </figure>
+        )}
+        <p class="small"><b>깨달음 한 줄:</b> {b.s.aha_ko}</p>
+      </section>
+    ))}
+
+    <section class="card stack-sm" aria-label="직접 해 보기">
+      <h2 class="t3">직접 해 보려면</h2>
+      <p class="small">Colab을 열 수 있게 되면 30분 맛보기에서 같은 코드를 직접 실행해 보세요. 숫자와 이름은 조금 다르게 나올 수 있습니다.</p>
+      <a class="btn primary block" href="/taste/" data-testid="precomputed-to-taste">30분 맛보기로 가기</a>
     </section>
   </div>
 </Base>

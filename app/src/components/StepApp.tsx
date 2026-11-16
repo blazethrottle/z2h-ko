@@ -15,6 +15,7 @@ import { useRuntime, useTables, useUiState } from './hooks';
 import { IconCheck, IconCross, IconExternal } from './Icons';
 import QuestionCard, { type PublicQuestion } from './QuestionCard';
 import VideoPlayer from './VideoPlayer';
+import { gated } from './Gate';
 
 export interface PublicStep {
   step_id: string;
@@ -72,7 +73,7 @@ type CheckResult = { ok: boolean; kind: 'compare' | 'error' | 'empty'; message?:
 
 const ERROR_STEPS = ['맨 아래 줄의 에러 종류', '그 줄의 설명', '위로 올라가 내 셀의 몇째 줄인지(---->  표시)', '그 줄의 변수 값을 print로 확인'];
 
-export default function StepApp(p: Props) {
+function StepAppView(p: Props) {
   const rt = useRuntime();
   const t = useTables(rt, ['step_progress', 'question_attempt', 'user_pref']);
   const s = p.step;
@@ -549,3 +550,6 @@ function CheckBox({ check, hints }: { check: CheckResult; hints: string[] }) {
     </div>
   );
 }
+
+/** 마운트 전에는 안의 버튼·입력칸이 눌리지 않게 감싼다(Gate.tsx) */
+export default gated(StepAppView, 'StepApp');

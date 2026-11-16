@@ -1,6 +1,7 @@
 // 빌드 요약 (자동 브라우저 테스트가 단계 목록을 읽는 용도). 풀이 없음.
 import type { APIRoute } from 'astro';
 import { loadSite } from '../../lib/content/build.mjs';
+import { loadTaster } from '../../lib/content/taster.mjs';
 
 export const GET: APIRoute = () => {
   const site: any = loadSite();
@@ -23,5 +24,15 @@ export const GET: APIRoute = () => {
     questions: d.questions.map((q: any) => ({ question_id: q.question_id, type: q.type, grade_type: q.grade_type, hint_levels: q.hint_levels, scored: q.scored, after_step: q.after_step })),
     rebuild_ids: d.rebuild.map((r: any) => r.rebuild_id),
   }));
-  return new Response(JSON.stringify({ source: site.source, lectures }), { headers: { 'content-type': 'application/json; charset=utf-8' } });
+  const t: any = loadTaster();
+  const taster = {
+    content_version: t.lecture.content_version,
+    requires_steps: t.lecture.requires_steps,
+    artifact_unlock_after: t.lecture.artifact?.unlock_after ?? null,
+    notebook_available: t.lecture.notebook.available,
+    total_minutes: t.total_minutes,
+    steps: t.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, kind: s.kind, cell_code_lines: s.cell_code_lines, question_ids: s.question_ids, hint_levels: s.hint_levels })),
+    questions: t.questions.map((q: any) => ({ question_id: q.question_id, after_step: q.after_step, choices: (q.choices ?? []).length })),
+  };
+  return new Response(JSON.stringify({ source: site.source, lectures, step_counts: site.stepCounts, taster }), { headers: { 'content-type': 'application/json; charset=utf-8' } });
 };

@@ -29,6 +29,26 @@ export interface AppConfig {
   badgeRules: { badge_id: string; name_ko: string; on_pass: string }[];
   /** 새 개발 계정의 기본 이름 */
   devAccountName: string;
+  /** 30분 맛보기 (spec 13.2, taster.md 4절) */
+  taste: TasteConfig;
+}
+
+export interface TasteConfig {
+  /** 맛보기 노트북 Colab 바로 열기 주소. null이면 버튼을 숨기고 "노트북 받기 + Colab에 올리기" 안내 (비공개 저장소 기간) */
+  colabOpenUrl: string | null;
+  /** 이 기기가 처음 정하는 시도 번호(taster_result.attempt_no, 1부터) */
+  firstAttemptNo: number;
+  /** 셀이 이 줄 수보다 길면 앞부분을 접는다("앞부분 10줄 보기") */
+  longCellLines: number;
+  foldHeadLines: number;
+  /** "보여야 하는 것"이 길면 앞 3줄 + … + 끝 2줄 */
+  outputHeadLines: number;
+  outputTailLines: number;
+  /** 이름 붙여 넣기 정리: 최대 줄 수, 한 이름 최대 글자 수(넘으면 자름) */
+  maxNames: number;
+  maxNameChars: number;
+  /** 카드에서 뺄 이름(금칙어) 목록. 교사·CEO 확정 전이라 비어 있음(taster.md 4절 "앱의 금칙어 목록") */
+  blockedNames: string[];
 }
 
 export const config: AppConfig = {
@@ -50,4 +70,15 @@ export const config: AppConfig = {
     { badge_id: 'BADGE-S3', name_ko: 'GPT 제작자', on_pass: 'CP3' },
   ],
   devAccountName: '개발용 계정',
+  taste: {
+    colabOpenUrl: null,
+    firstAttemptNo: 1,
+    longCellLines: 12,
+    foldHeadLines: 10,
+    outputHeadLines: 3,
+    outputTailLines: 2,
+    maxNames: 10,
+    maxNameChars: 20,
+    blockedNames: [],
+  },
 };

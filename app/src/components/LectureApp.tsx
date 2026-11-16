@@ -9,6 +9,7 @@ import { useRuntime, useTables } from './hooks';
 import { IconExternal } from './Icons';
 import ResultCodePaste from './ResultCodePaste';
 import Inline from './Inline';
+import { gated } from './Gate';
 
 interface StepItem {
   step_id: string;
@@ -35,7 +36,7 @@ interface Props {
   rebuild: { rebuild_id: string; title_ko: string; task_ko?: string | null }[];
 }
 
-export default function LectureApp(p: Props) {
+function LectureAppView(p: Props) {
   const rt = useRuntime();
   const t = useTables(rt, ['step_progress', 'question_attempt', 'rebuild_attempt', 'grade_result', 'user_pref', 'mastery_state']);
   const rows = t?.step_progress ?? [];
@@ -284,3 +285,6 @@ export default function LectureApp(p: Props) {
     </div>
   );
 }
+
+/** 마운트 전에는 안의 버튼·입력칸이 눌리지 않게 감싼다(Gate.tsx) */
+export default gated(LectureAppView, 'LectureApp');

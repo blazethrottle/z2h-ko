@@ -110,6 +110,26 @@ describe('IndexedDB 대기열', () => {
 });
 
 describe('동기화 관리자', () => {
+  it('첫 확인(첫 flush)이 끝나기 전에는 checking: "저장됨"을 미리 보이지 않는다', async () => {
+    for (const [handler, want] of [
+      [okSync, 'saved'],
+      [down, 'offline'],
+      [async () => json({ ok: false, error: 'no_user' }, 401), 'account'],
+    ] as const) {
+      const s = await newStore();
+      const f = fakeFetch(handler as Handler);
+      const t = manualTimers();
+      const m = new SyncManager(s, { fetch: f.fn, timers: t.timers, clientId: 'c1' });
+      const seen: string[] = [];
+      m.subscribe((st) => seen.push(st.display));
+      expect(m.state.display).toBe('checking');
+      await m.retryNow();
+      expect(m.state.display).toBe(want);
+      expect(seen[0]).toBe('checking');
+      expect(seen.slice(0, seen.indexOf(want))).not.toContain('saved');
+    }
+  });
+
   it('성공하면 대기열이 비고 저장됨, 본문은 {client_id, ops}', async () => {
     const s = await newStore();
     const f = fakeFetch(okSync);
@@ -186,7 +206,7 @@ describe('동기화 관리자', () => {
     release();
     await p;
     expect(m.state.display).toBe('saved');
-    expect(seen).toEqual(['saved', 'offline', 'syncing', 'saved']);
+    expect(seen).toEqual(['checking', 'offline', 'syncing', 'saved']);
   });
 
   it('1초 안에 끝나면 동기화 중을 보이지 않는다', async () => {

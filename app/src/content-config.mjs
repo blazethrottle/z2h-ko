@@ -9,6 +9,18 @@ export function isNoVideoStep(stepId) {
   return NO_VIDEO_STEPS.includes(stepId) || String(stepId).startsWith(TASTER_STEP_PREFIX);
 }
 
+/**
+ * 맛보기 (교사 정본, 손으로 고치지 않는다). 강의 콘텐츠 JSON 과 같은 폴더(inputs/pedagogy/content)에 있다.
+ * outputsFile: 교사가 실제로 실행한 출력(미리 계산한 결과 화면은 이 값만 쓴다).
+ * notebook: 맛보기 노트북(저장소 기준). 있으면 빌드 때 dist/notebooks/taster/ 로 복사, 없으면 화면에 "노트북 준비 중".
+ */
+export const TASTER = {
+  file: 'taster.json',
+  outputsFile: 'taster_outputs.json',
+  notebook: 'notebooks/taster/taster.ipynb',
+  publicDir: '/notebooks/taster/',
+};
+
 /** 편별 학생용 노트북 경로(저장소 기준). 교사 JSON 에는 노트북 칸이 없어 여기 둔다. 파일이 없으면 화면에 "노트북 준비 중" */
 export const NOTEBOOKS = {
   L01: { student: 'notebooks/ep01-micrograd/ep01_student.ipynb' },

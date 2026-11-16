@@ -185,7 +185,7 @@ export default function HintLadder(p: Props) {
   );
 }
 
-function HelpMemo(p: { rt: Runtime | null; targetId: string; title: string; seen: number[]; lastOutput?: string; runLocation?: string }) {
+export function HelpMemo(p: { rt: Runtime | null; targetId: string; title: string; seen: number[]; lastOutput?: string; runLocation?: string }) {
   const [cell, setCell] = useState('');
   const [errLine, setErrLine] = useState(() => {
     const lines = String(p.lastOutput ?? '')
