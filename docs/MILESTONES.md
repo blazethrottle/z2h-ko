@@ -12,7 +12,7 @@
 3. 영상은 youtube-nocookie 공식 embed와 링크만. 모든 단계에 영상 ID와 시작 초. 자동 재생 없음, 한국어 자막 매개변수 있음. 영상 파일·자막 전문 0건.
 4. 원본 코드를 쓴 파일 머리에 출처 한 줄, `third_party/licenses/`에 LICENSE 전문, `NOTICE.md` 갱신. build-nanogpt 코드 복사 0건.
 5. 서버는 127.0.0.1 바인드(다른 주소 거부 테스트 포함). 네트워크·보안 설정 변경 0건.
-6. 모든 학습 기록 표에 `user_id`. 스키마 변경은 Alembic 마이그레이션 파일로만.
+6. 모든 학습 기록 표에 `user_id`(users로 가는 실제 FK, 고정 사용자 전제 없음). 스키마 변경은 Alembic 마이그레이션 파일로만.
 7. `tests/verify_models.py` 결과를 `docs/model_audit/`에 기록: 메인 = Fable 5.2, 서브 = Opus 5.5 외 값이 있으면 불합격으로 적고 보고.
 8. 커밋·PR에 Co-Authored-By, Claude 꼬리표·링크 0건. 비밀값 0건(gitleaks 작업 폴더 검사).
 9. PR 본문: 한 일 / 테스트 결과 / 맥 실행 로그 요약 / 남은 일. 모르는 것은 "미확인".
@@ -22,13 +22,13 @@
 범위
 - `app/`: 디자인 토큰, 글꼴, 상단 바(동기화 표시)·하단 탭, 영상 플레이어 부품, 홈, 1편 개요, 단계 화면(구간 → 따라 하기 → 확인 문제, 힌트 사다리), 설정, 실습 시간 자동 측정·수정, 결과코드 붙여넣기. 랜딩·맛보기·배지·공유 카드·기초·복습은 주소와 뼈대, 데이터 자리만("자료 대기").
 - `server/`: FastAPI 진도 서버, `StorageAdapter` + `SqliteAdapter`, Alembic 첫 마이그레이션(DESIGN.md 5절 표 전부), 동기화 API, 테스트.
-- `content/ep01-micrograd/`: 단계 22개, 교사 문제 11개, 힌트, 재구성 과제 3개. `content/lectures.yaml`, `content/ep00-basics/units.yaml`(1편 선행 단위 목록).
+- 콘텐츠: 1편 정본은 교사의 `inputs/pedagogy/content/L01.json`(손으로 고치지 않음, 단계 수는 콘텐츠에서 셈). `content/lectures.yaml`, `content/ep00-basics/units.yaml`(1편 선행 단위 목록).
 - `notebooks/ep01-micrograd/`: 학생용·정답용, Colab 안내(받기 + 올리기). "Colab에서 열기" 링크는 설정값 자리만 두고, 값은 결정 질문 5의 답 뒤에 넣는다(보류).
 - `z2h_check/`: check, finish, 결과코드, 1편 채점 함수, 기준값.
 - `tests/verify_models.py`, `docs/PHONE_ACCESS_PLAN.md`(Tunnel·Access 초안만, 실행 금지), `NOTICE.md`, `third_party/licenses/`.
 
 완료 기준(공통 기준에 더해)
-- 맥미니에서 앱을 빌드하고 `python -m z2h_server` 하나로 열면 1편 22단계를 처음부터 끝까지 넘길 수 있다(자동 브라우저 테스트로 확인).
+- 맥미니에서 앱을 빌드하고 `python -m z2h_server` 하나로 열면 1편 모든 단계를 처음부터 끝까지 넘길 수 있다(자동 브라우저 테스트로 확인).
 - 서버를 끈 채 단계를 완료하고 문제를 푼 뒤 서버를 켜면 기록이 올라간다. 표시는 오프라인 → 동기화 중 → 저장됨으로 바뀐다(자동 테스트).
 - 같은 행을 두 기기에서 고친 경우 늦은 쪽이 남고 진 값이 `sync_conflicts`에 남는다(자동 테스트).
 - 마이그레이션 올리기 → 내리기 → 올리기 왕복 통과. 어댑터 공통 테스트 묶음 통과.

@@ -164,9 +164,10 @@
 
 **L07-S14 축소 설정으로 학습 (긴 단계)**
 - 새 코드: 약 8줄 (긴 단계: 나누면 뜻이 끊겨 한 단계로 둡니다. 줄마다 한국어 풀이가 붙습니다)
-- 입력: 앱 기본 축소 설정: `batch_size=12~32, block_size=64, n_embd=128, n_head=4, n_layer=4, dropout=0.1, max_iters=2000~5000`. nanoGPT README의 맥북용 축소 설정(block 64, batch 12, n_layer 4, n_head 4, n_embd 128, 2000스텝, CPU 약 3분, MPS는 2~3배 빠름)과 같은 크기입니다(research/07 6절). (원본 gpt.py 설정은 batch 64, block 256, n_embd 384, n_head 6, n_layer 6, 5000스텝입니다. M1 맥북 MPS에서 약 3시간이라는 사용자 보고가 있어 선택 과제로 둡니다. gpt.py는 MPS를 자동으로 고르지 않으므로 device를 'mps'로 바꿔야 합니다.)
+- 입력: 앱 기본 축소 설정: `batch_size=12~32, block_size=64, n_embd=128, n_head=4, n_layer=4, dropout=0.1, max_iters=2000~5000`. nanoGPT README의 맥북용 축소 설정(block 64, batch 12, n_layer 4, n_head 4, n_embd 128, 2000스텝, CPU 약 3분, MPS는 2~3배 빠름)과 같은 크기입니다(research/07 6절). (원본 gpt.py 설정은 batch 64, block 256, n_embd 384, n_head 6, n_layer 6, 5000스텝입니다. 맥미니 M4 MPS에서 5000스텝 약 64분(스텝당 0.77초, CTO 실측 2026-11-16, cto/MEASURE_M0.md)이라 선택 과제로 둡니다(M1 맥북 MPS 약 3시간이라는 사용자 보고도 있음). gpt.py는 MPS를 자동으로 고르지 않으므로 device를 'mps'로 바꿔야 합니다.)
 - 보여야 하는 것: val 손실이 바이그램(약 2.5)보다 확실히 낮아짐, 생성 글이 대본 모양(이름: 대사).
-- 뜻: 원본과 같은 구조를 작게 돌린 것입니다. 맥미니에서 대략 수십 분 이내 목표(실측은 CTO 확인 예정).
+- 시간(맥미니 M4 MPS, CTO 실측 2026-11-16, cto/MEASURE_M0.md): batch 12면 2000스텝 약 0.5분, 5000스텝 약 1.4분. batch 32면 2000스텝 약 0.8분, 5000스텝 약 2.1분. 모두 1~3분입니다(중간 평가로 10~20% 더 걸릴 수 있음). 실측 참고값: 200스텝에서 손실 4.37 → 2.51(batch 12), 4.39 → 2.28(batch 32).
+- 뜻: 원본과 같은 구조를 작게 돌린 것입니다.
 
 **L07-S15 ChatGPT와의 연결 정리**
 - 입력: 앱 요약 읽기.

@@ -28,3 +28,9 @@
 |---|---|---|---|
 | Pretendard | SIL OFL 1.1 | `third_party/licenses/Pretendard-OFL.txt` | `app/public/fonts/` (앱 작업자가 채움: 버전·배포처 확인) |
 | JetBrains Mono | SIL OFL 1.1 | `third_party/licenses/JetBrainsMono-OFL.txt` | `app/public/fonts/` (앱 작업자가 채움: 버전·배포처 확인) |
+
+## 글꼴 파일 출처 (SIL OFL 1.1, 사본은 third_party/licenses/)
+| 글꼴 | 받은 곳 | 우리가 쓴 위치 |
+|---|---|---|
+| Pretendard 1.3.9 (woff2 4개: 400·500·600·700) | npm `pretendard@1.3.9`의 `dist/web/static/woff2` | `app/public/fonts/` |
+| JetBrains Mono 가변 (woff2 1개) | github.com/JetBrains/JetBrainsMono 커밋 02bb50b0의 `fonts/webfonts/JetBrainsMono[wght].woff2` (파일 이름을 `JetBrainsMono-Variable.woff2`로 바꿈) | `app/public/fonts/` |

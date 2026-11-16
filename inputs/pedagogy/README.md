@@ -18,6 +18,9 @@ Andrej Karpathy의 "Neural Networks: Zero to Hero" 10편을 얼큰이님이 **�
 | data-spec.md | 앱 진도 저장용 데이터 구조(필드 이름) | CTO·디자이너 구현용 |
 | VALUE_CURRICULUM.md | 일반인 대상 가치 중심 안내: 편별 한 줄 약속, 단계 배지, 30분 맛보기, 대상별 길, 홍보 문구 기준 | 상품 기획·마케팅 |
 | video-segments.json | 단계별 영상 구간(초 단위 시작·끝)과 강의별 유튜브 영상 아이디 | 임베드 플레이어 구현용 |
+| taster.md | 30분 맛보기 제작용 명세: 단계(T-S01~T-S08), 줄별 풀이, 출력 예, 확인 질문, 힌트, 완료 조건, 공유 카드 | 프로토타입 1순위 |
+| content/ | 앱용 JSON(`taster.json`, `L01.json`)과 원본(`taster_source.py`, `l01_source.py`, `l01_extra.py`), 빌더 `build_content.py`, 실행 점검 `test_content.py` | 프로토타입 콘텐츠. taster.md와 01편 3~5절도 빌더가 만듭니다 |
+| bridge-cards-03-04.md | 03·04편을 건너뛰는 회사원·투자자 길을 위한 07편 대비 요약 카드 | VALUE_CURRICULUM 4절에서 연결 |
 
 연결 규칙:
 - 각 편 파일의 "선행 지식"은 00-foundations.md의 단위 번호(예: F-P6, F-M2)를 가리킵니다.
@@ -80,14 +83,14 @@ Andrej Karpathy의 "Neural Networks: Zero to Hero" 10편을 얼큰이님이 **�
   - 각 편 6절 바로 위: 영상 설명란의 연습 과제를 선택 심화로 연결.
   - 개별 수정: 08 영상 링크 확인, 08 강연 말실수 정정 메모(자막 0:16:30 부근), 07 축소 설정을 nanoGPT 맥북용 설정과 맞춤, 07 Q12(softmax 축 버그) 추가, 06 목표 손실 1.993, 05 approximate 기준 대조, 02 PyTorch 2.x 샘플링 차이 안내, 00 기초에 튜플·바이트·while·max(key=)·히스토그램 보충.
 - 10편은 research/10의 챕터·커밋 대응표, 원본 규모 수치(8×A100, 524,288 토큰 배치, HellaSwag 기준값), 맥미니에서 안 되는 기능 목록, 막힘 지점(CPU와 MPS 차이 등)을 반영했습니다.
-- 리서치에 없는 부분(각 단계의 "보여야 하는 것" 세부, 확인 문제, 익힘 기준, 축소 설정 수치)은 교사 몽키 설계이며, 축소 설정 수치는 CTO 실측 전 제안값입니다.
+- 리서치에 없는 부분(각 단계의 "보여야 하는 것" 세부, 확인 문제, 익힘 기준, 축소 설정 수치)은 교사 몽키 설계이며, 07·10편 축소 설정의 시간은 맥미니 M4 MPS 실측값을 반영했습니다(CTO 실측 2026-11-16, cto/MEASURE_M0.md). Colab 쪽은 아직 실측 전입니다.
 - 편 번호 주의: nn-zero-to-hero README는 토크나이저를 "Lecture 8"로 적지만, 이 프로젝트는 재생목록 순서(BRIEF 기준)를 따라 08 = State of GPT, 09 = 토크나이저, 10 = GPT-2 재현으로 씁니다(research/08도 같은 점을 지적).
 
 ### 리서치가 더 오면 손볼 곳
 
 | 파일 | 고칠 부분 |
 |---|---|
-| 10-gpt2.md, 07-gpt.md | 맥미니 M4 MPS 실측 시간과 축소 설정 확정(CTO 실측 필요) |
+| 10-gpt2.md, 07-gpt.md | 맥미니 MPS 실측 반영 완료(2026-11-16). 남은 것: Colab T4 실측, 10편 기본 설정 1000스텝 최종 손실 목표값 |
 | 01-micrograd.md | 설명란 연습 Colab 문항 내용(리서치도 미확인) |
 | 각 편 | 챕터보다 잘게 나눈 단계(예: 05의 S02~S08)는 챕터 범위만 표시. 세부 시각이 필요하면 리서치 자막 대조 요청 |
 | review.md | 누적 점검 문제를 리서치 개념 지도로 재점검(1차 점검은 완료, 10편 리서치 뒤 CP3 재확인) |
@@ -99,3 +102,8 @@ Andrej Karpathy의 "Neural Networks: Zero to Hero" 10편을 얼큰이님이 **�
 - 복습 간격: 1, 3, 7, 14, 30일.
 
 CEO·CTO께 여쭐 것은 status/teacher.md와 보고 메시지에 따로 적었습니다.
+
+## 단계 수(v1.2, 2026-11-16)
+
+- 01편 26단계(S01~S16과 쪼갠 단계 S09b, S10b, S11b, S13b, S13c, S13d, S13e, S14b, S14c, S15b). v1.1 발표의 22단계에서 S13c, S13d, S13e, S15b 4개가 늘었습니다. L01-S13b의 뜻은 'PyTorch 비교'에서 'exp와 빼기'로 바뀌었고 PyTorch 비교는 L01-S13e입니다.
+- 10편 전체 169단계(video-segments.json `steps` 169개). 맛보기 8단계(T-S01~T-S08)는 따로 셉니다.

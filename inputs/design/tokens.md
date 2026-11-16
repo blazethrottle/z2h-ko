@@ -122,6 +122,9 @@ ink 계열 남색 바탕이라 종이 배경과 따로 놀지 않는다. 색은 
 - 크기 `size.option-h` 52 (고르기 보기 행), `size.badge` 52 (배지 원).
 - `share-card` 묶음: 1200x675, 여백 64/56, 배지 원 56, 제목 30, 설명 20, 출력 40 (JetBrains Mono, 줄높이 1.55, 모서리 18), 바닥 20. 카드 위 글자 대비: `ink`/`paper` 13.82:1, `ink-muted`/`paper` 5.97:1, `code-text`/`code-bg` 12.85:1 (3절 표와 같은 쌍).
 - 맛보기 진행 막대: 끝난 칸 `correct`, 지금 `accent`, 남은 칸 `paper-sunken`.
+- 편 도장 칩 (20:18): `size.touch-min` 정사각, 받음 `accent` 테두리 + `accent-tint`, 아직 점선 `line-strong`.
+- 준비된 코드 블록 (D41): 점선 2px `line-strong` + 머리 `paper-sunken` + 본문 `code-bg`/`code-text`. 학습 대상 코드(실선, 머리 `code-bg`)와 테두리 모양으로 구분하고 색은 늘리지 않는다.
+- 구간 전환 칩: 지금 구간 2px `accent` + `accent-tint` + 글자 `accent` (대비 6.84:1). 영상 없음 줄 `novid`: `paper-raised` + `line` 테두리.
 
 ## 7. 토큰 파일 쓰는 법
 

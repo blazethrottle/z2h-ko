@@ -2,7 +2,7 @@ import asyncio, json, pathlib
 from playwright.async_api import async_playwright
 SRC=pathlib.Path(__file__).parent/'src'; PNG=pathlib.Path(__file__).parent/'png'
 import sys
-ALL=['s1_home','s2_lecture','s3_segment','s4_practice','s5_quiz','s6_hints','s7_review','s8_basics','s9_states','s10_l08','c1_cp_intro','c2_cp_item','c3_cp_hands','c4_cp_result','v2_landing','v2_taste_step','v2_taste_done','v2_auth','v2_badges']
+ALL=['s1_home','s2_lecture','s3_segment','s4_practice','s5_quiz','s6_hints','s7_review','s8_basics','s9_states','s10_l08','c1_cp_intro','c2_cp_item','c3_cp_hands','c4_cp_result','c5_prepared','c6_segments','v2_landing','v2_taste_step','v2_taste_done','v2_auth','v2_badges','v2_bridge','c7_edits']
 SCREENS=sys.argv[1:] or ALL
 CHECK_JS="""async()=>{await document.fonts.ready;
 const faces=[...document.fonts].map(f=>({family:f.family,weight:f.weight,status:f.status}));
@@ -35,7 +35,7 @@ async def main():
                 report[f'{s}_{tag}']=res; await pg.close()
             await ctx.close()
         ctx=await b.new_context(viewport={'width':1200,'height':675},device_scale_factor=1)
-        for c in ['card_names','card_gpt','card_grad']:
+        for c in ['card_names','card_wavenet','card_gpt']:
             pg=await ctx.new_page(); await pg.goto((SRC/f'{c}.html').as_uri()); res=await pg.evaluate(CHECK_JS); res['platformFonts']={}
             await pg.screenshot(path=str(PNG/f'{c}.png')); report[c]=res; await pg.close()
         await b.close()
