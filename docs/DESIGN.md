@@ -29,8 +29,10 @@
 - D46(X12): 랜딩 문구와 약관·개인정보 문구는 공개 전 승인 항목. 목업 "예시 화면" 표시 유지.
 - D47(X10): 단계 배지는 **누적 점검(CP) 통과**로 받음. CP1 → 언어 모델 견습, CP2 → 신경망 정비사, CP3 → GPT 제작자(수료). CP 단독 배지 없음. `c4_cp_result`에 배지 표시. 배지 부여는 `checkpoint_attempt` 통과 기록에서 서버가 계산.
 - D48(X11): 회사원·투자자 길에서만 07편 전 03·04 다리 카드 2장. 스키마에 **선택 필드**로 `bridge_card` 추가(아래 5-1). 확인 문제 결과는 복습 추천에만, 07편 잠그지 않음. 내용 원본 `pedagogy/bridge-cards-03-04.md`(작성 중).
-- **미정 X13**: 01편 최종 단계 수(v1.1 22 ↔ L01.json v1.2 26)와 새 필드 7개(`prepared_code_line_notes_ko`, `prepared_code_source_ko`, `cell_mode`, `edits`, `rerun_first`, `changed_lines_only`, `moved_code_lines`). 스키마에 **선택 필드**로만 받고(모르는 필드는 경고, 실패 아님), 단계 수는 하드코딩 금지(분모는 데이터의 단계 수).
-- **미정 X14**: 짧은 길(03·04편 건너뜀)에서 CP1(L01~L03)·CP2(L01~L06)와 단계 배지 처리. 배지 조건은 설정값 한 곳(`badge_rules`)으로 두어 나중에 바꾸기 쉽게.
+- X13(교사 콘텐츠 20:44 도착, data-spec 갱신): 01편은 L01.json **26단계**(최종 확정은 교사, 단계 수 하드코딩 금지, 분모는 데이터). step 선택 필드: `edits[]`(`target_step`, `where_ko`, `action`: insert|replace, `anchor_line`(null = 셀 맨 아래), `line_count`), `rerun_first[]`, `moved_code_lines`, `prepared_code_line_notes_ko`, `prepared_code_source_ko`, `kind: copy_run` + `cell_code_lines`(맛보기), 맛보기 전용 `code_alt_local`·`expected_output_example`·`aha_ko`·`summary_ko`·`minutes`·`question_ids`. **삭제**: `cell_mode`(edits 비었는지로 판단), `changed_lines_only`(edits[].action=replace로 합침). 문항 `alternate_of`(대체 문항 → 원 문항 id). 모두 선택 필드, 모르는 필드는 경고(실패 아님). edits 화면: anchor_line 흐리게 + 넣을 줄 강조 + "전체 보기".
+- X14(일부 열림): data-spec이 checkpoint에 `path_variants[]`(`path_id` office_worker|investor, `taken`, `replace[{from,to}]`, `remove_if_lecture_not_mastered`, `pass_ratio`, `badge_on_pass`, `gate`)와 요약 경로 배지(`BADGE-S1-SUMMARY`, `BADGE-SUMMARY-DONE`)를 제안. 스키마에 **선택 필드**로 받고, 학습자 기록에 `path_id`(full|office_worker|investor, 기본 full)를 둠. 최종 규칙은 교사 확정 대기라 배지 계산은 `badge_rules` 설정 한 곳.
+- 맛보기 노트북: Colab .ipynb는 `pedagogy/taster.md` 셀 내용(`content/taster.json`)으로 구현 쪽(P2)이 만듦. 검수 기준 = `inputs/pedagogy/content/test_content.py` 통과(CPU 약 7초, 손실 3.839 → 2.472).
+- 10편 1000스텝 실측은 프로토타입 뒤로 미룸(PM과 맥 자원 다투지 않게).
 
 승인 게이트
 - 얼큰이 승인: main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제(GPU 등).
@@ -90,7 +92,7 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 
 | 테이블 | 주요 칼럼 | 비고 |
 |---|---|---|
-| users | user_id(UUID PK), display_name, created_at, locale | 여러 계정 가능(로컬 개발 로그인으로 생성). 다른 테이블의 user_id는 FK |
+| users | user_id(UUID PK), path_id(full·office_worker·investor, 기본 full), display_name, created_at, locale | 여러 계정 가능(로컬 개발 로그인으로 생성). 다른 테이블의 user_id는 FK |
 | auth_identity | provider(dev_local 지금, email_otp·google 나중), subject, user_id(FK), created_at | AuthAdapter 뒤. 메일 발송·OAuth 미구현 |
 | sessions | session_id, user_id(FK), created_at, expires_at | 로컬 개발 로그인 세션 |
 | step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, updated_at | PK(user_id, step_id) |
@@ -98,7 +100,7 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 | rebuild_attempt | user_id, rebuild_id, passed, max_hint_level, at | |
 | mastery_state | user_id, target_id, state, steps_done_ratio, question_score_ratio, must_pass_ok, rebuild_ok, extra_checks_ok, mastered_at, updated_at | |
 | review_card | user_id, card_id, source_id, kind, interval_days, due_at, last_result, history_json, updated_at | |
-| checkpoint_attempt | user_id, checkpoint_id(CP1~CP3), attempt_no, covers_json, score_ratio, passed, max_hint_level, hand_task_self_check_json, started_at, at | 문항별 응답은 question_attempt에 checkpoint_attempt 번호를 달아 저장(checkpoint_attempt_no 칼럼). 잠금 동작(C5)은 설정값으로 |
+| checkpoint_attempt | path_id, user_id, checkpoint_id(CP1~CP3), attempt_no, covers_json, score_ratio, passed, max_hint_level, hand_task_self_check_json, started_at, at | 문항별 응답은 question_attempt에 checkpoint_attempt 번호를 달아 저장(checkpoint_attempt_no 칼럼). 잠금 동작(C5)은 설정값으로 |
 | diagnostic_result | user_id, attempt_no, answers_json, recommended_units_json, at | 기초 진단 F-D1~F-D5 |
 | taste_result | user_id, done_at, loss_start, loss_end, names_json, source(colab/precomputed) | 맛보기 완료 표시용, 사용자가 붙여넣은 값만 |
 | help_note | user_id, target_id, goal_ko, last_cell_code, error_last_line, env_json, hints_seen_json, created_at | 사용자 화면에만, 자동 발송 없음 |
@@ -116,7 +118,7 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 - question: `type`에 `choice` 추가, `choices`(2개 이상), `answer_index`(0부터), `auto_grade.type: choice`, `recommend_units_if_wrong`.
 - checkpoint: CP1~CP3, 문항 40개, `covers`, `unlocks_lecture`, `items`, `question_ids`, `pass_ratio` 0.8, `max_hint_level` 2, `hand_task_format`, `fail_action`.
 - 영상 구간 정본은 `inputs/pedagogy/video-segments.json`(영상 ID·길이·챕터·단계별 구간). 빌드 때 단계 파일과 합치고 어긋나면 빌드 실패.
-- 빌드 검사 추가: long_step ↔ new_code_lines 규칙, choice의 answer_index 범위, video_segments의 end_s 필수(null이면 실패)·start_s < end_s ≤ video_seconds, X13 새 필드는 선택(모르는 필드 경고), bridge_card 선택 스키마. 이유: 버전 관리·검수가 쉬움. 각 기록에 `content_version`을 붙여 내용이 바뀌어도 기록이 깨지지 않게.
+- 빌드 검사 추가: long_step ↔ new_code_lines 규칙, choice의 answer_index 범위, video_segments의 end_s 필수(null이면 실패)·start_s < end_s ≤ video_seconds, X13 새 필드는 선택(모르는 필드 경고), edits[].target_step·rerun_first id가 같은 편 안, alternate_of 문항은 원 문항과 type·max_points 같음, code 줄 수 = new + moved(+replace), bridge_card 선택 스키마. 이유: 버전 관리·검수가 쉬움. 각 기록에 `content_version`을 붙여 내용이 바뀌어도 기록이 깨지지 않게.
 
 영상 구간: v1.1에서 초 단위 `video_segments`로 정해짐. 임베드 `https://www.youtube-nocookie.com/embed/{youtube_video_id}?start={start_s}&end={end_s}&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=ko&hl=ko`(end_s 늘 있음, D49), 자동 재생 없음, 늘 "유튜브에서 열기"(`video_url&t={start_s}s`). 구간이 여럿이면 구간 버튼 여러 개. 빈 배열이면 플레이어 대신 "영상 없음" 상태.
 
