@@ -16,7 +16,7 @@
 | [karpathy/minbpe](https://github.com/karpathy/minbpe) | Copyright (c) 2024 Andrej | MIT | `third_party/licenses/minbpe-LICENSE.txt` | 아직 쓰지 않음 |
 
 - [karpathy/build-nanogpt](https://github.com/karpathy/build-nanogpt): 라이선스 표기 없음, 코드 복사 없이 링크만 (2026-11-16 GitHub에 LICENSE 파일 없음 확인).
-- 1편 노트북(`notebooks/ep01-micrograd/`)은 이 표를 쓴 시점(2026-11-16)에 아직 없습니다. 노트북에 원본 코드를 넣으면 그 작업에서 위치를 더합니다.
+- 1편 노트북(`notebooks/ep01-micrograd/ep01_solution.ipynb`, `ep01_student.ipynb`)은 교사 정본(`inputs/pedagogy/content/L01.json`)에서 생성하며, 그 코드는 karpathy/micrograd와 karpathy/nn-zero-to-hero(둘 다 MIT)의 방식을 따른다. 정답용에는 전체 코드가, 학생용에는 준비 코드(`draw_dot`)가 들어 있고 노트북 첫 셀에 출처를 적었다.
 
 ## 영상
 
