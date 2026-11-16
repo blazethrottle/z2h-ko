@@ -8,26 +8,37 @@
 1. 영상: 앱 단계 화면에 YouTube 공식 삽입(youtube-nocookie.com iframe embed). 해당 구간부터 재생(start=초, 필요 시 end=초). 영상 파일 재배포는 여전히 금지.
 2. 저장소: 비공개 blazethrottle/z2h-ko로 시작, 완성 후 공개 전환. 공개 전에 docs/PUBLIC_RELEASE_CHECKLIST.md(gitleaks 전체 이력 검사, MIT 원본 5개 LICENSE 전문·저작권자 NOTICE, build-nanogpt는 링크만) 확인. 공개 전환 자체는 그때 얼큰이 승인.
 
+## 얼큰이 결정 추가 반영 (2026-11-16 19:52 KST, CEO 전달)
+3. 진도는 맥미니에 저장해 폰과 맥에서 이어 보기. 맥미니에 작은 진도 저장 서버(localhost 전용), 브라우저 저장은 오프라인 임시 캐시와 동기화용. 폰 접속은 Cloudflare Tunnel + Cloudflare Access(얼큰이 이메일 한정) 같은 잠긴 주소로만, 공개 노출 없음.
+4. 실습 시간은 자동 측정하고 얼큰이님이 고칠 수 있게.
+5. 한국어 자막 기본 켜기(embed 매개변수 `cc_load_policy=1&cc_lang_pref=ko&hl=ko`).
+6. 10편 원본 규모 재현은 앱에 안내 한 줄만.
+
+### 네트워크·보안 게이트 (실행 전 CEO 사전 통보 필수)
+터널 생성, Access 정책, 방화벽, 포트 개방, DNS 등 네트워크·보안 설정을 바꾸는 단계는 실행 전에 CEO에게 먼저 알린다. PM·서브는 이런 설정을 바꾸지 않고 설계와 스크립트 초안까지만 쓴다. M0 단계에서 터널·Access는 만들지 않는다.
+
 ## 한 줄 요약
-폰에서 읽는 한국어 정적 웹앱 + 맥미니에서 돌리는 편별 실습 노트북(자동 채점 셀 포함). 10편 GPT-2는 맥에서 수십 분짜리 축소판이 기본. 유료 비용 0이 기본.
+폰에서 읽는 한국어 웹앱(맥미니의 작은 진도 서버가 진도 보관) + 맥미니에서 돌리는 편별 실습 노트북(자동 채점 셀 포함). 10편 GPT-2는 맥에서 수십 분짜리 축소판이 기본. 유료 비용 0이 기본.
 
 ---
 
 ## (a) 앱 구조
 
-### 1. 추천 스택: 정적 웹앱 (서버 없음)
+### 1. 추천 스택: 정적 웹앱 + 맥미니 진도 서버 (얼큰이 결정 3 반영)
 | 항목 | 추천 | 이유 |
 |---|---|---|
 | 프레임워크 | Astro + Preact 작은 부품(퀴즈·진도·힌트) | 글이 대부분인 강의 앱에 맞음. 콘텐츠 묶음(content collections)이 스키마 검사를 해 줘서 10편 자료 형식 오류를 빌드 단계에서 잡음. Preact는 BFB에서 이미 쓰는 기술 |
 | 대안 | Vite + Preact (BFB와 동일) | Astro가 낯설면 이쪽. 대신 스키마 검사를 따로 짜야 함 |
-| 서버 | 없음 | 로그인·DB가 없으면 비밀값·보안 부담이 0 |
-| 진도 저장 | 브라우저 저장(localStorage) + "진도 파일 내보내기/가져오기"(JSON) | 로그인 없음. 폰과 맥 사이는 파일 하나로 옮김. 나중에 원하면 동기화 추가(별도 결정) |
+| 진도 서버 | 맥미니의 작은 Python 서버(표준 라이브러리 또는 FastAPI 하나) + SQLite 파일 하나. `127.0.0.1`에만 바인드, 앱 정적 파일도 같이 제공 | 폰·맥 이어 보기. 외부 포트 개방 없음. 비밀번호·키를 앱에 넣지 않음(외부 접근 통제는 Access가 담당) |
+| 진도 저장 | 정본은 맥미니 SQLite. 브라우저(IndexedDB 또는 localStorage)는 오프라인 임시 캐시: 변경을 대기열에 쌓았다가 연결되면 서버로 보냄. 같은 항목 충돌은 `updated_at` 늦은 쪽 + 기록 보존. JSON 내보내기는 백업용 | 얼큰이 결정 3. data-spec.md 필드 그대로 저장 |
+| 폰 접속 | Cloudflare Tunnel(맥미니에서 바깥으로만 연결) + Cloudflare Access(얼큰이 이메일 한 명만 허용) | 공개 노출 없음. **설정은 네트워크·보안 게이트 대상(CEO 사전 통보), M0에서 만들지 않음** |
+| 실습 시간 | 단계 화면 열림~완료 사이 실제 머문 시간을 자동 측정(탭이 가려지거나 5분 이상 입력이 없으면 멈춤), 단계·편 화면에서 얼큰이님이 숫자를 고칠 수 있음(고친 값과 자동 값 둘 다 저장) | 얼큰이 결정 4 |
 | 노트북 실행 | 앱 밖: 맥미니 Jupyter(기본) 또는 Colab | 브라우저 안 파이썬(Pyodide)은 1편 일부만 가능하고 PyTorch가 안 돌아서 기본에서 제외, 선택 기능으로만 검토 |
-| 영상 | 단계 화면에 YouTube 공식 삽입: `https://www.youtube-nocookie.com/embed/{videoId}?start={초}&end={초}&rel=0` (iframe, 지연 로딩, 폰 폭 16:9) + "YouTube에서 열기" 링크(&t=초) | 얼큰이 결정 1. 공식 embed라 재배포 아님. 영상 파일·자막 전문은 저장 안 함 |
+| 영상 | 단계 화면에 YouTube 공식 삽입: `https://www.youtube-nocookie.com/embed/{videoId}?start={초}&end={초}&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=ko&hl=ko` (iframe, 지연 로딩, 자동 재생 없음, 폰 폭 16:9) + "YouTube에서 열기" 링크(&t=초). 한국어 자막 기본 켬(결정 5, 매개변수는 YouTube 공식 문서 확인). 한국어 자막 트랙이 없으면 플레이어가 다른 자막을 고를 수 있음(자동 번역 품질은 리서치가 표본 확인) | 얼큰이 결정 1. 공식 embed라 재배포 아님. 영상 파일·자막 전문은 저장 안 함 |
 
 화면 흐름(디자이너 확정 전 가안): 홈(10편 지도·진도) → 편 개요(목표·선행지식·예상시간) → 단계 화면(영상 구간 → 개념 → 코드 한 줄씩 풀이 → 따라하기 → 확인 문제 → 막힘 힌트) → 편 마무리(채점 결과 붙여넣기·체크).
 
-채점 결과 연결: 노트북 마지막 채점 셀이 "Z2H-결과코드"(편·단계별 통과 목록을 담은 짧은 문자열, 비밀 아님)를 출력. 얼큰이님이 앱에 붙여넣으면 진도에 반영. 서버 없이 노트북과 앱을 잇는 가장 단순한 방법.
+채점 결과 연결: 진도 서버가 켜져 있으면 노트북 채점 셀이 `http://127.0.0.1` 진도 서버로 결과를 바로 보냄. 서버가 꺼져 있을 때의 예비 방법: 노트북 마지막 채점 셀이 "Z2H-결과코드"(편·단계별 통과 목록을 담은 짧은 문자열, 비밀 아님)를 출력. 얼큰이님이 앱에 붙여넣으면 진도에 반영. 서버 없이 노트북과 앱을 잇는 가장 단순한 방법.
 
 ### 2. 콘텐츠 형식 (편별 단계 파일)
 - 편마다 폴더 1개: `content/ep01-micrograd/episode.yaml` + 단계별 `steps/NN-이름.mdx`
@@ -91,7 +102,7 @@ z2h-ko/
 - 원본 코드 사용: micrograd·makemore·nn-zero-to-hero·nanoGPT·minbpe는 MIT [확인됨]. build-nanogpt는 GitHub에 라이선스 표기가 없음 [확인됨] → 코드 복사 없이 링크만(설명은 우리말 재작성).
 - 공개 전환(얼큰이 결정 2): 비공개로 시작, 완성 후 공개. 전환 전 docs/PUBLIC_RELEASE_CHECKLIST.md 전 항목 통과 + 얼큰이 승인.
 
-### 4. 배포: 비공개 미리보기만
+### 4. 배포: 비공개 미리보기만 (폰 접속은 위 Tunnel + Access, 게이트 대상)
 - 기본: 맥미니에서 로컬 미리보기(`npm run preview`). 이것만으로 M1 검수 가능.
 - 폰 미리보기가 필요하면: Cloudflare Pages 미리보기 + Cloudflare Access(이메일 로그인 제한, 무료 범위) [가정: 무료 한도는 설정 시 재확인]. 주의: pages.dev 미리보기 주소는 Access를 켜지 않으면 누구나 열 수 있어 사실상 공개 배포임. Access 없이 올리지 않음.
 - 공개 배포는 얼큰이 승인 항목.
@@ -119,7 +130,7 @@ z2h-ko/
 10편 메모
 - 영상의 전 과정(모델 코드, 가중치 불러오기, 학습률 스케줄, 기울기 누적, 혼합 정밀도, 분산 학습 개념, 평가)을 축소판에서 모두 손으로 해 봄. 분산 학습(DDP)은 프로세스 1개로 구조만 실습 [맥확인: torchrun 1프로세스 동작].
 - MPS 주의 [맥확인]: torch.compile·bf16·fused AdamW 일부가 MPS에서 안 되거나 느릴 수 있음 → 노트북에 "맥에서는 이 줄을 끄세요" 분기와 이유 풀이.
-- 원본 124M 재현(영상 기준 8xA100급)은 유료 GPU라 별도 승인 항목(아래 g, h).
+- 원본 124M 재현(영상 기준 8xA100급)은 앱에 안내 한 줄만 둠(결정 6). 실제로 할 경우 유료 GPU라 결제 승인 항목(아래 g, h).
 
 공통 채점 방식
 - 학생 노트북 = 빈칸(`# 여기에 작성`) + 채점 셀 `z2h_check.check("ep03-s05", 변수)`. 틀리면 한국어로 "무엇이 다른지 + 힌트 번호" 출력.
@@ -148,6 +159,7 @@ Colab 메모: 비공개 저장소의 노트북은 Colab "바로 열기" 링크�
 | `CLAUDE_CODE_SUBAGENT_MODEL` + `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` | 모든 서브·팀원·워크플로 에이전트를 한 모델로 강제. 정의 파일 model·호출 시 model 무시. v2.1.257 이상 | 사용 (이중 잠금, --settings 파일의 env 블록에) |
 | `CLAUDE_CODE_EFFORT_LEVEL` 환경변수 | 메인·서브 모두의 강도를 하나로 덮어씀(정의의 effort보다 우선) | 쓰지 않음. 켜져 있으면 서브 xhigh가 medium으로 눌림. 발사 전 비어 있는지 확인 |
 | `ANTHROPIC_MODEL` | 메인 모델 지정 | 쓰지 않음(--model로 충분) |
+| `CLAUDE_CODE_DISABLE_ADVISOR_TOOL=1` | Advisor 도구 끔(`/advisor` 사용 불가, `advisorModel` 무시) [확인됨: code.claude.com/docs/en/env-vars] | 사용. z2h-run.settings.json env에만. 모델 검증에 다른 모델 값이 섞이지 않게 |
 
 예정 발사 형태(맥에서 실제 문자열 확인 후 확정, 지금은 실행 안 함):
 ```
@@ -176,6 +188,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 ### 실행 후 모델 검증
 - 세션 기록: `~/.claude/projects/<프로젝트경로>/<세션ID>.jsonl`, 서브 기록은 세션 폴더 아래 subagents/ [맥확인: 정확한 경로·필드명].
 - 집계 스크립트(`tests/verify_models.py`, PR에 포함): 모든 JSONL의 assistant 메시지 `message.model` 값을 메인/서브별로 세어 표로 출력. 합격 = 메인은 Fable 5.2 ID만, 서브는 Opus 5.5 ID만. 다른 값이 1건이라도 있으면 불합격으로 기록하고 CEO 보고(그 세션 산출물은 재검토).
+- 집계에서 advisor 관련 항목(도구 이름에 advisor가 들어간 호출·결과)이 보이면 따로 분류해 표시(끄기 설정이 듣지 않았다는 신호, 불합격 아님, CTO 보고).
 - 실행 중 확인: `/tasks`에서 서브 줄에 모델·강도 표시(v2.1.242 이상).
 - 결과는 `docs/model_audit/YYYYMMDD.md`에 남김(값 집계만, 비밀값 없음).
 
@@ -199,6 +212,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 | 자동 | 정답 대조 | z2h_check 테스트(pytest), 기준값 표와 허용오차 일치 |
 | 자동 | 콘텐츠 | 스키마 검사, 코드 줄 풀이 누락 0, 확인 문제·힌트 개수, 타임스탬프 범위 |
 | 디자이너 몽키 | 화면 | 폰 폭(390px 안팎)·맥 화면 스크린샷 검수, 디자인 토큰 일치, 글자 크기·대비 |
+| 자동 + CTO | 글꼴 | Pretendard 400·500·600·700 굵기별 파일 각각 연결, JetBrains Mono. 요소별 computed `font-weight`와 `[...document.fonts].map(f=>f.family+' '+f.weight+' '+f.status)` 전부 `loaded` 확인. button·code·textarea·input에 font-family 직접 지정 확인. 스크린샷만으로 판정 금지(맥에 Pretendard가 깔려 있으면 빠져도 정상처럼 보임) |
 | 교사 몽키 | 확인 문제·힌트 | 학습 목표와 문제 연결, 비개발자가 풀 수 있는 난이도, 채점 기준 |
 | 리서치 몽키 | 사실 | 타임스탬프·개념 설명이 원본과 일치 (표본 검사) |
 | 얼큰이 | 실제 사용 | 1편을 직접 해 보고 막힌 곳 기록 → M2 반영 |
@@ -249,7 +263,7 @@ Claude Max (이 계정은 Max 5x로 기록됨, 위키 기준 [맥확인])
 
 유료 비용: 기본 0원.
 - 선택 1, Colab Pro: 월 $9.99 (Pro+ $49.99) [확인됨: colab.research.google.com/signup, 미국 가격 표시]. 기본 계획엔 필요 없음.
-- 선택 2, 10편 원본 124M 재현: Karpathy는 "약 1시간, 약 $10"이라 적음(2024년 가격) [확인됨: github.com/karpathy/build-nanogpt README]. 현재 Lambda 8x A100 80GB 단가 $3.19/GPU/시간 → 시간당 약 $25.5, 8x H100 $4.59/GPU/시간 → 시간당 약 $36.7 [확인됨: lambda.ai/pricing, 2026-11-16 표시, 세금 별도]. 데이터 준비·설치·평가 포함 2~3시간 가정 시 약 $50~$110 [가정]. 얼큰이 승인 없이는 안 함.
+- 선택 2, 10편 원본 124M 재현(앱에는 "원본 규모 재현은 유료 클라우드 GPU가 필요해 이 앱에서는 축소판으로 전 과정을 실습합니다" 안내 한 줄만, 결정 6): Karpathy는 "약 1시간, 약 $10"이라 적음(2024년 가격) [확인됨: github.com/karpathy/build-nanogpt README]. 현재 Lambda 8x A100 80GB 단가 $3.19/GPU/시간 → 시간당 약 $25.5, 8x H100 $4.59/GPU/시간 → 시간당 약 $36.7 [확인됨: lambda.ai/pricing, 2026-11-16 표시, 세금 별도]. 데이터 준비·설치·평가 포함 2~3시간 가정 시 약 $50~$110 [가정]. 얼큰이 승인 없이는 안 함.
 
 ---
 
@@ -261,7 +275,7 @@ Claude Max (이 계정은 Max 5x로 기록됨, 위키 기준 [맥확인])
 
 CTO가 정하되 보고할 것
 4. 스택: Astro(추천) vs Vite+Preact
-5. 폰 미리보기 방식: 로컬만 vs Cloudflare Access 보호 미리보기 (Cloudflare 쓰기 권한 필요, 현재 계정 토큰은 읽기만 검증됨)
+5. 폰 접속: Cloudflare Tunnel + Access로 확정(결정 3). 만드는 시점·방법은 네트워크·보안 게이트(CEO 사전 통보). Cloudflare 쓰기 권한 필요, 현재 계정 토큰은 읽기만 검증됨
 6. 10편 축소판 데이터: FineWeb-Edu 일부 vs tiny shakespeare
 
 위험

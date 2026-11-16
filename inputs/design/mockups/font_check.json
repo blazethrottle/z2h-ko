@@ -1,0 +1,1282 @@
+{
+ "s1_home_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     12
+    ]
+   ],
+   ".big": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     1
+    ]
+   ],
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s2_lecture_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     27
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     4
+    ]
+   ],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s3_segment_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     12
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s4_practice_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     12
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": [
+    [
+     "JetBrains Mono",
+     "JetBrainsMono-Regular",
+     12
+    ]
+   ],
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     12
+    ]
+   ],
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s5_quiz_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     5
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s6_hints_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     2
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s7_review_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     2
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s8_basics_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     22
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s9_states_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     14
+    ]
+   ],
+   ".big": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     1
+    ]
+   ],
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": null,
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s10_l08_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     18
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": [
+    [
+     "Pretendard Medium",
+     "Pretendard-Medium",
+     22
+    ]
+   ],
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "s1_home_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     12
+    ]
+   ],
+   ".big": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     1
+    ]
+   ],
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s2_lecture_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     28
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     4
+    ]
+   ],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s3_segment_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     12
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s4_practice_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     12
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": [
+    [
+     "JetBrains Mono",
+     "JetBrainsMono-Regular",
+     12
+    ]
+   ],
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     12
+    ]
+   ],
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s5_quiz_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     5
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s6_hints_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     2
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s7_review_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     2
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s8_basics_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     23
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s9_states_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     14
+    ]
+   ],
+   ".big": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     1
+    ]
+   ],
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": null,
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
+   ".tabbar a": []
+  }
+ },
+ "s10_l08_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "unloaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": false,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     18
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": [],
+   ".next b": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     3
+    ]
+   ],
+   ".chip": null,
+   ".opt span:nth-child(2)": [
+    [
+     "Pretendard Medium",
+     "Pretendard-Medium",
+     22
+    ]
+   ],
+   ".tabbar a": []
+  }
+ }
+}

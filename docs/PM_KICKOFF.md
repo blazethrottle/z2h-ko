@@ -4,7 +4,17 @@
 
 읽을 것 (먼저)
 1. docs/DESIGN.md (CTO 설계 초안 사본)
-2. 팀 자료 research/, pedagogy/, design/ (CTO가 inputs/ 아래로 복사해 줌. 아직 비어 있을 수 있음. 기다리지 말고 초안부터 진행하고, 들어오면 반영 목록을 남겨라)
+2. 팀 입력 자료 (저장소 inputs/ 아래, 2026-11-16 도착). 서로 다르면 이 우선순위를 따른다:
+   - 화면·디자인: inputs/design/HANDOFF.md 가 최우선, 그다음 spec.md, tokens.json, flow.md. 목업 HTML은 구조 참고만.
+   - 학습 내용·문제·힌트·진도 필드: inputs/pedagogy/ (data-spec.md 필드 이름을 그대로 쓴다). 07·10편 학습 시간은 실측 전 제안값이니 CTO 실측(docs/MEASURE_M0.md)이 오면 바꾼다.
+   - 영상 구간·원본 코드·막힘 지점: inputs/research/. 10편 build-nanogpt 커밋 대응은 리서치 판단이라 네가 원본 저장소 이력과 대조해 검수하라.
+   - 위 자료와 docs/DESIGN.md 가 다르면 DESIGN.md의 '얼큰이 결정' 절이 이긴다.
+
+얼큰이 결정 (확정, 그대로 구현)
+- 영상: youtube-nocookie 공식 embed, 단계의 videoId+start(초)부터 재생, 자동 재생 없음, 한국어 자막 기본 켬(`cc_load_policy=1&cc_lang_pref=ko&hl=ko`).
+- 진도: 맥미니의 작은 진도 서버(Python + SQLite, 127.0.0.1 전용)가 정본. 브라우저 저장은 오프라인 임시 캐시와 동기화 대기열. 폰 접속은 나중에 Cloudflare Tunnel + Access(얼큰이 이메일 한정)로 연다(이번 범위 아님).
+- 실습 시간: 자동 측정 + 얼큰이님이 고칠 수 있게(자동 값·고친 값 둘 다 저장).
+- 10편 원본 규모 재현: 앱에 안내 한 줄만.
 
 이번 범위: M0 설계 확정 → M1 (앱 뼈대 + 0편 틀 + 1편 micrograd 수직 슬라이스). M2 이후는 하지 마라.
 
@@ -14,7 +24,9 @@ M0 산출물 (브랜치 `m0-design`, PR 1개)
 - 결정이 필요한 질문은 PR 본문 맨 위 "결정 필요" 목록으로 (최대 5개)
 
 M1 산출물 (브랜치 `m1-skeleton-ep01`, PR 1개)
-- app/: 홈(10편 지도·진도), 편 개요, 단계 화면(맨 위에 youtube-nocookie 공식 embed, 단계의 videoId·start초부터 재생), 확인 문제, 힌트, 진도 저장(localStorage) + 내보내기/가져오기, 결과코드 붙여넣기
+- server/: 진도 저장 서버(127.0.0.1 바인드, SQLite, data-spec.md 학습 기록 필드, 동기화 API, 테스트). 터널·Access·방화벽·포트 설정은 만들지 말고 docs/PHONE_ACCESS_PLAN.md 에 설계와 스크립트 초안만(실행 금지)
+- app/: 홈(10편 지도·진도), 편 개요, 단계 화면(맨 위에 youtube-nocookie 공식 embed, 단계의 videoId·start초부터 재생), 확인 문제, 힌트, 진도 서버 동기화 + 오프라인 임시 캐시, 실습 시간 자동 측정·수정, JSON 백업 내보내기, 결과코드 붙여넣기(서버 꺼졌을 때 예비)
+- 글꼴: Pretendard 400·500·600·700 굵기별 파일 각각 @font-face, JetBrains Mono, button·code·textarea·input에 font-family 직접 지정. 검사: computed font-weight와 document.fonts 전부 loaded (inputs/design/HANDOFF.md 4절)
 - 콘텐츠 스키마 + 빌드 검사(코드 줄 풀이 누락 0, 단계마다 확인 문제 1개 이상, 힌트 2단계 이상, 타임스탬프 범위)
 - z2h_check/: check(), 결과코드 생성, pytest
 - notebooks/ep00-basics/ 틀, env/ 환경 점검 노트북(MPS 사용 가능 여부 출력)
@@ -36,5 +48,6 @@ M1 산출물 (브랜치 `m1-skeleton-ep01`, PR 1개)
 5. 영상은 youtube-nocookie 공식 embed(`https://www.youtube-nocookie.com/embed/{videoId}?start={초}`)와 링크만. 모든 단계에 videoId+start(초) 필수. 영상 파일·자막 전문을 저장소에 넣지 마라. 저장소는 나중에 공개 전환될 수 있으니 docs/PUBLIC_RELEASE_CHECKLIST.md 를 처음부터 지켜라(원본 코드 파일 머리에 출처 한 줄, MIT LICENSE 전문은 third_party/licenses/). build-nanogpt는 라이선스 표기가 없으니 코드를 복사하지 말고 링크만 걸어라(MIT 저장소: micrograd, makemore, nn-zero-to-hero, nanoGPT, minbpe는 출처 표기 후 사용 가능).
 6. 10편은 축소판이 기본이다(맥 MPS에서 수십 분 이내). 원본 124M 재현은 유료 GPU라 이번 범위 아님.
 7. 막히면 추측으로 메우지 말고 "미확인"으로 적어라.
+8. 네트워크·보안 설정(Cloudflare Tunnel, Access 정책, 방화벽, 포트 개방, DNS, 공유 설정)은 바꾸지 마라. 설계와 스크립트 초안까지만 쓰고 실행하지 마라. 실행은 CTO가 CEO에 사전 통보한 뒤에 한다. 서버는 127.0.0.1에만 바인드한다.
 
 끝나면: PR 링크, 테스트 결과, 결정 필요 목록을 한 화면 분량으로 요약하라.

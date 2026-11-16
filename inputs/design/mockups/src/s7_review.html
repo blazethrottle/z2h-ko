@@ -1,0 +1,54 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>복습</title><link rel="stylesheet" href="z2h.css"><style>
+.q{display:grid;gap:var(--s2)}
+.item{display:flex;gap:var(--s3);align-items:flex-start;padding:var(--s3) 0;border-top:1px solid var(--line);min-height:56px}
+.item:first-child{border-top:0}
+.item .bd{flex:1}
+.flash{border:2px solid var(--accent)}
+.ans{background:var(--paper-sunken);border-radius:var(--r-md);padding:var(--s3) var(--s4)}
+.three{display:grid;grid-template-columns:1fr;gap:var(--s2)}
+.three .btn{flex-direction:column;gap:0;min-height:56px;padding:6px var(--s3)}
+.three .btn small{font-weight:500;font-size:13px;opacity:.9}
+@media(min-width:420px){.three{grid-template-columns:repeat(3,1fr)}}
+.lay{display:grid;gap:var(--s5)}
+@media(min-width:1024px){.lay{grid-template-columns:1.2fr 1fr;align-items:start}}
+.ivl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+.ivl span{padding:2px 8px;border-radius:var(--r-sm);background:var(--paper-sunken)}
+.ivl span.on{background:var(--accent-tint);color:var(--accent);font-weight:700}
+</style></head><body>
+<header class="topbar"><span class="brand">Z2H<small>제로 투 히어로 실습</small></span><nav class="topnav" aria-label="주 메뉴"><a href="#" >홈</a><a href="#" >강의</a><a href="#" aria-current=page>복습</a><a href="#" >기초</a></nav><span class="sync" role="status" aria-label="진도 저장됨"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg> 저장됨</span><span class="sample">예시 화면</span></header>
+<main class="wide"><div class="stack">
+<h1 class="t1">복습</h1>
+<p class="muted num">오늘 5장 · 약 12분 / 하루 최대 25분 · 1 / 5</p>
+</div>
+<div class="lay" style="margin-top:var(--s5)">
+<section class="card flash stack" aria-labelledby="fc">
+ <div class="row"><span class="badge">개념 카드</span><span class="cap">RC-L01-Q07-1 · 지금 간격 3일</span></div>
+ <h2 id="fc" class="t2"><code>backward()</code>가 노드를 거꾸로 도는 이유를 내 말로 설명해 보세요.</h2>
+ <div class="ans" role="region" aria-label="모범 설명"><p><b>모범 설명:</b> 결과 쪽 기울기가 다 모인 뒤에야 재료에게 나눠 줄 수 있기 때문입니다.</p></div>
+ <p class="small muted">스스로 떠올린 것과 비교해 하나를 고르세요. 다음 복습 날짜만 바뀝니다.</p>
+ <div class="three">
+  <button class="btn">틀렸어요<small>1일 뒤 다시</small></button>
+  <button class="btn">헷갈려요<small>3일 그대로</small></button>
+  <button class="btn primary">기억났어요<small>7일 뒤</small></button>
+ </div>
+ <div class="ivl" aria-label="복습 간격"><span>1일</span>→<span class="on">3일</span>→<span>7일</span>→<span>14일</span>→<span>30일</span>→<span>졸업 뒤 60일마다</span></div>
+</section>
+<div class="stack">
+<section class="card" aria-labelledby="tq">
+ <h2 id="tq" class="t3" style="margin-bottom:var(--s2)">오늘 남은 것 · 약 10분</h2>
+ <div class="q">
+  <div class="item"><span class="badge">예측</span><div class="bd"><p class="small">MLP(2, [3, 1])의 파라미터 개수는?</p><p class="cap">L01 · 간격 1일 · 약 2분</p></div></div>
+  <div class="item"><span class="badge ng"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg> 다시</span><div class="bd"><p class="small">+ 노드와 * 노드의 기울기 전달 차이</p><p class="cap">L01-Q04 · 어제 절반 → 1일 · 약 3분</p></div></div>
+  <div class="item"><span class="badge">기초</span><div class="bd"><p class="small">F-M2 연쇄 법칙 감각</p><p class="cap">힌트 2단계가 이 단위를 가리켜 되살림 · 약 3분</p></div></div>
+  <div class="item"><span class="badge">개념</span><div class="bd"><p class="small">grad를 매번 비워야 하는 이유</p><p class="cap">L01 · 간격 3일 · 약 2분</p></div></div>
+ </div>
+</section>
+<section class="card" aria-labelledby="up">
+ <h2 id="up" class="t3" style="margin-bottom:var(--s2)">다음 복습</h2>
+ <p class="small num">11월 17일 (화) · 3장 · 약 8분</p><p class="small num">11월 19일 (목) · 2장 · 약 5분</p>
+ <p class="cap" style="margin-top:var(--s2)">기억났어요는 다음 간격으로, 헷갈려요는 같은 간격을 한 번 더, 틀렸어요만 1일로 돌아갑니다. 25분을 넘는 날은 간격이 긴 카드를 하루 미룹니다. 빼먹은 날도 벌점은 없습니다.</p>
+</section>
+<div class="next small"><b>다음:</b><span>예측 · MLP(2, [3, 1])의 파라미터 개수는?</span></div>
+</div></div></main>
+<nav class="tabbar" aria-label="주 메뉴"><a href="#" ><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/></svg></span>홈</a><a href="#" ><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>강의</a><a href="#" aria-current=page><span class="ico" aria-hidden="true">↻</span>복습</a><a href="#" ><span class="ico" aria-hidden="true">◇</span>기초</a></nav></body></html>

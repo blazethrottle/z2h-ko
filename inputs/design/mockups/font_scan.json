@@ -1,0 +1,112 @@
+{
+ "s10_l08@390": {
+  "Pretendard": 657,
+  "Pretendard SemiBold": 122,
+  "Pretendard Medium": 350
+ },
+ "s1_home@390": {
+  "Pretendard": 924,
+  "Pretendard SemiBold": 455,
+  "Pretendard Medium": 250
+ },
+ "s2_lecture@390": {
+  "Pretendard": 1287,
+  "Pretendard SemiBold": 597,
+  "Pretendard Medium": 60
+ },
+ "s3_segment@390": {
+  "Pretendard": 757,
+  "Pretendard SemiBold": 100,
+  "Pretendard Medium": 514,
+  "JetBrains Mono": 10
+ },
+ "s4_practice@390": {
+  "Pretendard": 944,
+  "Pretendard SemiBold": 179,
+  "Pretendard Medium": 214,
+  "JetBrains Mono": 586
+ },
+ "s5_quiz@390": {
+  "Pretendard": 509,
+  "Pretendard SemiBold": 242,
+  "Pretendard Medium": 236,
+  "JetBrains Mono": 34
+ },
+ "s6_hints@390": {
+  "Pretendard": 535,
+  "Pretendard SemiBold": 107,
+  "Pretendard Medium": 212,
+  "JetBrains Mono": 58
+ },
+ "s7_review@390": {
+  "Pretendard": 665,
+  "Pretendard SemiBold": 90,
+  "Pretendard Medium": 456,
+  "JetBrains Mono": 20
+ },
+ "s8_basics@390": {
+  "Pretendard": 822,
+  "Pretendard SemiBold": 179,
+  "Pretendard Medium": 20
+ },
+ "s9_states@390": {
+  "Pretendard": 746,
+  "Pretendard SemiBold": 517,
+  "Pretendard Medium": 478
+ },
+ "s10_l08@1280": {
+  "Pretendard": 660,
+  "Pretendard SemiBold": 118,
+  "Pretendard Medium": 374
+ },
+ "s1_home@1280": {
+  "Pretendard": 924,
+  "Pretendard SemiBold": 451,
+  "Pretendard Medium": 274
+ },
+ "s2_lecture@1280": {
+  "Pretendard": 1324,
+  "Pretendard SemiBold": 593,
+  "Pretendard Medium": 82
+ },
+ "s3_segment@1280": {
+  "Pretendard": 1000,
+  "Pretendard SemiBold": 112,
+  "Pretendard Medium": 580,
+  "JetBrains Mono": 10
+ },
+ "s4_practice@1280": {
+  "Pretendard": 1326,
+  "Pretendard SemiBold": 200,
+  "Pretendard Medium": 300,
+  "JetBrains Mono": 586
+ },
+ "s5_quiz@1280": {
+  "Pretendard": 516,
+  "Pretendard SemiBold": 242,
+  "Pretendard Medium": 258,
+  "JetBrains Mono": 34
+ },
+ "s6_hints@1280": {
+  "Pretendard": 1706,
+  "Pretendard SemiBold": 365,
+  "Pretendard Medium": 310,
+  "JetBrains Mono": 310
+ },
+ "s7_review@1280": {
+  "Pretendard": 669,
+  "Pretendard SemiBold": 86,
+  "Pretendard Medium": 480,
+  "JetBrains Mono": 20
+ },
+ "s8_basics@1280": {
+  "Pretendard": 832,
+  "Pretendard SemiBold": 175,
+  "Pretendard Medium": 42
+ },
+ "s9_states@1280": {
+  "Pretendard": 744,
+  "Pretendard SemiBold": 513,
+  "Pretendard Medium": 500
+ }
+}

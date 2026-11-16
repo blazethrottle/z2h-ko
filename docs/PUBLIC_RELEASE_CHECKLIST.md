@@ -28,6 +28,10 @@
 - [ ] 영상은 youtube-nocookie 공식 embed와 링크만, 영상 파일·자막 전문 0건
 - [ ] data/ 의 데이터마다 출처·라이선스 표기 (names.txt: makemore MIT, tiny shakespeare: 출처 표기)
 
+## 3-1. 글꼴·입력 자료
+- [ ] Pretendard, JetBrains Mono 글꼴 파일은 SIL OFL 1.1 라이선스 사본을 함께 두기(공개 전 각 배포처에서 재확인)
+- [ ] inputs/ 폴더의 팀 자료에 내부 경로·개인 정보·비밀값 없는지 확인, 공개본에 남길지 결정
+
 ## 4. 저장소 상태
 - [ ] 우리 코드의 라이선스 결정(얼큰이): 예) MIT 또는 비공개 유지
 - [ ] 커밋·PR에 Co-Authored-By·Claude 꼬리표·링크 0건 (`git log --all --format=%B | rg -i "co-authored-by|claude"`)

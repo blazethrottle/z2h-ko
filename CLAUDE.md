@@ -11,4 +11,7 @@
 7. 원본 코드: micrograd, makemore, nn-zero-to-hero, nanoGPT, minbpe는 MIT, 파일 머리에 출처 한 줄 + third_party/licenses/ 에 LICENSE 전문. build-nanogpt는 라이선스 표기가 없으니 코드 복사 없이 링크만. docs/PUBLIC_RELEASE_CHECKLIST.md 를 처음부터 지킨다.
 8. 마일스톤 PR 본문은 "한 일 / 테스트 결과 / 맥 실행 로그 요약 / 남은 일"을 쉬운 한국어로. 모르는 것은 추측하지 말고 "미확인"으로 적는다.
 
+9. 네트워크·보안 설정(Cloudflare Tunnel, Access 정책, 방화벽, 포트 개방, DNS)은 바꾸지 않는다. 설계와 스크립트 초안까지만. 실행은 CTO가 CEO에 사전 통보한 뒤. 서버는 127.0.0.1에만 바인드.
+10. 입력 자료 우선순위: 화면은 inputs/design/HANDOFF.md 최우선, 학습 내용·진도 필드는 inputs/pedagogy(data-spec.md), 영상 구간·원본 대조는 inputs/research. docs/DESIGN.md의 '얼큰이 결정' 절이 모든 것보다 우선.
+
 실습 환경: 저장소 안 .venv (시스템 파이썬에 설치 금지). 10편은 축소판이 기본(맥 MPS 수십 분 이내).

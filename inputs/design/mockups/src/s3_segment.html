@@ -1,0 +1,42 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>강의 구간</title><link rel="stylesheet" href="z2h.css"><style>
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);list-style:none;padding:0;margin:0}
+.steps li{display:flex;flex-direction:column;gap:2px;padding:var(--s2) var(--s3);border-radius:var(--r-md);border:1px solid var(--line);background:var(--paper-raised);font-size:13px;font-weight:600;color:var(--ink-muted)}
+.steps li b{font-size:15px;color:var(--ink)}
+.steps li[aria-current]{border:2px solid var(--accent);color:var(--accent)}
+.sum{margin:0;padding-left:1.4em}
+.sum li+li{margin-top:var(--s2)}
+.term{display:grid;grid-template-columns:auto 1fr;gap:var(--s1) var(--s4);align-items:baseline}
+.term dt{font-family:var(--font-code);font-weight:600;font-size:14px;background:var(--paper-sunken);padding:0 8px;border-radius:var(--r-sm);font-variant-ligatures:none}
+.term dd{margin:0}
+.lay{display:grid;gap:var(--s6)}
+.rail{display:none}
+@media(min-width:1024px){.lay{grid-template-columns:1fr 300px}.rail{display:block}}
+.mini a{display:flex;gap:10px;min-height:44px;align-items:center;font-size:14px;color:var(--ink);text-decoration:none;border-radius:var(--r-sm);padding:0 var(--s2)}
+.mini a.now{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.mini a .no{font-variant-numeric:tabular-nums;color:var(--ink-muted);width:1.6em}
+.mini a.done .no{color:var(--correct)}
+</style></head><body>
+<header class="topbar"><a class="back" href="#" aria-label="강의 개요로">‹</a><span class="brand">Z2H<small>제로 투 히어로 실습</small></span><nav class="topnav" aria-label="주 메뉴"><a href="#" >홈</a><a href="#" aria-current=page>강의</a><a href="#" >복습</a><a href="#" >기초</a></nav><span class="sync" role="status" aria-label="진도 저장됨"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg> 저장됨</span><span class="sample">예시 화면</span></header>
+<main class="wide"><div class="lay"><div class="stack">
+<p class="cap">01 micrograd · <span class="num">단계 4 / 16</span> · L01-S04</p>
+<h1 class="t1">Value 클래스 뼈대</h1>
+<section class="pcard" aria-label="영상 구간 19:09–32:10"><div class="pc-head"><div><h2>영상 <span class="num">19:09–32:10</span></h2><span class="cap num">유튜브 공식 챕터 기준</span></div><button class="btn sm ghost" aria-expanded="true" aria-controls="pl">접기 <svg class="ic" width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button></div><div class="player ready" id="pl"><span class="lbl">YouTube 플레이어 자리 (목업)</span><button class="playbtn" aria-label="영상 재생, 19:09부터">▶</button><span class="sub">누르면 19:09부터 재생 · 한국어 자막 켜짐 · 자동 재생 없음</span><span class="range"><span>19:09</span><i></i><span>32:10에 멈춤</span></span></div><div class="pc-foot"><a href="#" aria-label="유튜브에서 19:09부터 열기, 새 창">유튜브에서 열기 ↗</a><span class="cap">32:10에서 멈춥니다</span></div><p class="pc-note cap">자막: 한국어 자막(YouTube 자동 번역)을 켜서 엽니다. YouTube가 한국어 자막을 주지 않으면 영어 자막이나 자막 없이 재생됩니다. 그때는 아래 세 줄 요약과 핵심 개념으로 내용을 확인하세요.</p></section>
+<p class="cap">이 영상 구간(유튜브 공식 챕터 19:09–32:10)은 단계 4~6이 함께 씁니다.</p>
+<p><b>이 단계에서 하는 일:</b> 숫자 하나에 기울기 칸과 재료 기록을 붙인 상자(Value)를 만듭니다.</p>
+<ol class="steps" aria-label="이 단계의 순서"><li aria-current="step">1 · 지금<b>영상 보기</b></li><li>2<b>따라 하기</b></li><li>3<b>결과 비교</b></li></ol>
+<section class="card stack" aria-labelledby="sm">
+ <h2 id="sm" class="t3">세 줄 요약 (예시)</h2>
+ <ol class="sum"><li>신경망 계산은 숫자를 많이 더하고 곱하는 일입니다.</li><li>각 숫자가 결과에 얼마나 영향을 주는지(기울기)를 알아야 학습할 수 있습니다.</li><li>그래서 숫자와 기울기, 재료 기록을 한 상자에 담는 Value를 먼저 만듭니다.</li></ol>
+</section>
+<section class="card stack" aria-labelledby="kc">
+ <h2 id="kc" class="t3">이 단계의 새 개념 1개</h2>
+ <dl class="term"><dt>Value</dt><dd>숫자 하나를 감싸는 상자. data(실제 숫자), grad(기울기, 처음엔 0), _prev(나를 만든 재료), _op(어떤 계산으로 만들어졌는지)를 가집니다.</dd></dl>
+ <p class="cap">익힘 판정 뒤 복습 카드로 다시 나옵니다.</p>
+</section>
+<a class="btn primary block" href="#">따라 하기 시작</a>
+<div class="next small"><b>다음:</b><span>따라 하기 · 코드 8줄로 Value 만들기</span></div>
+</div>
+<aside class="rail"><div class="card"><p class="cap" style="margin-bottom:var(--s2)">01 micrograd · 16단계</p><nav class="mini" aria-label="단계 목록"><a href="#" class="done"><span class="no"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span>함수 그래프 그리기</a><a href="#" class="done"><span class="no"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span>숫자 기울기</a><a href="#" class="done"><span class="no"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span>입력이 여러 개일 때</a><a href="#" class="now"><span class="no">04</span>Value 클래스 뼈대</a><a href="#" class=""><span class="no">05</span>덧셈과 곱셈 기록하기</a><a href="#" class=""><span class="no">06</span>계산 그래프 그림</a><a href="#" class=""><span class="no">07</span>손으로 기울기 채우기</a><a href="#" class=""><span class="no">08</span>한 걸음 움직여 보기</a><a href="#" class=""><span class="no">09</span>뉴런과 tanh</a><a href="#" class=""><span class="no">10</span>_backward를 노드 안에 넣기</a><a href="#" class=""><span class="no">11</span>위상 정렬과 backward()</a><a href="#" class=""><span class="no">12</span>같은 값을 두 번 쓰는 버그</a><a href="#" class=""><span class="no">13</span>더 많은 연산과 PyTorch 비교</a><a href="#" class=""><span class="no">14</span>Neuron, Layer, MLP</a><a href="#" class=""><span class="no">15</span>학습 반복</a><a href="#" class=""><span class="no">16</span>grad 비우기를 빼먹는 버그</a></nav></div></aside>
+</div></main>
+<nav class="tabbar" aria-label="주 메뉴"><a href="#" ><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/></svg></span>홈</a><a href="#" aria-current=page><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>강의</a><a href="#" ><span class="ico" aria-hidden="true">↻</span>복습</a><a href="#" ><span class="ico" aria-hidden="true">◇</span>기초</a></nav></body></html>
