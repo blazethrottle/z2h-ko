@@ -10,6 +10,7 @@ import Inline from './Inline';
 import { IconCheck, IconExternal } from './Icons';
 import { TASTER_ID, TasteBar, TasteCode, TasteHints, TasteOutput, TasteQuestion, tasteHref, useTaste, type TasteNav, type TasteQuestionPub, type TasteStep } from './TasteParts';
 import { gated } from './Gate';
+import { useBadgeAwards } from './BadgeNotice';
 
 export interface TasteNotebook {
   file: string;
@@ -68,6 +69,8 @@ export function NotebookCard({ notebook, colabUrl }: { notebook: TasteNotebook; 
 function TasteStepAppView(p: Props) {
   const s = p.step;
   const { rt, loaded, attemptNo, status } = useTaste(p.requiredSteps);
+  // 단계를 순서와 다르게 확인해 마지막 확인이 이 화면에서 끝나도 완료 표시를 저장한다
+  useBadgeAwards(rt, { taste: { required_steps: p.requiredSteps, content_version: p.contentVersion } });
   const [hint, setHint] = useHintState(rt, s.step_id);
   const [msg, setMsg] = useState<string | null>(null);
   const total = p.steps.length;
@@ -124,6 +127,12 @@ function TasteStepAppView(p: Props) {
           <Inline text={s.input_ko} />
           {s.kind === 'copy_run' && ' 코드를 이해할 필요는 없고, 풀이를 읽기만 하면 됩니다.'}
         </p>
+        {first && !p.colabUrl && (
+          // 정본 문구("맛보기 노트북 열기 단추를 누르면 …")는 그대로 두고, 바로 열기 주소가 없는 동안의 앱 문구를 덧붙인다
+          <p class="small" data-testid="taste-open-note">
+            지금은 노트북을 받아 Colab에 올려서 엽니다(아래 안내).
+          </p>
+        )}
       </header>
 
       <div class="tgrid">

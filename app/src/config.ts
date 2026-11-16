@@ -1,5 +1,5 @@
 // 앱 설정 한 곳 (DESIGN.md 12.6절). 바꿀 때는 이 파일만 고친다.
-// 콘텐츠 검사용 설정(영상 없는 단계 목록, 노트북 경로)은 src/content-config.mjs.
+// 콘텐츠 검사용 설정(영상 없는 단계 목록, 노트북 경로)은 src/content-config.mjs. 배지·도장 규칙은 src/badge-rules.ts.
 
 export type CheckpointLock = 'recommend' | 'lock';
 
@@ -23,10 +23,18 @@ export interface AppConfig {
   activityFlushMs: number;
   /** 영상이 이 시간 안에 안 뜨면 오류 상태 */
   videoLoadTimeoutMs: number;
-  /** 공유 카드 크기 (X15 미정, 설정값 한 곳) */
-  shareCard: { width: number; height: number };
-  /** 배지 규칙 자리 (D47: 단계 배지는 누적 점검 통과로, CP 단독 배지 없음). 계산 코드는 아직 없음 */
-  badgeRules: { badge_id: string; name_ko: string; on_pass: string }[];
+  /** 공유 카드 (spec 13.5). 크기는 D56 1200 × 675 (taster.json format 의 "1080 × 1080"은 D56·taster.md 4절로 바뀜) */
+  shareCard: {
+    width: number;
+    height: number;
+    /** 카드 아래 앱 이름과 짧은 이름(글 복사) */
+    appName: string;
+    appShort: string;
+    /** 학습 기록 카드: 손실 줄을 이만큼까지만 받는다 */
+    maxLossPoints: number;
+  };
+  /** 화면 부품이 이 시간 안에 켜지지(마운트) 않으면 "화면을 불러오지 못했습니다" 한 줄 (Base.astro) */
+  gateTimeoutMs: number;
   /** 새 개발 계정의 기본 이름 */
   devAccountName: string;
   /** 30분 맛보기 (spec 13.2, taster.md 4절) */
@@ -44,10 +52,10 @@ export interface TasteConfig {
   /** "보여야 하는 것"이 길면 앞 3줄 + … + 끝 2줄 */
   outputHeadLines: number;
   outputTailLines: number;
-  /** 이름 붙여 넣기 정리: 최대 줄 수, 한 이름 최대 글자 수(넘으면 자름) */
+  /** 이름 붙여 넣기 정리: 최대 줄 수, 한 이름 최대 글자 수(넘는 줄은 a~z 밖 줄처럼 저장·카드에서 뺀다) */
   maxNames: number;
   maxNameChars: number;
-  /** 카드에서 뺄 이름(금칙어) 목록. 교사·CEO 확정 전이라 비어 있음(taster.md 4절 "앱의 금칙어 목록") */
+  /** 카드에서 뺄 이름(금칙어) 목록. 교사·CEO 확정 전이라 비어 있음(taster.md 4절 "앱의 금칙어 목록"). 지어 넣지 않는다 */
   blockedNames: string[];
 }
 
@@ -63,12 +71,8 @@ export const config: AppConfig = {
   idleLimitMs: 5 * 60_000,
   activityFlushMs: 15_000,
   videoLoadTimeoutMs: 10_000,
-  shareCard: { width: 1200, height: 675 },
-  badgeRules: [
-    { badge_id: 'BADGE-S1', name_ko: '언어 모델 견습', on_pass: 'CP1' },
-    { badge_id: 'BADGE-S2', name_ko: '신경망 정비사', on_pass: 'CP2' },
-    { badge_id: 'BADGE-S3', name_ko: 'GPT 제작자', on_pass: 'CP3' },
-  ],
+  shareCard: { width: 1200, height: 675, appName: 'Z2H 제로 투 히어로 실습', appShort: 'Z2H', maxLossPoints: 200 },
+  gateTimeoutMs: 10_000,
   devAccountName: '개발용 계정',
   taste: {
     colabOpenUrl: null,

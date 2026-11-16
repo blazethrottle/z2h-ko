@@ -1,4 +1,6 @@
 // 2 강의 개요 (spec 2절): 단계 목록·상태, 선행 기초 추천(잠금 아님), 노트북 받기 + Colab 안내, 결과코드, 익힘 판정.
+// 익힘(mastered)이 되면 편 도장(user_badge, src/badge-rules.ts)을 저장하고 이 화면 안 한 줄로 알린다(spec 13.4).
+// 공유 결과물(정본 rewards.artifact)이 열리는 단계를 마치면 "학습 기록 카드 만들기" 링크를 보인다.
 import { useEffect } from 'preact/hooks';
 import { config } from '../config';
 import { computeMastery, MASTERY_LABEL } from '../lib/mastery';
@@ -10,6 +12,7 @@ import { IconExternal } from './Icons';
 import ResultCodePaste from './ResultCodePaste';
 import Inline from './Inline';
 import { gated } from './Gate';
+import { BadgeNotice, useBadgeAwards } from './BadgeNotice';
 
 interface StepItem {
   step_id: string;
@@ -34,11 +37,20 @@ interface Props {
   steps: StepItem[];
   questions: { question_id: string; max_points: number; must_pass: boolean }[];
   rebuild: { rebuild_id: string; title_ko: string; task_ko?: string | null }[];
+  contentVersion: string;
+  /** 편 도장 id (정본 rewards.stamp.stamp_id) */
+  stampId: string | null;
+  /** 공유 결과물 (정본 rewards.artifact). 열리는 단계를 마치면 카드 만들기 링크 */
+  artifact: { name_ko: string; unlock_step_id: string; unlock_label: string; href: string } | null;
 }
 
 function LectureAppView(p: Props) {
   const rt = useRuntime();
   const t = useTables(rt, ['step_progress', 'question_attempt', 'rebuild_attempt', 'grade_result', 'user_pref', 'mastery_state']);
+  const fresh = useBadgeAwards(
+    rt,
+    p.stampId ? { stamps: [{ lecture_id: p.lectureId, mark: p.lectureId.slice(1), available: true, stamp_id: p.stampId, content_version: p.contentVersion }] } : {},
+  );
   const rows = t?.step_progress ?? [];
   const statusOf = (id: string) => rows.find((r) => r.step_id === id)?.status as string | undefined;
   const ids = new Set(p.steps.map((s) => s.step_id));
@@ -101,6 +113,7 @@ function LectureAppView(p: Props) {
           <span class="badge ok num">✓ {doneCount} 완료</span>
           {m && <span class="badge cur">{MASTERY_LABEL[m.state]}</span>}
         </div>
+        <BadgeNotice awards={fresh} />
         <div class="bar" role="progressbar" aria-valuemin={0} aria-valuemax={p.steps.length} aria-valuenow={doneCount} aria-label={`${p.lectureLabel} 진도 ${p.steps.length}단계 중 ${doneCount}단계 완료`}>
           <i style={`width:${pct}%`} />
         </div>
@@ -216,6 +229,26 @@ function LectureAppView(p: Props) {
       </section>
 
       <ResultCodePaste rt={rt} lectureId={p.lectureId} />
+
+      {p.artifact && (
+        <section class="card stack-sm" aria-labelledby="artifact-h" data-testid="artifact">
+          <h2 class="t3" id="artifact-h">
+            {p.artifact.name_ko}
+          </h2>
+          {STEP_DONE.has(statusOf(p.artifact.unlock_step_id)) ? (
+            <>
+              <p class="small">노트북에서 나온 손실 줄을 붙여 넣으면 손실 꺾은선 카드를 만들 수 있습니다. 공유는 내가 직접 합니다.</p>
+              <a class="btn block" href={p.artifact.href} data-testid="make-l01-card">
+                학습 기록 카드 만들기
+              </a>
+            </>
+          ) : (
+            <p class="small" data-testid="artifact-locked">
+              이 단계를 마치면 만들 수 있습니다: {p.artifact.unlock_label}
+            </p>
+          )}
+        </section>
+      )}
 
       <section class="card stack-sm" aria-label="핵심 재구성 과제와 익힘 판정">
         <h2 class="t3">핵심 재구성 과제 · 익힘 판정</h2>

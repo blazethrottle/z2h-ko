@@ -23,6 +23,8 @@ export const GET: APIRoute = () => {
     })),
     questions: d.questions.map((q: any) => ({ question_id: q.question_id, type: q.type, grade_type: q.grade_type, hint_levels: q.hint_levels, scored: q.scored, after_step: q.after_step })),
     rebuild_ids: d.rebuild.map((r: any) => r.rebuild_id),
+    stamp_id: d.lecture.rewards?.stamp?.stamp_id ?? null,
+    artifact_id: d.lecture.rewards?.artifact?.artifact_id ?? null,
   }));
   const t: any = loadTaster();
   const taster = {
@@ -34,5 +36,7 @@ export const GET: APIRoute = () => {
     steps: t.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, kind: s.kind, cell_code_lines: s.cell_code_lines, question_ids: s.question_ids, hint_levels: s.hint_levels })),
     questions: t.questions.map((q: any) => ({ question_id: q.question_id, after_step: q.after_step, choices: (q.choices ?? []).length })),
   };
-  return new Response(JSON.stringify({ source: site.source, lectures, step_counts: site.stepCounts, taster }), { headers: { 'content-type': 'application/json; charset=utf-8' } });
+  // 편 목록 전체(내용이 없는 편 포함): 배지 화면의 편 도장 수를 테스트가 콘텐츠에서 센다
+  const lecture_list = site.lectures.map((l: any) => ({ lecture_id: l.lecture_id, available: !!l.available }));
+  return new Response(JSON.stringify({ source: site.source, lectures, lecture_list, step_counts: site.stepCounts, taster }), { headers: { 'content-type': 'application/json; charset=utf-8' } });
 };

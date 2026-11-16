@@ -1,6 +1,7 @@
 // 상단 바 동기화 표시 (spec 0.6): ✓ 저장됨 / ↻ 동기화 중(1초 넘을 때만) / ✕ 오프라인 + 지금 다시 시도
 // 서버가 계정 없음(401)이면 오프라인과 구분해 "계정을 골라 주세요" (설정의 개발용 계정으로 이동)
-// 계정·첫 서버 확인이 끝나기 전(정적 HTML 포함)은 checking: 화면에는 비워 두고 읽기 프로그램에만 "동기화 상태 확인 중"
+// 계정·첫 서버 확인이 끝나기 전(정적 HTML 포함)은 checking: 옅은 글자 "확인 중"을 보인다(spec 0.6 "늘 표시", P2 검수 권고).
+// "저장됨"은 계정과 첫 확인이 끝난 뒤에만 보인다
 import { useState } from 'preact/hooks';
 import { useRuntime, useSyncState } from './hooks';
 import { IconCheck, IconCross, IconSync } from './Icons';
@@ -17,7 +18,7 @@ function SyncStatusView() {
       <span role="status" aria-live="polite">
         {display === 'checking' ? (
           <span class="sync-btn checking" data-state="checking">
-            <span class="sr-only">동기화 상태 확인 중</span>
+            <span class="sr-only">동기화 상태 </span>확인 중
           </span>
         ) : display === 'account' ? (
           <a class="sync-btn account" href="/settings/#account" data-state="account">

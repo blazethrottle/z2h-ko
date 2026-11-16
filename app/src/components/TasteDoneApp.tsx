@@ -1,7 +1,9 @@
 // 맛보기 끝 화면 = 마지막 단계(T-S08 정리와 다음 길) (spec 13.2, 목업 v2_taste_done).
 // "맛보기 완료"는 배지가 아니라 표시다(VALUE 2절). 필요한 단계를 이 시도에서 모두 "직접 확인했어요"로 누르면 보인다.
 // 이름 붙여 넣기 카드: T-S07 출력(이름)과 첫·마지막 손실(선택)을 붙여 넣어 taster_result(T-S07 줄)에 저장한다. 앱이 확인하지 않은 값이다.
-// 카드 그림 그리기·X에 공유는 P3 범위라 만들지 않는다. 가입·로그인 화면도 없다(자리 문구 한 줄).
+// a~z 밖 글자가 있거나 20글자 넘는 줄은 저장·카드에서 뺀다(개인 정보를 붙여 넣는 경우 대비, P2 검수 권고 2).
+// 저장한 뒤 "이름 카드 만들기"로 공유 카드 화면(/share/?card=ART-TASTER)에 간다. 가입·로그인 화면은 없다(자리 문구 한 줄).
+// 맛보기 완료가 되면 완료 표시(user_badge TASTER-DONE, 배지 아님)를 저장한다(src/badge-rules.ts).
 import { useEffect, useState } from 'preact/hooks';
 import { config } from '../config';
 import { openHint, recordAttempt } from '../lib/hints';
@@ -12,6 +14,7 @@ import Inline from './Inline';
 import { IconCheck } from './Icons';
 import { TasteBar, TasteHints, tasteHref, useTaste, type TasteNav, type TasteStep } from './TasteParts';
 import { gated } from './Gate';
+import { useBadgeAwards } from './BadgeNotice';
 
 export interface TasteArtifact {
   name_ko: string;
@@ -32,6 +35,7 @@ interface Props {
 function TasteDoneAppView(p: Props) {
   const s = p.step;
   const { rt, rows, loaded, attemptNo, status } = useTaste(p.requiredSteps);
+  useBadgeAwards(rt, { taste: { required_steps: p.requiredSteps, content_version: p.contentVersion } });
   const [hint, setHint] = useHintState(rt, s.step_id);
   const total = p.steps.length;
   const confirmed = status.confirmed.has(s.step_id);
@@ -205,7 +209,13 @@ function NamesCard(p: Props & { rows: Record<string, any>[]; attemptNo: number; 
 
   const save = async () => {
     setMsg(null);
-    if (!clean.names.length) return setMsg({ ok: false, text: '붙여 넣은 이름이 없습니다. Colab의 출력 칸에서 이름 줄을 복사해 붙여 넣어 주세요.' });
+    if (!clean.names.length)
+      return setMsg({
+        ok: false,
+        text: clean.flagged.length || clean.blockedRemoved.length
+          ? '남은 이름이 없어 저장하지 않았습니다. 모델 출력만 넣어 주세요. 카드도 만들 수 없습니다.'
+          : '붙여 넣은 이름이 없습니다. Colab의 출력 칸에서 이름 줄을 복사해 붙여 넣어 주세요.',
+      });
     const ls = parseLoss(lossStart);
     const le = parseLoss(lossEnd);
     if (!ls.ok || !le.ok) return setMsg({ ok: false, text: '손실 칸에는 숫자만 넣어 주세요 (예: 3.84). 비워 두어도 됩니다.' });
@@ -293,15 +303,23 @@ function NamesCard(p: Props & { rows: Record<string, any>[]; attemptNo: number; 
           <div aria-live="polite" class="stack-sm">
             {clean.flagged.length > 0 && (
               <p class="small" data-testid="taste-names-flag">
-                모델 출력만 넣어 주세요. a~z 이외 글자가 있거나 {config.taste.maxNameChars}글자가 넘는 줄: {clean.flagged.join(', ')}번째
+                모델 출력만 넣어 주세요. a~z 이외 글자가 있거나 {config.taste.maxNameChars}글자가 넘는 줄은 저장하지 않고 카드에도 넣지 않습니다: {clean.flagged.join(', ')}번째 줄
               </p>
             )}
-            {clean.truncated > 0 && <p class="small">{config.taste.maxNameChars}글자가 넘는 이름은 앞 {config.taste.maxNameChars}글자만 저장합니다.</p>}
             {clean.dropped > 0 && <p class="small">이름은 {config.taste.maxNames}줄까지만 저장합니다. 뒤 {clean.dropped}줄은 넣지 않습니다.</p>}
-            {clean.blockedRemoved.length > 0 && <p class="small">카드에 넣지 않는 이름이 있어 뺐습니다. 셀을 다시 실행해 새 이름을 받아 보세요.</p>}
+            {clean.blockedRemoved.length > 0 && (
+              <p class="small" data-testid="taste-names-blocked">
+                카드에 넣지 않는 이름이 있어 뺐습니다. 셀을 다시 실행해 새 이름을 받아 보세요.
+              </p>
+            )}
+            {names.trim() !== '' && clean.names.length === 0 && (
+              <p class="small" data-testid="taste-names-none">
+                남은 이름이 없습니다. 이대로는 저장하거나 카드를 만들 수 없습니다.
+              </p>
+            )}
           </div>
           <p class="cap">
-            a~z 이외 글자나 {config.taste.maxNameChars}글자가 넘는 줄이 있으면 "모델 출력만 넣어 주세요"라고 알려 드립니다. {a.disclaimer_ko}
+            a~z 이외 글자나 {config.taste.maxNameChars}글자가 넘는 줄은 "모델 출력만 넣어 주세요"라고 알리고 저장·카드에서 뺍니다. {a.disclaimer_ko}
           </p>
           <button type="button" class="btn block" onClick={save} data-testid="taste-save-names">
             저장
@@ -321,9 +339,15 @@ function NamesCard(p: Props & { rows: Record<string, any>[]; attemptNo: number; 
               </pre>
             </div>
           )}
-          <p class="cap" data-testid="taste-card-later">
-            카드 만들기는 준비 중입니다.
-          </p>
+          {savedText ? (
+            <a class="btn block" href="/share/?card=ART-TASTER" data-testid="taste-make-card">
+              이름 카드 만들기
+            </a>
+          ) : (
+            <p class="cap" data-testid="taste-card-after-save">
+              이름을 저장하면 이름 카드를 만들 수 있습니다.
+            </p>
+          )}
         </>
       )}
     </section>

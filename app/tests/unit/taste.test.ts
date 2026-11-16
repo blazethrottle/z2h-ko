@@ -24,36 +24,42 @@ import {
 
 const OUTPUTS = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster_outputs.json'), 'utf8'));
 
-describe('이름 붙여 넣기 정리 (최대 10줄, 한 이름 20글자)', () => {
+describe('이름 붙여 넣기 정리 (최대 10줄, a~z 밖 줄·20글자 넘는 줄은 저장·카드에서 뺌)', () => {
   it('교사 출력 10줄은 그대로', () => {
     const r = cleanNames(OUTPUTS['T-S07']);
     expect(r.names).toEqual(OUTPUTS['T-S07'].trim().split('\n'));
     expect(r.flagged).toEqual([]);
     expect(r.text).toBe(OUTPUTS['T-S07'].trim());
   });
-  it('빈 줄·앞뒤 공백은 빼고, 10줄을 넘으면 앞 10줄만, 20글자를 넘으면 자른다', () => {
-    const lines = ['  gsli  ', '', 'abcdefghijklmnopqrstuvwxyz', ...Array.from({ length: 12 }, (_, i) => `n${'a'.repeat(i + 1)}`)];
+  it('빈 줄·앞뒤 공백은 빼고, 10줄을 넘으면 앞 10줄만, 20글자를 넘는 줄은 자르지 않고 뺀다', () => {
+    const lines = ['  gsli  ', '', 'abcdefghijklmnopqrstu', ...Array.from({ length: 12 }, (_, i) => `n${'a'.repeat(i + 1)}`)];
     const r = cleanNames(lines.join('\r\n'));
     expect(r.names).toHaveLength(config.taste.maxNames);
     expect(r.names[0]).toBe('gsli');
-    expect(r.names[1]).toBe('abcdefghijklmnopqrst');
-    expect(r.names[1]).toHaveLength(config.taste.maxNameChars);
-    expect(r.truncated).toBe(1);
-    expect(r.dropped).toBe(lines.filter((l) => l.trim()).length - config.taste.maxNames);
+    expect(r.names[1]).toBe('na');
+    expect(r.names.some((n) => n.length > config.taste.maxNameChars)).toBe(false);
+    expect(r.flagged).toEqual([2]);
+    expect(r.dropped).toBe(lines.filter((l) => l.trim()).length - 1 - config.taste.maxNames);
     expect(r.text.split('\n')).toEqual(r.names);
+    // 딱 20글자는 넣는다
+    expect(cleanNames('abcdefghijklmnopqrst').names).toEqual(['abcdefghijklmnopqrst']);
   });
-  it('a~z 밖 글자나 20글자 넘는 줄은 표시(모델 출력만 넣어 주세요)', () => {
-    const r = cleanNames('gsli\n홍길동\n010-1234\nKenah\nabcdefghijklmnopqrstu');
-    expect(r.flagged).toEqual([2, 3, 4, 5]);
+  it('a~z 밖 글자나 20글자 넘는 줄은 표시(모델 출력만 넣어 주세요)하고 저장·카드에서 뺀다 (개인 정보 대비)', () => {
+    const r = cleanNames('gsli\n홍길동\n010-1234\nKenah\nabcdefghijklmnopqrstu\nme@mail.com\ndi');
+    expect(r.flagged).toEqual([2, 3, 4, 5, 6]);
+    expect(r.names).toEqual(['gsli', 'di']);
+    expect(r.text).not.toMatch(/홍길동|010|@|Kenah/);
   });
-  it('금칙어 목록에 있는 이름은 뺀다 (목록은 설정 한 곳, 지금은 비어 있음)', () => {
+  it('금칙어 목록에 있는 이름은 뺀다 (목록은 설정 한 곳, 지금은 비어 있음. 지어 넣지 않는다)', () => {
     expect(config.taste.blockedNames).toEqual([]);
     const r = cleanNames('gsli\nbadword\ndi', { blocked: ['BadWord'] });
     expect(r.names).toEqual(['gsli', 'di']);
     expect(r.blockedRemoved).toEqual(['badword']);
   });
-  it('비어 있으면 이름 0개', () => {
+  it('남은 이름이 없으면 0개 (저장·카드 불가)', () => {
     expect(cleanNames('  \n \n').names).toEqual([]);
+    expect(cleanNames('홍길동\n010-1234-5678').names).toEqual([]);
+    expect(cleanNames('badword', { blocked: ['badword'] }).names).toEqual([]);
   });
 });
 

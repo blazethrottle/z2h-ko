@@ -2,7 +2,7 @@
 // 강의 개요 /lectures/L01/
 import Base from '../../../layouts/Base.astro';
 import LectureApp from '../../../components/LectureApp.tsx';
-import { lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
+import { lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
 import { config } from '../../../config';
 
 export function getStaticPaths() {
@@ -20,6 +20,7 @@ const speak = MR.speak_check
     }
   : null;
 const nbName = L.notebook?.student ? String(L.notebook.student).split('/').pop() : null;
+const art = lectureArtifact(lid);
 ---
 <Base title={L.title_ko} nav="lectures" back="/home/">
   <LectureApp
@@ -43,5 +44,8 @@ const nbName = L.notebook?.student ? String(L.notebook.student).split('/').pop()
     steps={d.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, meaning_ko: s.meaning_ko, check_id: s.check_id ?? null, kind: s.kind }))}
     questions={d.questions.map((q: any) => ({ question_id: q.question_id, max_points: q.max_points, must_pass: q.must_pass }))}
     rebuild={d.rebuild.map((r: any) => ({ rebuild_id: r.rebuild_id, title_ko: r.title_ko, task_ko: r.task_ko ?? null }))}
+    contentVersion={L.content_version}
+    stampId={L.rewards?.stamp?.stamp_id ?? null}
+    artifact={art ? { name_ko: art.name_ko, unlock_step_id: art.unlock_step.step_id, unlock_label: `단계 ${art.unlock_step.order} · ${art.unlock_step.title_ko}`, href: `/share/?card=${art.artifact_id}` } : null}
   />
 </Base>

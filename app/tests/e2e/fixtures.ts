@@ -22,6 +22,8 @@ export class MockApi {
   /** /api/me 응답만 늦춘다(계정 목록이 화면의 계정 확인보다 먼저 오는 경우를 만든다) */
   meDelayMs = 0;
   forwardedHeaders: string[] = [];
+  /** 서버에 이미 있는 행(다른 기기에서 올린 것처럼). 첫 상태 받기(since 없음)에만 돌려준다 */
+  serverTables: Record<string, any[]> = {};
 
   async attach(page: Page) {
     await page.route('**/api/**', async (route) => {
@@ -87,7 +89,7 @@ export class MockApi {
       if (url.pathname === '/api/state') {
         const since = url.searchParams.get('since');
         if (since != null && !/^\d+$/.test(since)) return route.fulfill({ status: 400, json: { ok: false, error: 'bad_since' } });
-        return route.fulfill({ json: { server_time: now, server_seq: this.ops.length, tables: {} } });
+        return route.fulfill({ json: { server_time: now, server_seq: this.ops.length, tables: since == null ? this.serverTables : {} } });
       }
       return route.fulfill({ status: 404, json: {} });
     });

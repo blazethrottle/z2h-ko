@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'preact/hooks';
+import { useEffect, useState, useCallback, useRef } from 'preact/hooks';
 import { getRuntime, type Runtime } from '../lib/runtime';
 import type { Row } from '../lib/sync/store';
 import type { SyncState } from '../lib/sync/manager';
@@ -46,16 +46,17 @@ export function useSyncState(rt: Runtime | null): SyncState | null {
   return s;
 }
 
-/** 이 기기에만 두는 화면 상태 */
+/** 이 기기에만 두는 화면 상태. 저장해 둔 값을 늦게 읽어 와도, 그 사이 사용자가 바꾼 값을 덮지 않는다 */
 export function useUiState<T>(rt: Runtime | null, key: string, initial: T): [T, (v: T) => void, boolean] {
   const [v, setV] = useState<T>(initial);
   const [ready, setReady] = useState(false);
+  const touched = useRef(false);
   useEffect(() => {
     if (!rt) return;
     let alive = true;
     rt.store.getUi<T>(key).then((x) => {
       if (!alive) return;
-      if (x !== undefined) setV(x);
+      if (x !== undefined && !touched.current) setV(x);
       setReady(true);
     });
     return () => {
@@ -64,6 +65,7 @@ export function useUiState<T>(rt: Runtime | null, key: string, initial: T): [T, 
   }, [rt, key]);
   const set = useCallback(
     (nv: T) => {
+      touched.current = true;
       setV(nv);
       void rt?.store.setUi(key, nv);
     },

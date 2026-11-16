@@ -16,6 +16,8 @@ export function isNoVideoStep(stepId) {
  */
 export const TASTER = {
   file: 'taster.json',
+  /** 맛보기 코드의 원본 저장소(화면 아래 출처 한 줄). 근거: NOTICE.md 표(makemore·nn-zero-to-hero 행, 둘 다 MIT) */
+  sourceRepos: ['karpathy/makemore', 'karpathy/nn-zero-to-hero'],
   outputsFile: 'taster_outputs.json',
   notebook: 'notebooks/taster/taster.ipynb',
   publicDir: '/notebooks/taster/',

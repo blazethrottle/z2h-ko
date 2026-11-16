@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { canOpen, openHint, type HintState, type UnlockRule } from '../lib/hints';
 import { fetchJsonOnce, answersUrl, hintsUrl, type Runtime } from '../lib/runtime';
+import { handleRadioKey } from '../lib/radio';
 import { attemptOf, codeFold, foldOutput, tasteStatus } from '../lib/taste';
 import { CopyButton, highlight, splitLines } from './CodeBlock';
 import { HelpMemo } from './HintLadder';
@@ -204,10 +205,12 @@ export function TasteQuestion({ rt, q }: { rt: Runtime | null; q: TasteQuestionP
               setPick(i);
               void load();
             }}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown' || e.key === 'ArrowRight') setPick(((pick ?? -1) + 1) % choices.length);
-              if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') setPick(((pick ?? 0) - 1 + choices.length) % choices.length);
-            }}
+            onKeyDown={(e) =>
+              handleRadioKey(e, pick, choices.length, (n) => {
+                setPick(n);
+                void load();
+              })
+            }
           >
             <span class="on num">{i + 1}</span>
             <span class="grow">{c}</span>

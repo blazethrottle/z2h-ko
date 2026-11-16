@@ -26,4 +26,8 @@ const prereq = (d?.lecture.prereq_units ?? []).map((u: string) => ({ unit_id: u,
 ---
 <Base title="홈" nav="home" wide>
   <HomeApp client:load lectures={lectures} main={main} prereq={prereq} />
+  <p class="row home-links">
+    <a class="btn" href="/badges/" data-testid="home-badges">배지와 편 도장</a>
+    <a class="btn" href="/share/" data-testid="home-share">공유 카드</a>
+  </p>
 </Base>

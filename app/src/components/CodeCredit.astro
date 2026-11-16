@@ -1,0 +1,16 @@
+---
+// 단계 화면 아래 코드 출처 한 줄 (저장소 규칙 7, NOTICE.md, P2 검수 권고). 저장소 링크는 새 창, 외부 스크립트 없음.
+interface Props {
+  credit: { text: string; repos: { name: string; url: string }[] };
+}
+const { credit } = Astro.props;
+---
+<p class="cap code-credit" data-testid="code-credit">
+  {credit.text}.
+  {credit.repos.map((r, i) => (
+    <>
+      {i > 0 ? ' · ' : ' '}
+      <a href={r.url} target="_blank" rel="noopener noreferrer">github.com/{r.url.replace('https://github.com/', '')}</a>
+    </>
+  ))}
+</p>

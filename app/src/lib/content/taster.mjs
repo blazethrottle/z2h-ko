@@ -209,6 +209,8 @@ export function buildTaster(tb) {
             name_ko: lecture.artifact.name_ko,
             unlock_after: lecture.artifact.unlock_after,
             ...lecture.artifact.card_fields,
+            // X 글쓰기 창에 미리 채우는 글(정본 그대로). 자동 게시·이미지 첨부 없음(attach_image·auto_post false)
+            prefill_ko: lecture.artifact.x_compose?.prefill_ko ?? null,
           }
         : null,
       next_ko: lecture.next_ko ?? [],

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { gradeQuestion, scoreAttempt, scoreLineKo, bestQuestionScore, type GradeResult } from '../lib/grading';
 import { recordAttempt } from '../lib/hints';
+import { handleRadioKey } from '../lib/radio';
 import { answersUrl, fetchJsonOnce, type Runtime } from '../lib/runtime';
 import type { Row } from '../lib/sync/store';
 import { nowKst, uuid4 } from '../lib/time';
@@ -236,8 +237,7 @@ export default function QuestionCard({
               onClick={() => !locked && setChoice(i)}
               onKeyDown={(e) => {
                 if (locked) return;
-                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') setChoice(((choice ?? -1) + 1) % q.choices!.length);
-                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') setChoice(((choice ?? 0) - 1 + q.choices!.length) % q.choices!.length);
+                handleRadioKey(e, choice, q.choices!.length, setChoice);
               }}
             >
               <span class="on num">{i + 1}</span>

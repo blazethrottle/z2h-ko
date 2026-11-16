@@ -27,6 +27,12 @@ export function tokensToCss(t) {
   for (const [k, v] of Object.entries(t.size)) lines.push(`  --${k}: ${v}px;`);
   lines.push(`  --motion-duration: ${t.motion.duration};`);
   lines.push(`  --motion-easing: ${t.motion.easing};`);
+  // 공유 카드 1200x675 전용 크기 (spec 13.5). canvas 가 이 변수를 읽어 그린다. lineHeight 는 단위 없음
+  for (const [k, v] of Object.entries(t['share-card'] ?? {})) {
+    if (k.startsWith('$')) continue;
+    const name = k.replace(/-lineHeight$/, '-lh');
+    lines.push(`  --share-card-${name}: ${/lineHeight$/.test(k) ? v : `${v}px`};`);
+  }
   lines.push('}', '');
   return lines.join('\n');
 }

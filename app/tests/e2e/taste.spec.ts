@@ -52,6 +52,8 @@ test('맛보기: 첫 화면에서 시작해 모든 단계를 "직접 확인했�
   await expect
     .poll(() => [...new Set(api.opsFor('taster_result').filter((o) => o.data.self_reported === 'similar').map((o) => o.key.step_id))].sort())
     .toEqual([...T.requires_steps].sort());
+  // 맛보기 완료 표시(배지 아님)는 user_badge TASTER-DONE 한 행
+  await expect.poll(() => api.opsFor('user_badge').map((o) => o.key.badge_id)).toEqual(['TASTER-DONE']);
   for (const o of api.opsFor('taster_result')) {
     expect(o.key.attempt_no).toBe(config.taste.firstAttemptNo);
     expect(o.data.user_id).toBeUndefined();
@@ -135,7 +137,8 @@ test('끝 화면: 이름 카드는 앞 단계 확인 뒤 열리고, 붙여 넣�
   const card = page.getByTestId('taste-names-card');
   await expect(card).toContainText('첫 모델이라 아직 서툴러요');
   await expect(card).toContainText('이름, 주소, 전화번호 같은 개인 정보는 넣지 마세요');
-  await expect(card.getByTestId('taste-card-later')).toContainText('카드 만들기는 준비 중');
+  await expect(card.getByTestId('taste-card-after-save')).toContainText('이름을 저장하면 이름 카드를 만들 수 있습니다');
+  await expect(card.getByTestId('taste-make-card')).toHaveCount(0);
   await expect(card.getByTestId('taste-names')).toHaveCSS('font-family', /JetBrains Mono/);
 
   const ten: string[] = OUT[T.artifact_unlock_after].trim().split('\n');
@@ -149,8 +152,11 @@ test('끝 화면: 이름 카드는 앞 단계 확인 뒤 열리고, 붙여 넣�
   await card.getByTestId('taste-loss-end').fill('2.472');
   await card.getByTestId('taste-save-names').click();
   await expect(card.getByTestId('taste-names-result')).toContainText(`이름 ${config.taste.maxNames}개`);
-  const want = [long.slice(0, config.taste.maxNameChars), ...ten.slice(0, config.taste.maxNames - 1)].join('\n');
+  // 20글자 넘는 줄은 자르지 않고 뺀다(P2 검수 권고 2)
+  const want = ten.slice(0, config.taste.maxNames).join('\n');
   await expect(card.getByTestId('taste-names-saved')).toHaveText(want);
+  await expect(card.getByTestId('taste-make-card')).toHaveText('이름 카드 만들기');
+  await expect(card.getByTestId('taste-make-card')).toHaveAttribute('href', '/share/?card=ART-TASTER');
   await expect
     .poll(() => {
       const o = api.opsFor('taster_result').filter((x) => x.key.step_id === T.artifact_unlock_after && x.data.pasted_names_text != null).pop();
@@ -206,6 +212,10 @@ test('첫 단계: Colab 바로 열기 주소가 없으면 버튼을 숨기고 �
   await expect(nb.getByTestId('taste-colab-open')).toHaveCount(0);
   await expect(nb).toContainText('colab.research.google.com');
   await expect(nb).toContainText('Colab은 Google 로그인이 필요할 수 있습니다.');
+  // 정본 문구는 그대로 두고 그 아래 앱 문구 한 줄 (P2 검수 권고)
+  const tsteps = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster.json'), 'utf8')).steps;
+  await expect(page.locator('main header')).toContainText(plain(tsteps[0].input_ko));
+  await expect(page.getByTestId('taste-open-note')).toHaveText('지금은 노트북을 받아 Colab에 올려서 엽니다(아래 안내).');
   await expect(nb.getByTestId('taste-precomputed-link')).toHaveAttribute('href', '/taste/precomputed/');
   if (T.notebook_available) {
     const href = await nb.getByTestId('taste-notebook-download').getAttribute('href');
@@ -278,4 +288,49 @@ test('계정이 없는 첫 실행(서버 꺼짐)에도 이 기기에 먼저 저�
   await expect.poll(() => api.opsFor('taster_result').map((o) => [o.key.step_id, o.data.self_reported])).toContainEqual([s.step_id, 'similar']);
   expect(api.accounts).toHaveLength(1);
   await expect(page.getByTestId('taste-confirmed')).toBeVisible();
+});
+
+test('이름 붙여 넣기 안전: 한글·전화번호·이메일·대문자·20글자 넘는 줄은 저장·카드에서 빠지고, 남은 이름이 0개면 저장하지 않는다', async ({ page, api }) => {
+  test.setTimeout(120_000);
+  const T = await taster(page);
+  const last = T.steps[T.steps.length - 1];
+  // 앞 단계 확인은 서버에 이미 있는 기록으로 둔다(다른 기기에서 확인한 것처럼)
+  const at = '2026-11-16T09:00:00.000+09:00';
+  api.serverTables = { taster_result: T.steps.slice(0, -1).map((s: any) => ({ attempt_no: 1, step_id: s.step_id, self_reported: 'similar', at, updated_at: at })) };
+  await page.goto(`/taste/${last.slug}/`);
+  await hydrated(page);
+  const card = page.getByTestId('taste-names-card');
+  await card.getByTestId('taste-names').fill(['홍길동', '010-1234-5678', 'me@mail.example'].join('\n'));
+  await expect(card.getByTestId('taste-names-flag')).toContainText('1, 2, 3번째 줄');
+  await expect(card.getByTestId('taste-names-none')).toContainText('남은 이름이 없습니다');
+  await card.getByTestId('taste-save-names').click();
+  await expect(card.getByTestId('taste-names-result')).toContainText('저장하지 않았습니다');
+  await page.waitForLoadState('networkidle');
+  expect(api.opsFor('taster_result').some((o) => o.data.pasted_names_text != null)).toBe(false);
+
+  await card.getByTestId('taste-names').fill(['gsli', '홍길동', 'Kenah', 'abcdefghijklmnopqrstu', 'di', 'me@mail.example'].join('\n'));
+  await expect(card.getByTestId('taste-names-flag')).toContainText('2, 3, 4, 6번째 줄');
+  await card.getByTestId('taste-save-names').click();
+  await expect(card.getByTestId('taste-names-saved')).toHaveText('gsli\ndi');
+  await expect
+    .poll(() => api.opsFor('taster_result').filter((o) => o.data.pasted_names_text != null).pop()?.data.pasted_names_text)
+    .toBe('gsli\ndi');
+  for (const o of api.opsFor('taster_result')) expect(JSON.stringify(o.data)).not.toMatch(/홍길동|010-|mail\.example|Kenah/);
+});
+
+test('단계 화면 아래 코드 출처 한 줄: 맛보기는 makemore·nn-zero-to-hero, 1편은 micrograd·nn-zero-to-hero (MIT)', async ({ page, api }) => {
+  const m = await manifest(page);
+  const T = m.taster;
+  await page.goto(`/taste/${T.steps[1].slug}/`);
+  const tc = page.getByTestId('code-credit');
+  await expect(tc).toContainText('이 코드는 Andrej Karpathy의 makemore와 nn-zero-to-hero(MIT 라이선스)를 따라 만든 것입니다');
+  await expect(tc.getByRole('link')).toHaveCount(2);
+  await expect(tc.getByRole('link').first()).toHaveAttribute('href', 'https://github.com/karpathy/makemore');
+  const L = m.lectures[0];
+  await page.goto(`/lectures/${L.lecture_id}/${L.steps[0].slug}/`);
+  const lc = page.getByTestId('code-credit');
+  await expect(lc).toContainText('이 코드는 Andrej Karpathy의 micrograd와 nn-zero-to-hero(MIT 라이선스)를 따라 만든 것입니다');
+  await expect(lc.getByRole('link').first()).toHaveAttribute('href', 'https://github.com/karpathy/micrograd');
+  await expect(lc.getByRole('link').nth(1)).toHaveAttribute('href', 'https://github.com/karpathy/nn-zero-to-hero');
+  for (const a of await lc.getByRole('link').all()) await expect(a).toHaveAttribute('rel', /noopener/);
 });

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 빌드 결과 문구 검사 (npm run build 마지막 단계). 랜딩과 맛보기 화면(dist)의 글에서
+// 빌드 결과 문구 검사 (npm run build 마지막 단계). 랜딩·맛보기·배지·공유 카드 화면(dist)의 글에서
 //  - 쓰지 않는 말(src/content/landing-banned.mjs, VALUE 5절·D28·spec 0.4) 0건
 //  - 긴 줄표(U+2014) 0건
 //  - 랜딩 "예시 화면 · 문구는 공개 전 승인 대기" 표시 있음(D46)
@@ -37,12 +37,12 @@ export function checkDist(dist = DIST) {
   const problems = [];
   const landing = path.join(dist, 'index.html');
   if (!fs.existsSync(landing)) problems.push('dist/index.html 이 없습니다(먼저 astro build)');
-  const files = [landing, ...htmlFiles(path.join(dist, 'taste'))].filter((f) => fs.existsSync(f));
+  const files = [landing, ...['taste', 'badges', 'share'].flatMap((d) => htmlFiles(path.join(dist, d)))].filter((f) => fs.existsSync(f));
   for (const f of files) {
     const text = visibleText(fs.readFileSync(f, 'utf8'));
     const rel = path.relative(APP, f);
     for (const b of findBanned(text)) problems.push(`${rel}: 쓰지 않는 말 "${b.match}" (${b.why})`);
-    if (text.includes('\u2014')) problems.push(`${rel}: 긴 줄표(U+2014)가 있습니다`);
+    if (text.includes(String.fromCharCode(0x2014))) problems.push(`${rel}: 긴 줄표(U+2014)가 있습니다`);
     if (f === landing && !(text.includes(LANDING.sample.label) && text.includes(LANDING.sample.note)))
       problems.push(`${rel}: "${LANDING.sample.label} · ${LANDING.sample.note}" 표시가 없습니다(D46)`);
   }

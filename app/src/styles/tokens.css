@@ -83,4 +83,15 @@
   --badge: 52px;
   --motion-duration: 150ms;
   --motion-easing: ease-out;
+  --share-card-width: 1200px;
+  --share-card-height: 675px;
+  --share-card-pad-x: 64px;
+  --share-card-pad-y: 56px;
+  --share-card-badge: 56px;
+  --share-card-title: 30px;
+  --share-card-sub: 20px;
+  --share-card-output: 40px;
+  --share-card-output-lh: 1.55;
+  --share-card-output-radius: 18px;
+  --share-card-foot: 20px;
 }

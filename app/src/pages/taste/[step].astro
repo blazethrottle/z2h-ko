@@ -5,7 +5,9 @@ import Base from '../../layouts/Base.astro';
 import TasteStepApp from '../../components/TasteStepApp.tsx';
 import TasteDoneApp from '../../components/TasteDoneApp.tsx';
 import { loadTaster } from '../../lib/content/taster.mjs';
-import { lectureLabel, loadSite } from '../../lib/pageData';
+import { codeCredit, lectureLabel, loadSite } from '../../lib/pageData';
+import { TASTER } from '../../content-config.mjs';
+import CodeCredit from '../../components/CodeCredit.astro';
 import { config } from '../../config';
 
 export function getStaticPaths() {
@@ -27,6 +29,7 @@ const links = {
   lectureLabel: firstLecture ? lectureLabel(firstLecture.lecture_id, firstLecture.title_ko) : '강의 01',
 };
 const isLast = step.step_id === last.step_id;
+const credit = codeCredit(TASTER.sourceRepos);
 ---
 <Base title={`${step.title_ko} · 맛보기 ${step.order}`} tabs={false} back="/taste/" wide>
   {isLast ? (
@@ -51,4 +54,5 @@ const isLast = step.step_id === last.step_id;
       colabUrl={config.taste.colabOpenUrl}
     />
   )}
+  <CodeCredit credit={credit} />
 </Base>

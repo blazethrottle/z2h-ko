@@ -9,17 +9,16 @@ export type SelfReport = 'similar' | 'different';
 const ONLY_AZ = /^[a-z]+$/;
 
 export interface CleanNames {
-  /** 저장할 이름(빈 줄·앞뒤 공백 빼고, 금칙어 빼고, 최대 maxNames 줄, 한 이름 maxChars 글자) */
+  /** 저장·카드에 넣을 이름: 빈 줄·앞뒤 공백 빼고, a~z 만이고 maxChars 글자 이하인 줄만, 금칙어 빼고, 최대 maxNames 줄 */
   names: string[];
   /** names 를 줄바꿈으로 이은 글 (pasted_names_text 로 저장) */
   text: string;
-  /** a~z 밖 글자가 있거나 maxChars 를 넘는 줄 번호(빈 줄을 뺀 뒤 1부터) → "모델 출력만 넣어 주세요" */
+  /** 뺀 줄 번호(빈 줄을 뺀 뒤 1부터): a~z 밖 글자가 있거나 maxChars 를 넘는 줄 → "모델 출력만 넣어 주세요".
+   *  개인 정보를 잘못 붙여 넣은 경우를 생각해 자르지 않고 통째로 뺀다(P2 검수 권고 2) */
   flagged: number[];
-  /** 잘린 이름 수 */
-  truncated: number;
   /** maxNames 를 넘어 버린 줄 수 */
   dropped: number;
-  /** 금칙어라 뺀 이름 */
+  /** 금칙어라 뺀 이름 → "다시 실행" 권유 */
   blockedRemoved: string[];
 }
 
@@ -35,20 +34,15 @@ export function cleanNames(
     .map((l) => l.trim())
     .filter(Boolean);
   const flagged: number[] = [];
+  const valid: string[] = [];
   lines.forEach((l, i) => {
-    if (!ONLY_AZ.test(l) || l.length > maxChars) flagged.push(i + 1);
+    if (!ONLY_AZ.test(l) || [...l].length > maxChars) flagged.push(i + 1);
+    else valid.push(l);
   });
-  const blockedRemoved = lines.filter((l) => blocked.has(l.toLowerCase()));
-  const kept = lines.filter((l) => !blocked.has(l.toLowerCase()));
-  const take = kept.slice(0, maxNames);
-  let truncated = 0;
-  const names = take.map((l) => {
-    const chars = [...l];
-    if (chars.length <= maxChars) return l;
-    truncated++;
-    return chars.slice(0, maxChars).join('');
-  });
-  return { names, text: names.join('\n'), flagged, truncated, dropped: Math.max(0, kept.length - maxNames), blockedRemoved };
+  const blockedRemoved = valid.filter((l) => blocked.has(l));
+  const kept = valid.filter((l) => !blocked.has(l));
+  const names = kept.slice(0, maxNames);
+  return { names, text: names.join('\n'), flagged, dropped: Math.max(0, kept.length - maxNames), blockedRemoved };
 }
 
 /** 손실 칸(선택): 비우면 null, 0 이상 숫자(소수점은 점)만 */
