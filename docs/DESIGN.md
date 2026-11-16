@@ -278,7 +278,7 @@ content/              lectures.yaml(10편 목록), ep00-basics/units.yaml(1편 �
                       ep01-micrograd/overlay_draft.yaml(앱 전용 칸 초안, 교사 확인 대기, 아직 화면에 쓰지 않음)
 server/               z2h_server/, alembic/, tests/. data/ 는 git 제외
 z2h_check/            채점 패키지(check, finish, 결과코드, graders/, reference/, 묶음)
-notebooks/ep01-micrograd/  학생용·정답용 노트북 (아직 없음, P1 남은 일)
+notebooks/ep01-micrograd/  학생용·정답용 노트북(교사 정본에서 생성), 생성 스크립트, Colab 안내
 tests/                verify_models.py, 채점 패키지 테스트
 third_party/licenses/ MIT 원본 LICENSE 전문 5개, 글꼴 OFL
 NOTICE.md             원본·저작권자·쓴 위치 표

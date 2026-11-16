@@ -9,8 +9,8 @@
 
 | 원본 | 저작권 (LICENSE 원문) | 라이선스 | 전문 | 우리가 쓴 위치 (1편 기준) |
 |---|---|---|---|---|
-| [karpathy/micrograd](https://github.com/karpathy/micrograd) | Copyright (c) 2020 Andrej Karpathy | MIT | `third_party/licenses/micrograd-LICENSE.txt` | `tests/reference_impl/micrograd_ref.py` (정답 구현: engine.py의 Value, nn.py의 Neuron·Layer·MLP와 같은 구조), `z2h_check/graders/l01.py` (test/test_engine.py의 PyTorch 기울기 비교 방식. 식과 코드는 새로 씀), `content/ep01-micrograd/steps/S11b.yaml`, `content/ep01-micrograd/overlay_draft.yaml` (`code_origin`에 micrograd/engine.py) |
-| [karpathy/nn-zero-to-hero](https://github.com/karpathy/nn-zero-to-hero) | Copyright (c) 2022 Andrej Karpathy | MIT | `third_party/licenses/nn-zero-to-hero-LICENSE.txt` | `tests/reference_impl/micrograd_ref.py` (lectures/micrograd 강의 노트북 코드), `z2h_check/reference/l01.json` (강의 예제 숫자와 학습 데이터 xs, ys), `z2h_check/graders/l01.py`, `z2h_check/_bundle.py` (z2h_check 패키지를 묶은 사본), `content/ep01-micrograd/steps/*.yaml` (`code_origin`에 lectures/micrograd/) |
+| [karpathy/micrograd](https://github.com/karpathy/micrograd) | Copyright (c) 2020 Andrej Karpathy | MIT | `third_party/licenses/micrograd-LICENSE.txt` | `tests/reference_impl/micrograd_ref.py` (정답 구현: engine.py의 Value, nn.py의 Neuron·Layer·MLP와 같은 구조), `z2h_check/graders/l01.py` (test/test_engine.py의 PyTorch 기울기 비교 방식. 식과 코드는 새로 씀), `content/ep01-micrograd/overlay_draft.yaml` (`code_origin`에 micrograd/engine.py) |
+| [karpathy/nn-zero-to-hero](https://github.com/karpathy/nn-zero-to-hero) | Copyright (c) 2022 Andrej Karpathy | MIT | `third_party/licenses/nn-zero-to-hero-LICENSE.txt` | `tests/reference_impl/micrograd_ref.py` (lectures/micrograd 강의 노트북 코드), `z2h_check/reference/l01.json` (강의 예제 숫자와 학습 데이터 xs, ys), `z2h_check/graders/l01.py`, `z2h_check/_bundle.py` (z2h_check 패키지를 묶은 사본), `notebooks/ep01-micrograd/` (정답용·학생용 노트북) |
 | [karpathy/makemore](https://github.com/karpathy/makemore) | Copyright (c) 2022 Andrej Karpathy | MIT | `third_party/licenses/makemore-LICENSE.txt` | 아직 쓰지 않음 |
 | [karpathy/nanoGPT](https://github.com/karpathy/nanoGPT) | Copyright (c) 2022 Andrej Karpathy | MIT | `third_party/licenses/nanoGPT-LICENSE.txt` | 아직 쓰지 않음 |
 | [karpathy/minbpe](https://github.com/karpathy/minbpe) | Copyright (c) 2024 Andrej | MIT | `third_party/licenses/minbpe-LICENSE.txt` | 아직 쓰지 않음 |
@@ -26,8 +26,8 @@
 
 | 글꼴 | 라이선스 | 전문 | 쓴 위치 |
 |---|---|---|---|
-| Pretendard | SIL OFL 1.1 | `third_party/licenses/Pretendard-OFL.txt` | `app/public/fonts/` (앱 작업자가 채움: 버전·배포처 확인) |
-| JetBrains Mono | SIL OFL 1.1 | `third_party/licenses/JetBrainsMono-OFL.txt` | `app/public/fonts/` (앱 작업자가 채움: 버전·배포처 확인) |
+| Pretendard | SIL OFL 1.1 | `third_party/licenses/Pretendard-OFL.txt` | `app/public/fonts/` (버전·받은 곳은 아래 표) |
+| JetBrains Mono | SIL OFL 1.1 | `third_party/licenses/JetBrainsMono-OFL.txt` | `app/public/fonts/` (버전·받은 곳은 아래 표) |
 
 ## 글꼴 파일 출처 (SIL OFL 1.1, 사본은 third_party/licenses/)
 | 글꼴 | 받은 곳 | 우리가 쓴 위치 |
