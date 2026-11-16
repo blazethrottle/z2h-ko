@@ -1,0 +1,11 @@
+# 진도 서버가 쓰는 패키지(2026-11-16 저장소 .venv 에 설치된 판을 그대로 고정)
+fastapi==0.163.1
+starlette==1.10.0
+pydantic==2.14.3
+uvicorn==0.54.0
+sqlalchemy==2.1.8
+alembic==1.20.1
+
+# 테스트용
+pytest==9.2.0
+httpx==0.28.1

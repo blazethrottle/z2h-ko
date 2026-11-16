@@ -1,0 +1,10 @@
+# 시험용 예시 (app 테스트 전용). 실제 콘텐츠는 저장소 content/ 에 있다.
+lectures:
+  - lecture_id: L01
+    title_ko: "micrograd: 신경망과 역전파를 손으로 만들기"
+    youtube_video_id: VMj-3S1tku0
+    video_seconds: 8752
+  - lecture_id: L02
+    title_ko: makemore
+    youtube_video_id: PaCmpygFfXo
+    video_seconds: 7065

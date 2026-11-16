@@ -1,0 +1,10 @@
+---
+import Base from '../../layouts/Base.astro';
+import SettingsApp from '../../components/SettingsApp.tsx';
+import { loadSite } from '../../lib/pageData';
+const site: any = loadSite();
+const first = Object.values(site.details)[0] as any;
+---
+<Base title="설정" nav="settings" back="/home/">
+  <SettingsApp client:load contentVersion={first?.lecture.content_version ?? null} />
+</Base>

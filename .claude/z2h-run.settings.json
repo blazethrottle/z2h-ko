@@ -4,5 +4,40 @@
     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
     "CLAUDE_CODE_DISABLE_ADVISOR_TOOL": "1"
   },
-  "attribution": false
+  "attribution": false,
+  "permissions": {
+    "blockWritesOutsideWorkingDirectories": true,
+    "disableBypassPermissionsMode": "disable",
+    "deny": [
+      "Bash(git push*main*)",
+      "Bash(git push*HEAD:main*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push*--force*)",
+      "Bash(git push*-f *)",
+      "Bash(git push*+*)",
+      "Bash(git -C*push*)",
+      "Bash(git -c*push*)",
+      "Bash(git --git-dir*push*)",
+      "Bash(git --work-tree*push*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh repo edit*)",
+      "Bash(gh api*visibility*)",
+      "Bash(gh api*-X PATCH*repos*)",
+      "Bash(gh api*--method PATCH*repos*)",
+      "Bash(gh repo delete*)",
+      "Bash(wrangler*)",
+      "Bash(npx wrangler*)",
+      "Bash(vercel*)",
+      "Bash(npx vercel*)",
+      "Bash(netlify*)",
+      "Bash(npx netlify*)",
+      "Bash(gh workflow run*)",
+      "Bash(cloudflared*)",
+      "Bash(ngrok*)",
+      "Bash(tailscale*)",
+      "Edit(~/.claude/**)",
+      "Edit(~/.ssh/**)"
+    ]
+  }
 }

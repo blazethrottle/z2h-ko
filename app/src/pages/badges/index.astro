@@ -1,0 +1,29 @@
+---
+// E 배지 (뼈대). D47: 단계 배지는 누적 점검 통과로 받는다(CP 단독 배지 없음). 배지 계산은 config.badgeRules 한 곳(자리만).
+// 연속 기록 배지 없음. 배지는 앱 안의 학습 기록이며 자격증이 아니다(D31).
+import Base from '../../layouts/Base.astro';
+import { config } from '../../config';
+---
+<Base title="배지" nav={null} back="/home/">
+  <div class="stack">
+    <h1 class="t1">배지</h1>
+    <section class="card stack-sm" aria-label="단계 배지">
+      <h2 class="t3">단계 배지</h2>
+      <p class="small muted">누적 점검을 통과하면 받습니다. 배지는 앱 안의 학습 기록이며 자격증이 아닙니다.</p>
+      <ul class="list" data-testid="badge-list">
+        {config.badgeRules.map((b) => (
+          <li class="lrow">
+            <span class="main semibold">{b.name_ko}</span>
+            <span class="side small"><span class="st-todo">아직</span> <span class="cap">{b.on_pass} 통과</span></span>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <section class="card stack-sm" aria-label="편 도장">
+      <h2 class="t3">편 도장</h2>
+      <p class="small muted">편을 익히면 그 편의 도장이 찍힙니다.</p>
+      <span class="waiting">자료 대기</span>
+    </section>
+    <a class="btn" href="/share/">공유 카드 미리 보기</a>
+  </div>
+</Base>

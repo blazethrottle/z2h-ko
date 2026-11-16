@@ -1,0 +1,20 @@
+---
+// C 미리 계산한 결과 보기 (뼈대). 실제 실행 결과만 쓴다(P2). 지어낸 숫자 없음.
+import Base from '../../../layouts/Base.astro';
+---
+<Base title="미리 계산한 결과" nav={null} back="/taste/">
+  <div class="stack">
+    <p class="kicker">30분 맛보기</p>
+    <h1 class="t1">미리 계산한 결과 보기</h1>
+    <span class="waiting">자료 대기</span>
+    <section class="card stack-sm" aria-label="손실 그래프">
+      <h2 class="t3">손실이 줄어드는 모습</h2>
+      <p class="small muted">맛보기 노트북을 실제로 실행한 값이 오면 그립니다.</p>
+      <p class="num">–</p>
+    </section>
+    <section class="card stack-sm" aria-label="지어낸 이름">
+      <h2 class="t3">모델이 지어낸 이름</h2>
+      <p class="num">–</p>
+    </section>
+  </div>
+</Base>

@@ -1,0 +1,32 @@
+{
+  "name": "z2h-app",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1 --port 4321",
+    "build": "node scripts/validate-content.mjs && ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "build:fixture": "Z2H_CONTENT_DIR=tests/fixtures/content npm run build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --host 127.0.0.1 --port 4329",
+    "check:content": "node scripts/validate-content.mjs",
+    "check:content:fixture": "Z2H_CONTENT_DIR=tests/fixtures/content node scripts/validate-content.mjs",
+    "tokens": "node scripts/gen-tokens.mjs",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:real": "playwright test -c playwright.real.config.ts"
+  },
+  "dependencies": {
+    "@astrojs/preact": "6.1.6",
+    "astro": "7.4.12",
+    "idb": "8.0.4",
+    "preact": "11.2.0",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "fake-indexeddb": "6.2.8",
+    "pretendard": "1.3.9",
+    "vitest": "5.1.0"
+  }
+}

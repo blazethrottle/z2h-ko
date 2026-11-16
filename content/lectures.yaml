@@ -1,0 +1,55 @@
+# 10편 목록(홈 지도용).
+# 출처: inputs/pedagogy/video-segments.json의 lectures(영상 아이디, 길이), 각 pedagogy 편 파일 제목,
+# video_url은 inputs/research/README.md의 영상 링크와 같은 주소.
+# 프로토타입은 1편만 내용이 있고 2~10편은 이름만 씁니다.
+lectures:
+  - lecture_id: "L01"
+    title_ko: "micrograd: 신경망과 역전파를 손으로 만들기"
+    youtube_video_id: "VMj-3S1tku0"
+    video_seconds: 8752
+    video_url: "https://www.youtube.com/watch?v=VMj-3S1tku0"
+  - lecture_id: "L02"
+    title_ko: "makemore 1: 바이그램 언어 모델"
+    youtube_video_id: "PaCmpygFfXo"
+    video_seconds: 7065
+    video_url: "https://www.youtube.com/watch?v=PaCmpygFfXo"
+  - lecture_id: "L03"
+    title_ko: "makemore 2: MLP 언어 모델"
+    youtube_video_id: "TCH_1BHY58I"
+    video_seconds: 4540
+    video_url: "https://www.youtube.com/watch?v=TCH_1BHY58I"
+  - lecture_id: "L04"
+    title_ko: "makemore 3: 활성값, 기울기, BatchNorm"
+    youtube_video_id: "P6sfmUTpUmc"
+    video_seconds: 6957
+    video_url: "https://www.youtube.com/watch?v=P6sfmUTpUmc"
+  - lecture_id: "L05"
+    title_ko: "makemore 4: Backprop Ninja (손으로 하는 역전파)"
+    youtube_video_id: "q8SA3rM6ckI"
+    video_seconds: 6924
+    video_url: "https://www.youtube.com/watch?v=q8SA3rM6ckI"
+  - lecture_id: "L06"
+    title_ko: "makemore 5: WaveNet 구조 만들기"
+    youtube_video_id: "t3YJ5hKiMQ0"
+    video_seconds: 3381
+    video_url: "https://www.youtube.com/watch?v=t3YJ5hKiMQ0"
+  - lecture_id: "L07"
+    title_ko: "GPT 만들기: 처음부터, 코드로, 한 줄씩"
+    youtube_video_id: "kCc8FmEb1nY"
+    video_seconds: 6980
+    video_url: "https://www.youtube.com/watch?v=kCc8FmEb1nY"
+  - lecture_id: "L08"
+    title_ko: "State of GPT (강연)"
+    youtube_video_id: "bZQun8Y4L2A"
+    video_seconds: 2560
+    video_url: "https://www.youtube.com/watch?v=bZQun8Y4L2A"
+  - lecture_id: "L09"
+    title_ko: "GPT 토크나이저 만들기"
+    youtube_video_id: "zduSFxRajkE"
+    video_seconds: 8014
+    video_url: "https://www.youtube.com/watch?v=zduSFxRajkE"
+  - lecture_id: "L10"
+    title_ko: "GPT-2 (124M) 재현: 축소판으로 전 과정 실습"
+    youtube_video_id: "l8pRSuU81PU"
+    video_seconds: 14486
+    video_url: "https://www.youtube.com/watch?v=l8pRSuU81PU"

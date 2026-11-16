@@ -1,0 +1,80 @@
+---
+// 공통 틀: 상단 바(동기화 표시), 본문, 하단 탭 (spec 0.1). 로그인·가입 없음.
+import '../styles/tokens.css';
+import '../styles/base.css';
+import SyncStatus from '../components/SyncStatus.tsx';
+import { loadSite } from '../lib/content/build.mjs';
+
+interface Props {
+  title: string;
+  nav?: 'home' | 'lectures' | 'review' | 'basics' | 'settings' | null;
+  back?: string | null;
+  wide?: boolean;
+  tabs?: boolean;
+}
+const { title, nav = null, back = null, wide = false, tabs = true } = Astro.props;
+const site = loadSite();
+const firstLecture = site.lectures.find((l) => l.available)?.lecture_id ?? 'L01';
+const lecturesHref = `/lectures/${firstLecture}/`;
+const items = [
+  { id: 'home', href: '/home/', label: '홈' },
+  { id: 'lectures', href: lecturesHref, label: '강의' },
+  { id: 'review', href: '/review/', label: '복습' },
+  { id: 'basics', href: '/basics/', label: '기초' },
+];
+const fonts = ['Pretendard-Regular', 'Pretendard-Medium', 'Pretendard-SemiBold', 'Pretendard-Bold', 'JetBrainsMono-Variable'];
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>{title} · Z2H 제로 투 히어로 실습</title>
+    {fonts.map((f) => <link rel="preload" href={`/fonts/${f}.woff2`} as="font" type="font/woff2" crossorigin="anonymous" />)}
+  </head>
+  <body>
+    <a class="skip" href="#main">본문으로 건너뛰기</a>
+    <header class="topbar">
+      {back && (
+        <a class="iconbtn back" href={back} aria-label="뒤로">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+        </a>
+      )}
+      <a class="brand" href="/home/">Z2H <span class="sub">제로 투 히어로 실습</span></a>
+      {tabs && (
+        <nav class="topnav" aria-label="주 메뉴">
+          {items.map((it) => <a href={it.href} aria-current={nav === it.id ? 'page' : undefined}>{it.label}</a>)}
+        </nav>
+      )}
+      <span class="spacer"></span>
+      <SyncStatus client:load />
+      <a class="iconbtn" href="/settings/" aria-label="설정" aria-current={nav === 'settings' ? 'page' : undefined}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+      </a>
+    </header>
+    {site.source === 'snapshot' && <p class="fixture-banner" role="note">병합 전 교사 콘텐츠 사본(L01.json)으로 만든 화면입니다.</p>}
+    <main id="main" class:list={[{ wide, notabs: !tabs }]}>
+      <slot />
+    </main>
+    {tabs && (
+      <nav class="tabbar" aria-label="아래 탭">
+        {items.map((it) => (
+          <a href={it.href} aria-current={nav === it.id ? 'page' : undefined}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              {it.id === 'home' && <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />}
+              {it.id === 'lectures' && <path d="M4 5h16v11H4zM8 20h8M12 16v4" />}
+              {it.id === 'review' && <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />}
+              {it.id === 'basics' && <path d="M4 19V6a2 2 0 0 1 2-2h12v15H6a2 2 0 0 0-2 2zM8 8h6" />}
+            </svg>
+            {it.label}
+          </a>
+        ))}
+      </nav>
+    )}
+    <script is:inline>
+      // 선언한 글꼴 파일 5개를 모두 불러 둔다(굵기별 파일 연결 확인용, HANDOFF 4절)
+      if (document.fonts && document.fonts.forEach) document.fonts.forEach(function (f) { f.load().catch(function () {}); });
+    </script>
+  </body>
+</html>

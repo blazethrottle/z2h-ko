@@ -1,0 +1,25 @@
+---
+// E 공유 카드 (뼈대). 내 기기에 이미지 저장만, 공개 공유 주소·자동 게시 없음.
+// D45: "X에 공유"는 X 글쓰기 창만 연다. 버튼 바로 아래 "저장한 이미지를 첨부해 주세요". 카드 크기는 config.shareCard(X15 미정).
+import Base from '../../layouts/Base.astro';
+import { config } from '../../config';
+---
+<Base title="공유 카드" nav={null} back="/badges/">
+  <div class="stack">
+    <h1 class="t1">공유 카드</h1>
+    <section class="card stack-sm" aria-label="카드 미리 보기" data-testid="share-preview">
+      <div class="card sunken stack-sm" style={`aspect-ratio:${config.shareCard.width}/${config.shareCard.height}`}>
+        <span class="waiting">자료 대기</span>
+        <p class="small">첫 모델이라 아직 서툴러요</p>
+      </div>
+      <p class="cap num">카드 크기 {config.shareCard.width}x{config.shareCard.height}</p>
+      <p class="small">카드에는 모델이 만든 결과물과 학습 숫자만 들어갑니다. 이메일, 실명, 기기 정보, 학습 시간은 넣지 않습니다.</p>
+      <div class="row">
+        <button type="button" class="btn" disabled aria-disabled="true">이미지 저장</button>
+        <button type="button" class="btn" disabled aria-disabled="true">X에 공유</button>
+      </div>
+      <p class="small semibold">저장한 이미지를 첨부해 주세요</p>
+      <p class="cap">X에 공유를 누르면 X의 글쓰기 창이 열리고, 올리기는 내가 직접 누릅니다. 이 앱은 자동으로 올리지 않습니다.</p>
+    </section>
+  </div>
+</Base>

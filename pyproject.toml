@@ -1,0 +1,22 @@
+# z2h_check 채점 패키지 설치용 최소 설정.
+# 로컬 Jupyter: 저장소 루트에서 `uv pip install --python .venv/bin/python -e .`
+# Colab은 설치 없이 노트북 준비 셀의 묶음(z2h_check/_bundle.py)을 쓴다.
+# 우리 코드의 라이선스는 아직 정하지 않았다(PUBLIC_RELEASE_CHECKLIST 4절, 얼큰이 결정).
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "z2h-check"
+version = "0.1.0"
+description = "Z2H 노트북 채점 패키지 (check, finish, 결과코드)"
+readme = "z2h_check/README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.setuptools]
+packages = ["z2h_check", "z2h_check.graders"]
+
+[tool.setuptools.package-data]
+z2h_check = ["reference/*.json", "README.md"]

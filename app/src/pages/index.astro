@@ -1,0 +1,23 @@
+---
+// A 랜딩 (뼈대). 문구는 공개 전 승인 항목이라(D46) "예시 화면" 표시를 유지하고 "자료 대기". 숫자·후기·로고 없음.
+import Base from '../layouts/Base.astro';
+---
+<Base title="시작" tabs={false}>
+  <div class="stack">
+    <div class="row">
+      <span class="pill">예시 화면</span>
+      <span class="pill">자료 대기</span>
+    </div>
+    <p class="cap">랜딩 문구와 약관·개인정보 문구는 공개 전 승인 항목입니다.</p>
+    <h1 class="t1">랜딩 문구 자료 대기</h1>
+    <p class="muted">제품 소개 문구는 교사·디자이너 확정 자료가 오면 넣습니다.</p>
+    <div class="row">
+      <a class="btn primary" href="/taste/">30분 맛보기 시작</a>
+      <a class="btn" href="/home/">학습 홈</a>
+    </div>
+    <hr class="rule" />
+    <p class="small muted">
+      영상 출처: Andrej Karpathy, Neural Networks: Zero to Hero (YouTube 원본 임베드와 링크만 씁니다. 다시 올리지 않습니다).
+    </p>
+  </div>
+</Base>

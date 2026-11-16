@@ -1,0 +1,29 @@
+---
+// 1 홈·진도 /home/
+import Base from '../../layouts/Base.astro';
+import HomeApp from '../../components/HomeApp.tsx';
+import { lectureLabel, loadSite, unitTitles } from '../../lib/pageData';
+
+const site: any = loadSite();
+const mainId = site.lectures.find((l: any) => l.available)?.lecture_id ?? null;
+const d = mainId ? site.details[mainId] : null;
+const titles = unitTitles();
+const main = d
+  ? {
+      lectureId: mainId,
+      lectureLabel: lectureLabel(mainId, d.lecture.title_ko),
+      steps: d.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko })),
+    }
+  : null;
+const lectures = site.lectures.map((l: any) => ({
+  lecture_id: l.lecture_id,
+  title_ko: l.title_ko,
+  video_seconds: l.video_seconds,
+  available: l.available,
+  step_count: l.step_count ?? null,
+}));
+const prereq = (d?.lecture.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null }));
+---
+<Base title="홈" nav="home" wide>
+  <HomeApp client:load lectures={lectures} main={main} prereq={prereq} />
+</Base>
