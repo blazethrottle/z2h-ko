@@ -29,8 +29,13 @@
 - D46(X12): 랜딩 문구와 약관·개인정보 문구는 공개 전 승인 항목. 목업 "예시 화면" 표시 유지.
 - D47(X10): 단계 배지는 **누적 점검(CP) 통과**로 받음. CP1 → 언어 모델 견습, CP2 → 신경망 정비사, CP3 → GPT 제작자(수료). CP 단독 배지 없음. `c4_cp_result`에 배지 표시. 배지 부여는 `checkpoint_attempt` 통과 기록에서 서버가 계산.
 - D48(X11): 회사원·투자자 길에서만 07편 전 03·04 다리 카드 2장. 스키마에 **선택 필드**로 `bridge_card` 추가(아래 5-1). 확인 문제 결과는 복습 추천에만, 07편 잠그지 않음. 내용 원본 `pedagogy/bridge-cards-03-04.md`(작성 중).
-- X13(교사 콘텐츠 20:44 도착, data-spec 갱신): 01편은 L01.json **26단계**(최종 확정은 교사, 단계 수 하드코딩 금지, 분모는 데이터). step 선택 필드: `edits[]`(`target_step`, `where_ko`, `action`: insert|replace, `anchor_line`(null = 셀 맨 아래), `line_count`), `rerun_first[]`, `moved_code_lines`, `prepared_code_line_notes_ko`, `prepared_code_source_ko`, `kind: copy_run` + `cell_code_lines`(맛보기), 맛보기 전용 `code_alt_local`·`expected_output_example`·`aha_ko`·`summary_ko`·`minutes`·`question_ids`. **삭제**: `cell_mode`(edits 비었는지로 판단), `changed_lines_only`(edits[].action=replace로 합침). 문항 `alternate_of`(대체 문항 → 원 문항 id). 모두 선택 필드, 모르는 필드는 경고(실패 아님). edits 화면: anchor_line 흐리게 + 넣을 줄 강조 + "전체 보기".
-- X14(일부 열림): data-spec이 checkpoint에 `path_variants[]`(`path_id` office_worker|investor, `taken`, `replace[{from,to}]`, `remove_if_lecture_not_mastered`, `pass_ratio`, `badge_on_pass`, `gate`)와 요약 경로 배지(`BADGE-S1-SUMMARY`, `BADGE-SUMMARY-DONE`)를 제안. 스키마에 **선택 필드**로 받고, 학습자 기록에 `path_id`(full|office_worker|investor, 기본 full)를 둠. 최종 규칙은 교사 확정 대기라 배지 계산은 `badge_rules` 설정 한 곳.
+- 단계 수 확정(D51, HANDOFF 20:53, data-spec v1.2): 01편 **26단계**, 10편 합 **169단계**(맛보기 8단계 별도). 그래도 단계 수 하드코딩 금지(분모는 데이터). HANDOFF 7-2 새 필드(모두 선택 필드, 모르는 필드는 경고): step `edits[]`(`target_step`, `where_ko`, `action` insert|replace, `anchor_line`(null = 셀 맨 아래), `line_count`), `rerun_first[]`, `moved_code_lines`, `prepared_code_line_notes_ko`, `prepared_code_source_ko`, `kind: copy_run`·`expected_output_example`·`aha_ko`·`code_alt_local`(맛보기), 문항 `after_step`·`scored`(false면 제출 없이 바로 풀이, 점수·복습 없음)·`alternate_of`, 힌트 `show_solution`, 편 `rewards`(`stamp`, `badge_progress`, `artifact`), 학습자 `path_id`, checkpoint `path_variants[]`(+`gate`), 배지 변형(`badge_on_pass` id, 예 `BADGE-S1-SUMMARY`). **삭제**: `cell_mode`, `changed_lines_only`.
+- 바뀐 줄만 보여 주는 화면(spec 4.2-1, 목업 `c7_edits`): 비교(diff) 도구 없이, `anchor_line`은 회색 한 줄, 그 아래 넣을 줄(replace면 바뀐 뒤 줄) 강조, "전체 보기"로 셀 전체 펼침. `rerun_first`는 위에 "먼저 다시 실행: L01-S04 셀" 안내.
+- 요약 경로(spec 12.5, 회사원·투자자 길): CP 점수 기준(`path_variants`의 replace·remove·pass_ratio)과 `gate`는 **프로토타입 범위 밖**(07편 이후). 스키마·DB에 자리만 두고 계산 코드는 만들지 않음. `path_id`(full|office_worker|investor, 기본 full)는 진도 기록(users·step_progress·checkpoint_attempt)에 포함. "전체 길로 바꾸기"는 path_id만 full로, 기록은 그대로.
+- 맛보기 완료·공유(D30·D45): Colab에서 사용자가 **스스로 완료를 확인**("비슷해요 / 달라요")하고, 결과(지어낸 이름, 손실 값)를 **붙여넣어** 공유 카드를 만든다. `taster_result`에 `self_reported`와 붙여넣은 값을 저장(검증 안 된 값이라는 표시).
+- 영상 없는 단계: `L08-S01`·`L08-S04`·`L08-S08`과 맛보기(전부). 빌드 검사로 이 목록과 데이터의 빈 `video_segments`가 일치하는지 확인.
+- **미정 X15**: 맛보기 이름 카드 크기. 일단 1200 × 675(taster.md는 1080 × 1080). 카드 크기는 설정값 한 곳.
+- **미정 X16**: 요약 경로에서 CP1(요약)을 보는 시점(디자이너 제안: 03편 다리 카드 6장 바로 뒤). 프로토타입 범위 밖, 자리만.
 - 맛보기 노트북: Colab .ipynb는 `pedagogy/taster.md` 셀 내용(`content/taster.json`)으로 구현 쪽(P2)이 만듦. 검수 기준 = `inputs/pedagogy/content/test_content.py` 통과(CPU 약 7초, 손실 3.839 → 2.472).
 - 10편 1000스텝 실측은 프로토타입 뒤로 미룸(PM과 맥 자원 다투지 않게).
 
@@ -47,7 +52,7 @@
 | 0편 기초 중 1편에 필요한 단위 | 1편 선행 단위만 (추천 표시, 잠금 아님) | 예 (00-foundations.md) |
 | 랜딩 | 제품 소개, 맛보기 시작 버튼 | [자리] 교사·디자이너 설계 중 |
 | 첫 30분 맛보기 | 설치 없이 브라우저에서. 교사 VALUE_CURRICULUM.md 3절의 Colab 맛보기 코드(이름 지어내기, CPU 약 6초, 손실 3.84 → 2.47, 교사 실행 확인) | 예 (내용 확정, 화면은 design v2_taste 목업) |
-| 성취 배지 | 단계 배지 3개 = CP 통과(D47), 편 도장 10개, 맛보기 완료 표시 | 테이블 5절, 규칙은 `badge_rules` 설정 한 곳(X14 미정) |
+| 성취 배지 | 단계 배지 3개 = CP 통과(D47), 편 도장 10개, 맛보기 완료 표시 | 테이블 5절, 규칙은 `badge_rules` 설정 한 곳, 요약 경로 배지 변형은 `badge_on_pass` id(자리만) |
 | 공유 카드 | 이미지 카드 | [자리] 테이블은 지금 설계, 프로토타입은 내 기기에 이미지 저장만(공개 공유 주소 없음) |
 | 2~10편 | 프로토타입 뒤 | 아님 (자료는 inputs/에 보관) |
 
@@ -95,24 +100,25 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 | users | user_id(UUID PK), path_id(full·office_worker·investor, 기본 full), display_name, created_at, locale | 여러 계정 가능(로컬 개발 로그인으로 생성). 다른 테이블의 user_id는 FK |
 | auth_identity | provider(dev_local 지금, email_otp·google 나중), subject, user_id(FK), created_at | AuthAdapter 뒤. 메일 발송·OAuth 미구현 |
 | sessions | session_id, user_id(FK), created_at, expires_at | 로컬 개발 로그인 세션 |
-| step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, updated_at | PK(user_id, step_id) |
+| step_progress | user_id, path_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, updated_at | PK(user_id, step_id) |
 | question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, context(step·checkpoint·bridge·taste), at | PK(user_id, question_id, attempt_no) |
 | rebuild_attempt | user_id, rebuild_id, passed, max_hint_level, at | |
 | mastery_state | user_id, target_id, state, steps_done_ratio, question_score_ratio, must_pass_ok, rebuild_ok, extra_checks_ok, mastered_at, updated_at | |
 | review_card | user_id, card_id, source_id, kind, interval_days, due_at, last_result, history_json, updated_at | |
 | checkpoint_attempt | path_id, user_id, checkpoint_id(CP1~CP3), attempt_no, covers_json, score_ratio, passed, max_hint_level, hand_task_self_check_json, started_at, at | 문항별 응답은 question_attempt에 checkpoint_attempt 번호를 달아 저장(checkpoint_attempt_no 칼럼). 잠금 동작(C5)은 설정값으로 |
 | diagnostic_result | user_id, attempt_no, answers_json, recommended_units_json, at | 기초 진단 F-D1~F-D5 |
+| taster_result | user_id(FK), attempt_no, step_id(T-S01~T-S08), self_reported(similar·different), pasted_names_text, pasted_loss_start, pasted_loss_end, share_card_id(NULL 가능), at | 맛보기 본인 확인 + 붙여넣은 값(검증 안 됨 표시). PK(user_id, attempt_no, step_id) |
 | taste_result | user_id, done_at, loss_start, loss_end, names_json, source(colab/precomputed) | 맛보기 완료 표시용, 사용자가 붙여넣은 값만 |
 | help_note | user_id, target_id, goal_ko, last_cell_code, error_last_line, env_json, hints_seen_json, created_at | 사용자 화면에만, 자동 발송 없음 |
 | study_session | user_id, session_id, target_id, started_at, ended_at, active_seconds, source(auto/manual) | 실습 시간 원자료 |
-| badge_def | badge_id, name_ko, rule_json, icon, version | D47: 단계 배지 3개 = CP1·CP2·CP3 통과, 편 도장 10개. rule_json은 `badge_rules` 설정에서 생성(X14 미정) |
+| badge_def | badge_id, name_ko, rule_json, icon, version | D47: 단계 배지 3개 = CP1·CP2·CP3 통과, 편 도장 10개. rule_json은 `badge_rules` 설정에서 생성, 요약 배지 변형(BADGE-S1-SUMMARY 등) 행은 자리만 |
 | user_badge | user_id, badge_id, earned_at, evidence_json | PK(user_id, badge_id) |
 | share_card | share_id(추측 불가 임의 값), user_id, kind, payload_json, image_path, visibility(기본 private), created_at, revoked_at | 공개 공유 주소는 공개 배포 승인 뒤 |
 | sync_conflicts | user_id, table_name, row_key, losing_json, at | 동기화 충돌 기록 |
 | schema_migrations | Alembic 관리 | |
 
 콘텐츠(lecture, step, question, hint, rebuild_task, mastery_rule, checkpoint)는 DB가 아니라 저장소 파일. pedagogy v1.1 반영:
-- step: `long_step`(새 코드 6~10줄이면 true, 10줄 초과 오류), `new_code_lines`, `prepared_code`(+줄별 풀이), `video_segments: [{start_s, end_s}]`(여러 개 가능, 없으면 [] = 영상 없는 단계, end_s 늘 필수, D49). 전체 165단계. 나눈 단계는 `L01-S14b`처럼 접미 글자라 **step_id는 늘 문자열**, 정렬은 `order` 필드로(문자열 정렬 금지).
+- step: `long_step`(새 코드 6~10줄이면 true, 10줄 초과 오류), `new_code_lines`, `prepared_code`(+줄별 풀이), `video_segments: [{start_s, end_s}]`(여러 개 가능, 없으면 [] = 영상 없는 단계, end_s 늘 필수, D49). 전체 169단계(D51, 맛보기 8단계 별도). 나눈 단계는 `L01-S14b`처럼 접미 글자라 **step_id는 늘 문자열**, 정렬은 `order` 필드로(문자열 정렬 금지).
 - 5-1 `bridge_card`(D48, 선택, 디자이너 제안 필드): `bridge_id`, `lecture_id`("L03"/"L04"), `title_ko`, `body_ko`(한 문단), `figure_ko` 또는 `mini_practice`(둘 중 하나, 선택), `questions`(1~2개, `type: "choice"`, 점수 없음, "모르겠어요" 포함), `video_segments`(03·04편 구간, 위 규칙 동일), `paths`(["office","investor"]). 응답은 `question_attempt`에 `context="bridge"`로 저장(새 테이블 없음).
 - lecture: `youtube_video_id`, `video_seconds`, `video_url`(대체 링크).
 - question: `type`에 `choice` 추가, `choices`(2개 이상), `answer_index`(0부터), `auto_grade.type: choice`, `recommend_units_if_wrong`.
@@ -233,7 +239,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 ## 11. 위험·결정 필요
 - 승인 필요(얼큰이): main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제.
 - CEO 사전 통보: 폰 접속용 Tunnel·Access 생성.
-- 미정: X13(01편 최종 단계 수·새 필드 7개), X14(짧은 길의 CP·단계 배지). 공개 전 승인: 랜딩·약관·개인정보 문구(D46). 디자인 결정은 decisions.md D1~D49(20:40 HANDOFF) 기준.
+- 미정: X15(맛보기 이름 카드 크기, 일단 1200 × 675), X16(요약 경로 CP1 시점). X13·X14는 D51~D55로 닫힘(요약 경로 CP·gate는 프로토타입 밖, 자리만). 공개 전 승인: 랜딩·약관·개인정보 문구(D46). 디자인 결정은 decisions.md D1~D49(20:40 HANDOFF) 기준.
 - 위험: Colab 바로 열기는 공개 저장소가 필요(프로토타입은 우회), Fable 한도 소모가 빠름, 맛보기 Pyodide 로딩 크기, 공유 카드의 개인정보(이름·진도 노출 범위는 기본 비공개).
 - 라이선스: MIT 5개 출처 표기, build-nanogpt는 링크만(PUBLIC_RELEASE_CHECKLIST).
 

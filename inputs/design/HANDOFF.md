@@ -9,13 +9,13 @@
 | `tokens.json` | 디자인 토큰 원본 (색, 대비, 글꼴, 글자 크기, 간격, 모서리, 분기점) |
 | `tokens.md` | 토큰 설명, WCAG 대비표, 글꼴 파일 목록 |
 | `spec.md` | 화면별 컴포넌트, 상태, 문구, 모바일/데스크톱 차이, 접근성 |
-| `decisions.md` | 결정 D1~D49와 이유, 해결된 질문(Q1~Q8, C1~C10, X2·X3·X6·X9~X12), 남은 질문 X4·X5·X8·X13·X14 |
+| `decisions.md` | 결정 D1~D57과 이유, 해결된 질문(Q1~Q8, C1~C10, X2·X3·X6·X9~X16), 남은 질문 X4·X5·X8 |
 | `mockups/src/*.html` + `z2h.css` | 목업 HTML. 반응형 하나로 390/1280 둘 다 그림. 구조 참고용 (운영 코드로 그대로 쓰지 말 것) |
-| `mockups/png/*_{m390,d1280}.png` | 화면 22종 × 2폭 = 44장 (2배 해상도): v1 `s1~s10`, v1.3 `c1~c4` 누적 점검 + `c5_prepared` 준비된 코드 + `c6_segments` 구간 전환·영상 없음, v2 `v2_*` (다리 카드 `v2_bridge` 포함) |
+| `mockups/png/*_{m390,d1280}.png` | 화면 23종 × 2폭 = 46장 (2배 해상도): v1 `s1~s10`, v1.3 `c1~c4` 누적 점검 + `c5_prepared` 준비된 코드 + `c6_segments` 구간 전환·영상 없음, v2 `v2_*` (다리 카드 `v2_bridge` 포함), `c7_edits` 바뀐 줄만 |
 | `mockups/png/card_*.png` | 공유 카드 예시 3장 (`card_names`, `card_wavenet`, `card_gpt`), 1200x675 실제 크기 |
 | `mockups/src/gen.py`, `gen_v2.py`, `render.py`, `fontscan.py`, `contact*.py` | 목업 생성·촬영·글꼴 검사·모음 스크립트 |
 | `contact_sheet.png` | v1 화면 10종 한 장 요약 (v1.3 반영) |
-| `contact_sheet_v1.3.png` | 누적 점검 4화면 + 준비된 코드 + 구간 전환·영상 없음 + 01편 22단계 목록 + 고르기 문항 + 모르겠어요 + 자동으로 건너뛰지 않음 |
+| `contact_sheet_v1.3.png` | 누적 점검 4화면 + 준비된 코드 + 구간 전환·영상 없음 + 01편 26단계 목록 + 고르기 문항 + 모르겠어요 + 자동으로 건너뛰지 않음 |
 | `contact_sheet_v2.png` | v2 화면 5종 + 공유 카드 3장만 |
 | `mockups/font_check.json`, `font_scan.json` | 글꼴 실제 로딩 검사 결과 |
 
@@ -61,10 +61,10 @@
 - `autoplay` 매개변수와 `allow="autoplay"`를 넣지 않는다. IFrame API를 써도 `playVideo()`를 자동 호출하지 않는다.
 - 대체 링크: `https://www.youtube.com/watch?v={videoId}&t={start}s`, 새 창. 늘 보이게 둔다 (오류 상태에서는 큰 버튼으로 바뀜).
 - 오류 판정: 10초 안에 로드 없음, 또는 IFrame API `onError`. 
-- 시각은 `pedagogy/video-segments.json` v1.1 `steps[step_id]`의 `video_segments: [{start_s, end_s}]`와 `shared_with`에서 읽는다 (D38). 165단계 모두 들어 있다. 19:09–32:10은 L01-S04~S06이 함께 쓰는 공식 챕터 구간 (pedagogy/01, research 출처), 영상 id는 data-spec 예시의 `VMj-3S1tku0`.
+- 시각은 `pedagogy/video-segments.json` v1.2 (169단계) `steps[step_id]`의 `video_segments: [{start_s, end_s}]`와 `shared_with`에서 읽는다 (D38). 169단계 모두 들어 있다. 19:09–32:10은 L01-S04~S06이 함께 쓰는 공식 챕터 구간 (pedagogy/01, research 출처), 영상 id는 data-spec 예시의 `VMj-3S1tku0`.
 - **구간 공유 `shared_with`**: 값이 있으면 그 단계들 사이에서 플레이어 인스턴스를 유지하고 재생 위치를 이어 간다. 문구 "이 구간은 단계 4~6이 함께 씁니다" (자기 + `shared_with` 단계 번호 범위). 쪼갠 단계(L01-S14b)는 원래 단계 구간을 그대로 쓴다.
 - **구간이 여럿** (48단계, L02-S12·L10-S18은 3개, L08-S02는 5개): 칩 줄 "구간 1/3 · 1:10:01" + "다음 구간". 바꿀 때 `cueVideoById({videoId, startSeconds, endSeconds})` (재생하지 않고 준비만). 구간 순서는 배열 순서 그대로 (L08-S02처럼 시각이 앞뒤로 오갈 수 있음).
-- **영상 없음** `video_segments: []` (L08-S01·S04·S08): 플레이어 iframe을 만들지 않는다. `novid` 한 줄만 (D40, D49 확정: 빈 목록 = 영상 없는 단계).
+- **영상 없음** `video_segments: []` (L08-S01·S04·S08, 맛보기 T-S01~T-S08, D53): 플레이어 iframe을 만들지 않는다. `novid` 한 줄만 (D40, D49 확정: 빈 목록 = 영상 없는 단계).
 - `end_s`는 늘 채워져 온다 (D49, 교사 20:34). 값을 그대로 쓴다.
 - 자막: `cc_load_policy=1&cc_lang_pref=ko`. 자동 번역 한국어 자막은 YouTube가 주지 않을 수 있다 (영상·지역·시점마다 다름). 그때는 영어 자막 또는 자막 없이 재생되고, 화면 안내 문구와 세 줄 요약이 대신한다. 앱이 자막을 따로 만들거나 올리지 않는다.
 - 영상 파일을 내려받거나 다시 올리지 않는다.
@@ -77,7 +77,7 @@
 | `lecture.video_minutes` | 1 홈 행, 2 개요 머리 | "영상 2:26" |
 | `lecture.prereq_units` | 1 홈 기초 카드, 2 개요 추천 줄 | "먼저 보면 좋은 기초: F-P6 …" |
 | `lecture.objectives` | 2 개요 (펼침, 목업 없음) | 학습 목표 목록 |
-| `step.step_id`, `order` | 2 목록 번호, 3·4 위치 줄, 노트북 칸 이름 | "단계 4 / 22 · L01-S04" (분모 = 그 편 step 수, v1.1 합 165) |
+| `step.step_id`, `order` | 2 목록 번호, 3·4 위치 줄, 노트북 칸 이름 | "단계 4 / 26 · L01-S04" (분모 = 그 편 step 수, v1.2 합 169) |
 | `step.title_ko` | 2 목록, 3·4 제목 | |
 | `step.video_segment.start/end` | 0.5 플레이어 | 임베드 start·end, "영상 19:09–32:10" |
 | `step.kind` | 4 (code) / 10 (read, reflect) / 10 선택 카드 (optional) | |
@@ -127,17 +127,35 @@ data-spec에 없어서 디자인이 추가로 바라는 필드 (교사 몽키·C
 - `step_progress.prediction` 빈 값 + "모르겠어요" → 예측 없이 공개. 예측은 점수·진행에 쓰지 않는다 (D39).
 - 누적 점검: data-spec `checkpoint` 그대로 (`covers`, `unlocks_lecture`, `items`, `question_ids`, `pass_ratio` 0.8, `max_hint_level` 2, `time_limit_min` null, `hand_task_format`, `fail_action`) + `checkpoint_attempt`. 문항 합 40 (CP1 11, CP2 13, CP3 16). 점수 = 문항별 힌트 비율 적용 합 / 문항 수. H3 이상 버튼은 숨김. 아직이면 `fail_action`대로 놓친 편 카드 1일, 재도전은 마지막 시도 + 3일 (재도전 시각 필드는 data-spec에 없음, `checkpoint_attempt.at` + `retry_after_days`로 계산). 통과는 단계 배지 조건의 일부, 단독 배지 없음 (spec 12절).
 
+## 7-2. data-spec v1.2 새 칸 (교사 20:43, D50~D55)
+| 칸 | 화면 | 처리 |
+|---|---|---|
+| `edits[]` (`target_step`, `where_ko`, `action` insert/replace, `anchor_line`, `line_count`) | 4.2-1 바뀐 줄만 (`c7_edits`) | 비었으면 새 셀, 있으면 바뀐 줄 화면. `code` 앞쪽 줄을 `edits` 순서·`line_count`로 나눔. `anchor_line` null = 셀 맨 아래. `cell_mode`·`changed_lines_only`는 없음 |
+| `rerun_first` | 4.2-1 위 안내 | "먼저 다시 실행: L01-S04 셀" + 링크 |
+| `moved_code_lines` | 4.2 새 코드 블록 | 옮겨 붙이는 줄에 꼬리표 "앞 단계에서 옮김", 새 코드 줄 수에 넣지 않음 |
+| `prepared_code_line_notes_ko`, `prepared_code_source_ko` | 4.2 준비된 코드 블록 | 줄별 풀이(접기), 출처 한 줄 `caption` |
+| `kind: copy_run`, `expected_output_example`, `aha_ko`, `code_alt_local` | 13.2 맛보기 | 붙여넣기만, 실제 출력, 깨달음, "Colab 밖에서 하려면" 접힌 대체 셀 |
+| 문항 `after_step`, `scored` | 5절, 13.2 | `scored: false`면 제출 단추 없이 고르면 바로 풀이, 점수·복습 없음 |
+| 힌트 `show_solution` | 6절 H4 | 정답 코드 + 줄별 풀이 펼침 |
+| 편 `rewards` (`stamp`, `badge_progress`, `artifact`) | 13.4 | 편 도장, 배지 진행 줄, 공유 결과물 단추 |
+| 학습자 `path_id` (full / office_worker / investor) | 13.4 띠, 13.6, 12.5 | 길 띠·다리 카드 표시·점검 문항 계산. "전체 길로 바꾸기"는 `path_id`를 full로 바꾸고 기록은 그대로 |
+| `checkpoint.path_variants[]` (`path_id`, `taken`, `replace[{from,to}]`, `remove_if_lecture_not_mastered`, `pass_ratio`, `badge_on_pass`, `gate`) | 12.5 | 문항 목록 = 원 목록에서 replace·remove 적용(그 편을 mastered면 빼지 않음). `taken: false`(CP2)면 `gate {cards, must_correct, unlocks_lecture: L07}` |
+| 배지 변형 | 13.4 | 요약 경로 배지는 `badge_on_pass` id(예 `BADGE-S1-SUMMARY`)로 구분. 요약 경로 표시가 붙은 배지와 "AI 속 들여다보기 수료"는 다른 모양 (spec 13.4). 전체 배지를 받으면 요약 표시를 바꿈 |
+| 다리 카드 질문 id `B03-1-Q1` | 13.6 | bridge-cards-03-04.md. 관문 질문 정답 여부만 기록(점수 없음) |
+
 ## 7-1. v2 구현 메모
 - **가입·로그인 (D33)**: Google OAuth + 이메일 일회용 코드(6자리, 10분, 5회) + 같은 메일 속 매직 링크. 비밀번호 저장 없음. 동의 기록(약관 버전, 시각 `+09:00`, 만 14세 확인)을 계정에 남긴다.
-- **맛보기 (D30)**: VALUE_CURRICULUM 3절의 8단계 Colab 흐름. 앱은 Colab 맛보기 노트북 링크(T1)와 셀별 준비된 코드·풀이·보이는 것·깨달음을 보여 주고, 사용자는 "비슷해요 / 달라요"를 누른다. 가입 전 기록은 브라우저(IndexedDB) `taste_progress`, 가입·로그인 때 계정으로 옮긴다. 결과(손실, 이름 10개)는 사용자가 붙여 넣은 글만 쓴다. 맛보기 Colab 노트북 파일을 어디에 둘지(공개 GitHub 또는 Drive 공유 링크)는 CTO가 정한다 (공개 = 승인 사항일 수 있음).
-- **다리 카드 03·04 (D48)**: 사용자가 고른 길이 회사원 또는 투자자일 때만, 02편을 마친 뒤 07편을 열기 전에 다리 카드 2장(03 임베딩, 04 정규화)을 보인다. 입문 개발자 길에는 없다. 데이터 원본 `pedagogy/bridge-cards-03-04.md` (작성 중). 카드 필드 제안: `bridge_id`, `lecture_id`, `title_ko`, `body_ko`(한 문단), `figure_ko` 또는 `mini_practice`, `questions`(1~2개, `type: "choice"`, 점수 없음), `video_segments`(03·04편 구간). 확인 문제 결과는 복습 추천에만 쓰고 07편을 잠그지 않는다. 화면 `spec.md` 13.6, 목업 `v2_bridge`.
+- **맛보기 (D30)**: VALUE_CURRICULUM 3절의 8단계 Colab 흐름. 앱은 Colab 맛보기 노트북 링크(T1)와 셀별 준비된 코드·풀이·보이는 것·깨달음을 보여 주고, 사용자는 "비슷해요 / 달라요"를 누른다. 가입 전 기록은 브라우저(IndexedDB) `taste_progress`, 가입·로그인 때 계정으로 옮긴다. 결과(손실, 이름 10개)는 사용자가 붙여 넣은 글만 쓴다. 앱은 Colab을 읽지 못하므로 단계 완료는 자기 확인 "직접 확인했어요" (D54). 맛보기 확인 질문 3개는 `scored: false`. 맛보기 Colab 노트북 파일을 어디에 둘지(공개 GitHub 또는 Drive 공유 링크)는 CTO가 정한다 (공개 = 승인 사항일 수 있음).
+- **다리 카드 03·04 (D48 → D50·D55, 원본 10장)**: 사용자가 고른 길이 회사원 또는 투자자일 때만, 02편을 마친 뒤 07편을 열기 전에 다리 카드 2장(03 임베딩, 04 정규화)을 보인다. 입문 개발자 길에는 없다. 데이터 원본 `pedagogy/bridge-cards-03-04.md` (작성 중). 카드 필드 제안: `bridge_id`, `lecture_id`, `title_ko`, `body_ko`(한 문단), `figure_ko` 또는 `mini_practice`, `questions`(1~2개, `type: "choice"`, 점수 없음), `video_segments`(03·04편 구간). 요약 경로 순서 (D57): 01편 → 02편 → 03편 다리 카드 6장 → CP1(요약) → 04편 다리 카드 4장(07편 관문) → 07편 → 그 길의 남은 편 (길별 선택, VALUE_CURRICULUM 4-1·4-2) → CP3(요약, 줄인 판). 07편 뒤 편을 코드에 고정하지 말고 학습자 길(`path_id`)의 편 목록과 선택 편 익힘 여부에서 계산한다. 03편 카드 질문 B03-1-Q1·Q2는 CP1(요약) 문항으로 쓰고, 04편 카드 질문 4개는 07편 관문(`gate.must_correct`)이다. 화면 `spec.md` 13.6, 목업 `v2_bridge`.
 - **브라우저 안 실행**: 쓰지 않음 (X1 닫힘). 맛보기에 torch가 필요하고 Colab이 "설치 없음"을 충족.
 - **공유 카드 (D32)**: 카드 PNG는 서버 또는 브라우저 캔버스에서 1200x675로 그린다 (목업 `card_*.html`이 배치 원본). 출력은 사용자가 실습에서 붙여 넣은 실제 결과만 쓴다. 출처 줄 "Andrej Karpathy의 공개 강의를 따라 만든 결과 (비공식)" 고정, 이름 카드는 실제 이름 안내 줄 추가. "글 복사"는 클립보드에 사실 문장만. "X에 공유"는 `https://x.com/intent/post?text=…`를 새 창으로 열 뿐, 자동 게시 API를 쓰지 않는다. intent는 이미지 첨부가 안 되므로 버튼 바로 아래에 "저장한 이미지를 첨부해 주세요"를 늘 보인다 (D45, `aria-describedby`). 맛보기 이름 카드와 정리 화면에는 "첫 모델이라 아직 서툴러요" 한 줄. X 로그인은 만들지 않는다 (D44).
 
 ## 8. 열린 질문·충돌 (CTO 관련, 전체는 decisions.md "남은 질문과 충돌")
 - X1 닫힘: 맛보기는 Colab (브라우저 안 실행 안 씀).
 - 20:34 닫힘: X2 저장(D43), X3 X 로그인 안 함(D44), X6 빈 구간 = 영상 없음·`end_s` 늘 채움(D49), X9 X에 공유 유지 + 첨부 안내(D45), X10 CP 통과 = 단계 배지(D47), X11 다리 카드(D48), X12 랜딩·약관·개인정보 문구는 공개 전 승인 항목(D46).
-- 남음: X4 공유 카드 이미지 첨부 방식(기본안: 이미지 저장 뒤 직접 첨부). X5 동의·약관 법적 검토. X8 맛보기 보관 7일·코드 10분·재전송 60초 값. X13 단계 수 확정과 새 필드 7개 (교사가 data-spec에 정리 중). X14 짧은 길의 누적 점검·단계 배지 처리.
+- 20:43 닫힘: X13 단계 수 169·새 칸 (D51·D52), X14 요약 경로 점검·배지 (D50).
+- 20:55 닫힘: X15 이름 카드 1200 × 675 유지 (D56), X16 요약 경로 순서 (D57).
+- 남음: X4 공유 카드 이미지 첨부 방식(기본안: 이미지 저장 뒤 직접 첨부). X5 동의·약관 법적 검토. X8 맛보기 보관 7일·코드 10분·재전송 60초 값.
 - C2·C4는 교사 동의로 닫힘: 주석 없는 코드 + 옆 칸 풀이, 앱 안 "비교하기"·"제출" = 시도 1회.
 - 비교 기능 숫자 허용 오차 기본값 (상대 1e-4 제안).
 

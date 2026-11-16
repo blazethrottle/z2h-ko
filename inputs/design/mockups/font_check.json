@@ -669,7 +669,7 @@
     [
      "Pretendard Medium",
      "Pretendard-Medium",
-     22
+     18
     ]
    ],
    ".tabbar a": [
@@ -1157,23 +1157,18 @@
     [
      "Pretendard",
      "Pretendard-Bold",
-     12
+     9
     ]
    ],
    ".big": null,
    ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": [
     [
-     "Pretendard",
-     "Pretendard-Regular",
-     2
-    ],
-    [
      "JetBrains Mono",
      "JetBrainsMono-Regular",
-     27
+     40
     ]
    ],
-   ".result .sym, .badge.ok, .tag": null,
+   ".result .sym, .badge.ok, .tag": [],
    ".next b": [
     [
      "Pretendard",
@@ -1182,7 +1177,13 @@
     ]
    ],
    ".chip": null,
-   ".opt span:nth-child(2)": null,
+   ".opt span:nth-child(2)": [
+    [
+     "Pretendard",
+     "Pretendard-Regular",
+     11
+    ]
+   ],
    ".tabbar a": null
   }
  },
@@ -1385,7 +1386,7 @@
    {
     "family": "Z2H JetBrains Mono",
     "weight": "100 800",
-    "status": "unloaded"
+    "status": "loaded"
    }
   ],
   "overflow": false,
@@ -1394,7 +1395,7 @@
   "small": [],
   "em": false,
   "checkUI": true,
-  "checkCode": false,
+  "checkCode": true,
   "platformFonts": {
    "h1": [
     [
@@ -1412,9 +1413,67 @@
     [
      "Pretendard",
      "Pretendard-Regular",
-     1
+     6
     ]
    ],
+   ".tabbar a": [
+    [
+     "Pretendard SemiBold",
+     "Pretendard-SemiBold",
+     1
+    ]
+   ]
+  }
+ },
+ "c7_edits_m390": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 390,
+  "sw": 390,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     22
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": null,
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
    ".tabbar a": [
     [
      "Pretendard SemiBold",
@@ -2040,7 +2099,7 @@
     [
      "Pretendard Medium",
      "Pretendard-Medium",
-     22
+     19
     ]
    ],
    ".tabbar a": []
@@ -2486,23 +2545,18 @@
     [
      "Pretendard",
      "Pretendard-Bold",
-     12
+     9
     ]
    ],
    ".big": null,
    ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": [
     [
-     "Pretendard",
-     "Pretendard-Regular",
-     2
-    ],
-    [
      "JetBrains Mono",
      "JetBrainsMono-Regular",
-     27
+     40
     ]
    ],
-   ".result .sym, .badge.ok, .tag": null,
+   ".result .sym, .badge.ok, .tag": [],
    ".next b": [
     [
      "Pretendard",
@@ -2511,7 +2565,13 @@
     ]
    ],
    ".chip": null,
-   ".opt span:nth-child(2)": null,
+   ".opt span:nth-child(2)": [
+    [
+     "Pretendard",
+     "Pretendard-Regular",
+     11
+    ]
+   ],
    ".tabbar a": null
   }
  },
@@ -2708,7 +2768,7 @@
    {
     "family": "Z2H JetBrains Mono",
     "weight": "100 800",
-    "status": "unloaded"
+    "status": "loaded"
    }
   ],
   "overflow": false,
@@ -2717,7 +2777,7 @@
   "small": [],
   "em": false,
   "checkUI": true,
-  "checkCode": false,
+  "checkCode": true,
   "platformFonts": {
    "h1": [
     [
@@ -2735,9 +2795,61 @@
     [
      "Pretendard",
      "Pretendard-Regular",
-     1
+     6
     ]
    ],
+   ".tabbar a": []
+  }
+ },
+ "c7_edits_d1280": {
+  "faces": [
+   {
+    "family": "Z2H Pretendard",
+    "weight": "400",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "500",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "600",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H Pretendard",
+    "weight": "700",
+    "status": "loaded"
+   },
+   {
+    "family": "Z2H JetBrains Mono",
+    "weight": "100 800",
+    "status": "loaded"
+   }
+  ],
+  "overflow": false,
+  "vw": 1280,
+  "sw": 1280,
+  "small": [],
+  "em": false,
+  "checkUI": true,
+  "checkCode": true,
+  "platformFonts": {
+   "h1": [
+    [
+     "Pretendard",
+     "Pretendard-Bold",
+     23
+    ]
+   ],
+   ".big": null,
+   ".code .cd span:nth-child(2), .line .cd span:nth-child(2), pre.out": null,
+   ".result .sym, .badge.ok, .tag": null,
+   ".next b": null,
+   ".chip": null,
+   ".opt span:nth-child(2)": null,
    ".tabbar a": []
   }
  },
