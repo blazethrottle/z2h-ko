@@ -28,7 +28,7 @@ def test_every_data_method_takes_user_id_first():
 def test_adapter_is_a_storage_adapter(adapter):
     assert isinstance(adapter, StorageAdapter)
     assert adapter.ping() is True
-    assert adapter.schema_version() == "0001"
+    assert adapter.schema_version() == "0002"
 
 
 # ---------- 계정 ----------
@@ -339,7 +339,7 @@ def test_rebuild_and_diagnostic_attempts_are_numbered_by_server(adapter, user):
     assert dg[0]["recommended_units"] == ["F-P1"]
 
 
-def test_help_note_study_session_taster_and_taste(adapter, user):
+def test_help_note_study_session_and_taster(adapter, user):
     n1, n2 = aid(), aid()
     res = adapter.apply_ops(
         user, "pc",
@@ -350,7 +350,6 @@ def test_help_note_study_session_taster_and_taste(adapter, user):
             op("ts1", "taster_result", {"attempt_no": 1, "step_id": "T-S05"},
                {"self_reported": "similar", "pasted_names_text": "mira\nkaley", "pasted_loss_start": 3.84, "pasted_loss_end": 2.47, "at": t("19:30:00")}, t("19:30:00")),
             op("ts2", "taster_result", {"attempt_no": 1, "step_id": "T-S06"}, {"self_reported": "different"}, t("19:31:00")),
-            op("tr", "taste_result", {}, {"done_at": t("19:40:00"), "loss_start": 3.84, "loss_end": 2.47, "names": ["mira"], "source": "colab"}, t("19:40:00")),
         ],
     )
     assert res.rejected == []
@@ -358,11 +357,27 @@ def test_help_note_study_session_taster_and_taste(adapter, user):
     tasters = adapter.list_rows(user, "taster_result")
     assert [(r["step_id"], r["self_reported"]) for r in tasters] == [("T-S05", "similar"), ("T-S06", "different")]
     assert tasters[0]["pasted_loss_end"] == pytest.approx(2.47)
-    adapter.apply_ops(user, "pc", [op("tr2", "taste_result", {}, {"loss_end": 2.40}, t("19:50:00"))])
-    (taste,) = adapter.list_rows(user, "taste_result")  # 한 사람 1행
-    assert taste["names"] == ["mira"] and taste["loss_end"] == pytest.approx(2.40)
     bad = adapter.apply_ops(user, "pc", [op("ts3", "taster_result", {"attempt_no": 1, "step_id": "T-S07"}, {"self_reported": "maybe"}, t("19:32:00"))])
     assert bad.rejected
+
+
+def test_taste_result_is_an_unknown_table_now(adapter, user):
+    """0002 에서 지운 표. 다른 모르는 표와 똑같이 그 줄만 rejected, 나머지는 계속 반영."""
+    res = adapter.apply_ops(
+        user, "pc",
+        [
+            op("tr", "taste_result", {}, {"done_at": t("19:40:00"), "loss_end": 2.47, "names": ["mira"], "source": "colab"}, t("19:40:00")),
+            op("ok", "taster_result", {"attempt_no": 1, "step_id": "T-S08"}, {"self_reported": "similar"}, t("19:41:00")),
+        ],
+    )
+    assert res.applied == ["ok"]
+    (rej,) = res.rejected
+    assert rej == {"op_id": "tr", "reason_ko": "모르는 표입니다: taste_result"}
+    assert adapter.apply_ops(user, "pc", [op("x", "no_such_table", {}, {}, t("19:42:00"))]).rejected[0]["reason_ko"] == "모르는 표입니다: no_such_table"
+    assert "taste_result" not in adapter.get_state(user)["tables"]
+    assert "taste_result" not in adapter.export_all(user)["tables"]
+    with pytest.raises(KeyError):
+        adapter.list_rows(user, "taste_result")
 
 
 # ---------- 같은 op_id는 한 번만 ----------
@@ -630,7 +645,7 @@ def test_export_contains_every_table_and_conflicts(adapter, user):
     adapter.apply_ops(user, "pc", [op("c1", "user_pref", key, {"value": "local"}, t("20:05:00"))])
     data = adapter.export_all(user)
     assert data["format"] == "z2h-backup" and data["user"]["user_id"] == user
-    assert data["schema_version"] == "0001" and isinstance(data["server_seq"], int)
+    assert data["schema_version"] == "0002" and isinstance(data["server_seq"], int)
     assert set(StorageAdapter.SYNC_TABLES) <= set(data["tables"])
     assert len(data["tables"]["sync_conflicts"]) == 1
     assert data["tables"]["user_pref"][0]["value"] == "local"

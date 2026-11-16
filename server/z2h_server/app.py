@@ -16,7 +16,7 @@ from starlette.types import Receive, Scope, Send
 
 from . import migrate
 from .api import DevAuthOff, NoUser, router
-from .auth import AuthAdapter, LocalDevAuth, NoAuth
+from .auth import NO_TAILSCALE_USER_KO, AuthAdapter, ByHostAuth, LocalDevAuth, NoAuth, TailscaleAuth
 from .config import Settings, load_settings, validate_bind_host
 from .security import GuardMiddleware
 from .storage import StorageAdapter, open_adapter
@@ -74,16 +74,27 @@ def create_app(
             await run_in_threadpool(migrate.upgrade, settings.db_url)
         made = storage or open_adapter(settings.db_url)
         app.state.storage = made
-        # 요청의 현재 계정을 정하는 곳. 지금은 로컬 개발 로그인뿐(이메일·Google 은 공개 승인 뒤).
+        # 요청의 현재 계정을 정하는 곳. 맥 개발용 로그인 + (설정하면) 폰 Tailscale 로그인. 이메일·Google 은 공개 승인 뒤.
         off = settings.dev_auth_off_reason
         if auth is not None:
             app.state.auth = auth
-        elif off is not None:
-            # 터널 등 바깥 주소를 허용하면 개발용 로그인을 끈다. 로그인 수단이 없으므로 기록 API 는 모두 401.
-            log.warning("개발용 로그인 꺼짐: %s. 기록 API 는 로그인 수단이 없어 401 을 돌려줍니다.", off)
-            app.state.auth = NoAuth()
         else:
-            app.state.auth = LocalDevAuth(made, session_days=settings.dev_session_days)
+            local: AuthAdapter
+            if off is not None:
+                # 터널 등 바깥 주소를 허용하면 개발용 로그인을 끈다. 로그인 수단이 없으므로 기록 API 는 모두 401.
+                log.warning("개발용 로그인 꺼짐: %s. 기록 API 는 로그인 수단이 없어 401 을 돌려줍니다.", off)
+                local = NoAuth()
+            else:
+                local = LocalDevAuth(made, session_days=settings.dev_session_days)
+            if settings.tailscale_host:
+                # serve 이름 Host 요청만 TailscaleAuth. 이름(tailnet)과 로그인 이름은 로그에 쓰지 않는다.
+                log.warning(
+                    "Tailscale 로그인 켜짐(Z2H_TAILSCALE_HOST): serve 주소로 온 요청은 맥미니에서 이어 둔 계정으로만 "
+                    "들어옵니다(자동 가입 없음, 잇기: python -m z2h_server link-tailscale)."
+                )
+                app.state.auth = ByHostAuth(local, TailscaleAuth(made, settings.tailscale_host))
+            else:
+                app.state.auth = local  # 설정이 없으면 지금과 같은 조립
         try:
             yield
         finally:
@@ -102,12 +113,13 @@ def create_app(
 
     @app.exception_handler(NoUser)
     async def _no_user(request: Request, exc: NoUser):
+        # auth_provider: 이 요청을 맡은 로그인 수단(dev_local | tailscale | none). 로그인 이름은 되돌려 주지 않는다.
+        if exc.provider == TailscaleAuth.provider:
+            message = NO_TAILSCALE_USER_KO
+        else:
+            message = "먼저 계정을 고르거나 만들어 주세요(/api/dev-auth/accounts)."
         return JSONResponse(
-            {
-                "ok": False,
-                "error": "no_user",
-                "message_ko": "먼저 계정을 고르거나 만들어 주세요(/api/dev-auth/accounts).",
-            },
+            {"ok": False, "error": "no_user", "message_ko": message, "auth_provider": exc.provider},
             status_code=401,
         )
 

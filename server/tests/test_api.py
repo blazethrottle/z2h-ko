@@ -12,7 +12,7 @@ def test_health_needs_no_account(anon_client):
     r = anon_client.get("/api/health")
     assert r.status_code == 200
     body = r.json()
-    assert body == {"ok": True, "server_time": body["server_time"], "schema_version": "0001"}
+    assert body == {"ok": True, "server_time": body["server_time"], "schema_version": "0002"}
     assert body["server_time"].endswith("+09:00")
 
 
@@ -121,6 +121,32 @@ def test_sync_response_shape_and_state_shape(client):
     later = client.get("/api/state", params={"since": state["server_seq"]}).json()
     assert later["since"] == state["server_seq"]
     assert all(rows == [] for rows in later["tables"].values())
+
+
+def test_state_and_export_have_no_taste_result(client):
+    """맛보기 기록은 taster_result 하나(0002 에서 taste_result 를 지움)."""
+    state = client.get("/api/state").json()
+    assert "taste_result" not in state["tables"] and "taster_result" in state["tables"]
+    assert len(state["tables"]) == 14
+    assert "taste_result" not in client.get("/api/export").json()["tables"]
+    r = client.post("/api/sync", json={"client_id": "pc", "ops": [op("tr", "taste_result", {}, {"loss_end": 2.4}, t("20:00:00"))]})
+    assert r.status_code == 200
+    assert r.json()["rejected"] == [{"op_id": "tr", "reason_ko": "모르는 표입니다: taste_result"}]
+
+
+def test_me_and_no_user_say_which_login_is_in_use(anon_client):
+    """auth_provider 칸: 지금 요청을 맡은 로그인 수단(개발용 로그인이면 dev_local)."""
+    r = anon_client.get("/api/me")
+    assert r.status_code == 401
+    assert r.json() == {
+        "ok": False,
+        "error": "no_user",
+        "message_ko": "먼저 계정을 고르거나 만들어 주세요(/api/dev-auth/accounts).",
+        "auth_provider": "dev_local",
+    }
+    uid = login_new_account(anon_client)
+    body = anon_client.get("/api/me").json()
+    assert body["ok"] is True and body["user"]["user_id"] == uid and body["auth_provider"] == "dev_local"
 
 
 def test_state_since_must_be_server_seq(client):

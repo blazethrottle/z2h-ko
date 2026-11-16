@@ -319,7 +319,7 @@ inputs/               팀 입력 자료(읽기 전용)
 | `question_attempt` PK(user_id, question_id, attempt_no) | PK(user_id, question_id, attempt_id), attempt_no는 서버가 매김. `rebuild_attempt`·`checkpoint_attempt`·`diagnostic_result`도 같은 방식, `help_note`는 note_id | 두 기기 오프라인 충돌 방지 |
 | `schema_migrations` | Alembic 기본 표 `alembic_version` | Alembic이 스스로 관리하는 표를 따로 만들지 않음 |
 | 표에 없음 | `grade_result`(노트북 채점 결과), `user_pref`, `step_progress.prediction`, `question_attempt.checkpoint_attempt_id`, 공통 칼럼 `server_seq`·`content_version`·`last_client_id`, `applied_ops`, `sync_counter` | 채점 결과 저장, 설정 동기화, 예측 칸, 동기화 판정 |
-| `taste_result`와 `taster_result` 둘 다 있음 | 둘 다 만듦. 앱은 `taster_result`만 씀 | 5절에 둘 다 적혀 있음. 하나로 합칠지 확인 필요 |
+| `taste_result` 표 없음 | `taster_result` 하나만 둠. 마이그레이션 0002가 `taste_result`를 지움 | 얼큰이 결정 11/17: 하나로 합침. 앱은 `taste_result`를 쓴 적이 없음 |
 | 이름 카드: 20글자 넘는 이름은 앞 20글자 + … (taster.md 4절, spec 13.5) | 20글자 넘는 줄과 a~z 밖 글자가 있는 줄은 저장·카드에서 뺌 | 개인 정보를 붙여 넣는 경우 대비(P2 검수). 교사·디자이너 확인 대기 |
 | 맛보기 완료는 배지가 아닌 표시(VALUE 2절) | 화면은 표시로만 보이고, 저장은 `user_badge`에 `TASTER-DONE` 행 | 완료 기록을 둘 표가 따로 없어서. 교사 확인 대기 |
 | 단계 배지 3개(1절·5절) / 화면은 4장(spec 13.4: 0 첫 셀 완주 포함) | 화면 4장. 0번 id `BADGE-S0`은 앱이 임시로 붙임 | spec 13.4. id는 교사 확인 대기 |
@@ -345,11 +345,21 @@ inputs/               팀 입력 자료(읽기 전용)
 
 ### 12.8 열린 것 (PM이 본 것. 디자인·교사의 X 항목과 별개)
 1. 맛보기 노트북: CTO 20:47 통지로 P2 확정(닫힘).
-2. 1편 확인 문제는 교사 문제 11개만(기본값 유지, 확인 대기).
+2. 1편 확인 문제는 교사 문제 11개만(기본값 유지, 교사 답 대기).
 3. 익힘 문턱: 교사 정본 `mastery_rule`을 따른다(P0 질문 3 닫음).
 4. `end_s` 빈 값: D49로 닫힘.
 5. Colab 바로 열기용 공개 노트북 주소: 공개 배포 승인 항목, 열림.
-6. 로컬 Jupyter 자동 전송의 계정 지정 방법(12.7절).
-7. 폰 접속(Tailscale serve)에서 쓸 로그인 장치: `docs/PHONE_ACCESS_PLAN.md` 2절의 A~D안 중 결정 필요(보안 변경이라 CTO 결정).
+6. 로컬 Jupyter 자동 전송의 계정 지정: 닫힘(12.9절 3번).
+7. 폰 접속 로그인 장치: A안으로 결정, 구현함(12.9절 1번). serve를 켜는 것은 CTO 검토 뒤.
 8. 같은 구간을 쓰는 단계 사이 재생 위치 유지: YouTube 외부 스크립트(IFrame API) 없이는 안 되어 만들지 않음. 외부 스크립트를 허용할지 결정 필요.
-9. `taste_result`·`taster_result` 중복(12.5절).
+9. `taste_result`·`taster_result` 중복: 닫힘(12.9절 4번).
+10. 교사 답 대기: 붙여 넣은 이름의 금칙어 목록, 재구성 R1~R3 채점 노트북과 R3 기준(손실 0.1), `BADGE-S0`·`TASTER-DONE` id.
+
+### 12.9 얼큰이 결정 반영 (2026-11-17 05:45 KST, P4 `p4-decisions`)
+1. 폰 로그인은 A안: Tailscale serve가 붙이는 접속자 정보(`Tailscale-User-Login`)를 서버가 학습 계정에 잇는다. 서버는 127.0.0.1에만 열리고, 이 머리말은 serve를 거친 요청(접속 쪽 127.0.0.1 + Host가 설정한 serve 이름)에서만 믿는다. 자동 가입 없음(맥미니에서 명령으로 이어 둔 로그인 이름만). Funnel 금지. 켜는 절차와 위험은 `docs/PHONE_ACCESS_PLAN.md`. 보안 변경이라 CTO 검토 전에는 serve를 켜지 않는다.
+2. 정답과 H4 풀이 파일을 앱이 미리 받는 구조는 그대로 둔다(서버 없이 채점. 개발자 도구로는 보임).
+3. 로컬 Jupyter의 결과는 지금처럼 결과코드 붙여넣기로 받는다. 노트북에 계정 번호를 넣지 않는다.
+4. `taste_result` 표를 지우고 `taster_result` 하나만 쓴다(마이그레이션 0002). 5절 표의 `taste_result` 줄은 이 결정으로 쓰지 않는다.
+5. 이름 카드: 20글자를 넘거나 a~z 밖 글자가 있는 줄은 저장과 카드에서 뺀다(유지).
+6. 옛 22단계 초안(커밋한 적 없는 `content/ep01-micrograd/`의 lecture·questions·rebuild·steps)은 지웠다. 1편 정본은 교사의 `inputs/pedagogy/content/L01.json`뿐이다.
+7. 맛보기 T-S01: 교사 문구는 그대로 두고, 바로 열기 주소가 없는 동안 앱이 "받기 + 올리기" 안내 한 줄을 덧붙인다(P3에서 반영됨).

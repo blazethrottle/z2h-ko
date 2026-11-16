@@ -9,11 +9,15 @@
 - Z2H_HOST      바인드 주소. 127.0.0.1 말고는 실행을 거부한다
 - Z2H_EXTRA_HOSTS, Z2H_EXTRA_ORIGINS  쉼표로 구분한 추가 허용값(기본 없음. 나중 터널 주소용)
 - Z2H_DEV_AUTH  0 이면 개발용 로그인을 끈다. 허용 Host 에 127.0.0.1·localhost 가 아닌 주소가 있어도 꺼진다
+- Z2H_TAILSCALE_HOST  폰 로그인(TailscaleAuth)을 켠다. 값은 '<기기>.<tailnet>.ts.net' 이름 1개(스킴·포트·쉼표 없이).
+                      그 이름이 허용 Host 에, https://<그 이름> 이 허용 Origin 에 자동으로 들어간다.
+                      이 이름은 개발용 로그인을 끄는 '바깥 주소'로 치지 않는다. 비우거나 없으면 지금과 똑같다
 """
 
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -50,6 +54,29 @@ def validate_bind_host(host: object) -> str:
     return BIND_HOST
 
 
+class TailscaleHostRefused(ValueError):
+    """Z2H_TAILSCALE_HOST 값이 '<기기>.<tailnet>.ts.net' 이름 1개가 아닐 때. 서버를 켜지 않는다."""
+
+
+_DNS_LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+# Tailscale MagicDNS 이름: 기기 이름 + tailnet 이름 + ts.net (예: macmini.example-tailnet.ts.net)
+_TAILSCALE_HOST = re.compile(rf"{_DNS_LABEL}\.{_DNS_LABEL}\.ts\.net")
+
+
+def validate_tailscale_host(value: object) -> str:
+    """serve 이름 검사. 통과하면 소문자로 맞춘 이름을 돌려준다.
+
+    받는 것: '<기기>.<tailnet>.ts.net' 하나. 거부: 스킴(https://), 포트(:443), 경로(/), 쉼표 목록, 앞뒤 공백,
+    끝 점, 별표, IP 주소, ASCII 밖 글자, ts.net 이 아닌 이름. 받은 값은 오류 글에 넣지 않는다(tailnet 이름이 로그에 남지 않게).
+    """
+    if not isinstance(value, str) or not value.isascii() or not _TAILSCALE_HOST.fullmatch(value.lower()):
+        raise TailscaleHostRefused(
+            "Z2H_TAILSCALE_HOST 는 '<기기>.<tailnet>.ts.net' 모양의 이름 1개만 받습니다"
+            "(https:// 같은 스킴, :443 같은 포트, 쉼표, 공백 없이). 받은 값의 모양이 맞지 않아 실행하지 않습니다."
+        )
+    return value.lower()
+
+
 def sqlite_url(path: Path | str) -> str:
     return f"sqlite:///{Path(path).resolve()}"
 
@@ -73,14 +100,23 @@ class Settings:
     require_loopback_peer: bool = True
     auto_migrate: bool = True
     dev_auth: bool = True  # 개발용 로그인(LocalDevAuth). 끄는 조건은 dev_auth_off_reason
+    tailscale_host: str | None = None  # Z2H_TAILSCALE_HOST. None 이면 폰 로그인(TailscaleAuth) 없음
+
+    def __post_init__(self) -> None:
+        # 어떤 길로 만든 설정이든(load_settings, Settings(...), dataclasses.replace) 같은 검사를 지난다
+        if self.tailscale_host is not None:
+            object.__setattr__(self, "tailscale_host", validate_tailscale_host(self.tailscale_host))
 
     @property
     def allowed_hostnames(self) -> frozenset[str]:
-        return frozenset(h.lower() for h in (*ALLOWED_HOSTNAMES, *self.extra_hosts))
+        serve = (self.tailscale_host,) if self.tailscale_host else ()
+        return frozenset(h.lower() for h in (*ALLOWED_HOSTNAMES, *self.extra_hosts, *serve))
 
     @property
     def allowed_origins(self) -> frozenset[str]:
         own = {f"http://{h}:{self.port}" for h in ALLOWED_HOSTNAMES}
+        if self.tailscale_host:
+            own.add(f"https://{self.tailscale_host}")  # serve 는 https 기본 포트(443)로 연다
         return frozenset({*own, *(o.lower().rstrip("/") for o in self.extra_origins)})
 
     @property
@@ -89,6 +125,9 @@ class Settings:
 
         터널 등으로 바깥 주소를 허용하면 터널 프로그램이 127.0.0.1 에서 접속하므로
         접속 주소 검사만으로는 바깥 사람을 막을 수 없다. 그래서 그런 설정이 하나라도 있으면 끈다.
+        Z2H_TAILSCALE_HOST 로 들어온 이름만 예외다(extra_hosts 가 아니라 tailscale_host 칸이라 여기서 세지 않는다).
+        그 이름으로 온 요청은 개발용 로그인에 닿지 않고 TailscaleAuth 만 보기 때문이다(auth.ByHostAuth).
+        같은 이름을 Z2H_EXTRA_HOSTS 에도 넣으면 그것은 바깥 주소로 세어 지금처럼 끈다.
         """
         if not self.dev_auth:
             return "설정으로 끔(Z2H_DEV_AUTH=0)"
@@ -132,5 +171,7 @@ def load_settings(env: Mapping[str, str] | None = None, **overrides) -> Settings
         extra_hosts=_split_list(env.get("Z2H_EXTRA_HOSTS")),
         extra_origins=_split_list(env.get("Z2H_EXTRA_ORIGINS")),
         dev_auth=env.get("Z2H_DEV_AUTH", "1").strip().lower() not in ("0", "false", "off", "no"),
+        # 빈 값은 설정 없음. 그 밖의 값은 Settings 가 검사한다(틀리면 TailscaleHostRefused)
+        tailscale_host=overrides.pop("tailscale_host", None) or env.get("Z2H_TAILSCALE_HOST") or None,
         **overrides,
     )

@@ -56,7 +56,6 @@ DESIGN_COLUMNS = {
         "attempt_no", "step_id", "self_reported", "pasted_names_text", "pasted_loss_start",
         "pasted_loss_end", "share_card_id", "at",
     },
-    "taste_result": COMMON | {"done_at", "loss_start", "loss_end", "names_json", "source"},
     "help_note": COMMON | {
         "note_id", "target_id", "goal_ko", "last_cell_code", "error_last_line", "env_json",
         "hints_seen_json", "created_at",
@@ -84,7 +83,6 @@ DESIGN_PRIMARY_KEYS = {
     "mastery_state": ["user_id", "target_id"],
     "review_card": ["user_id", "card_id"],
     "taster_result": ["user_id", "attempt_no", "step_id"],
-    "taste_result": ["user_id"],
     "grade_result": ["user_id", "check_id"],
     "user_pref": ["user_id", "pref_key"],
     "user_badge": ["user_id", "badge_id"],

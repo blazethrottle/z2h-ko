@@ -125,7 +125,7 @@ def test_real_server_starts_on_loopback_and_answers_health(tmp_path):
                     break
                 time.sleep(0.2)
         assert body is not None, proc.stderr.read() if proc.poll() is not None else "응답 없음"
-        assert body["ok"] is True and body["schema_version"] == "0001"
+        assert body["ok"] is True and body["schema_version"] == "0002"
         assert (tmp_path / "real.sqlite3").exists()
     finally:
         proc.terminate()

@@ -23,6 +23,9 @@ class SqliteAdapter(SqlAdapter):
     def __init__(self, path_or_url: Path | str):
         text = str(path_or_url)
         url = text if text.startswith("sqlite:") else sqlite_url(path_or_url)
-        engine = sa.create_engine(url, connect_args={"check_same_thread": False, "timeout": 30})
+        # hide_parameters: DB 오류 글에 SQL 에 넣은 값(로그인 이름·학습 기록)을 싣지 않는다. 서버 오류 기록에 개인정보가 남지 않게
+        engine = sa.create_engine(
+            url, connect_args={"check_same_thread": False, "timeout": 30}, hide_parameters=True
+        )
         sa.event.listen(engine, "connect", _enable_foreign_keys)
         super().__init__(engine)

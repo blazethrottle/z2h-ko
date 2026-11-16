@@ -21,6 +21,12 @@ export class MockApi {
   devAuthBlocked = false;
   /** /api/me 응답만 늦춘다(계정 목록이 화면의 계정 확인보다 먼저 오는 경우를 만든다) */
   meDelayMs = 0;
+  /** 서버가 알려 주는 로그인 길(/api/me 의 auth_provider). null 이면 옛 서버(칸 없음) */
+  authProvider: 'dev_local' | 'tailscale' | null = null;
+  /** tailscale 일 때: 접속자의 Tailscale 계정에 이어 둔 학습 계정(user_id). null 이면 안 이어짐(기록 API 401) */
+  tailscaleUser: string | null = null;
+  /** tailscale 일 때: false 면 /api/me 의 401 본문에는 auth_provider 를 넣지 않는다(기록 API 401 에만) */
+  meUnauthorizedHasProvider = true;
   forwardedHeaders: string[] = [];
   /** 서버에 이미 있는 행(다른 기기에서 올린 것처럼). 첫 상태 받기(since 없음)에만 돌려준다 */
   serverTables: Record<string, any[]> = {};
@@ -36,7 +42,8 @@ export class MockApi {
       const hdrs = route.request().headers();
       for (const h of ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip', 'forwarded']) if (hdrs[h]) this.forwardedHeaders.push(h);
       if (url.pathname.startsWith('/api/dev-auth/')) {
-        if (this.devAuthBlocked) return route.fulfill({ status: 404, json: { ok: false, error: 'not_found' } });
+        // Tailscale 경유(폰)에서는 개발용 로그인이 늘 404 (server/API.md 1절)
+        if (this.devAuthBlocked || this.authProvider === 'tailscale') return route.fulfill({ status: 404, json: { ok: false, error: 'not_found' } });
         if (url.pathname === '/api/dev-auth/accounts' && method === 'GET') return route.fulfill({ json: { accounts: this.accounts, current_user_id: this.current } });
         if (url.pathname === '/api/dev-auth/accounts' && method === 'POST') {
           const body = route.request().postDataJSON() ?? {};
@@ -53,11 +60,21 @@ export class MockApi {
         }
       }
       if (url.pathname === '/api/health') return route.fulfill({ json: { ok: true, server_time: now, schema_version: 'test' } });
-      const me = this.accounts.find((a) => a.user_id === this.current);
-      if (!me) return route.fulfill({ status: 401, json: { ok: false, error: 'no_user', message_ko: '먼저 계정을 고르거나 만들어 주세요' } });
+      const ts = this.authProvider === 'tailscale';
+      const me = this.accounts.find((a) => a.user_id === (ts ? this.tailscaleUser : this.current));
+      if (!me) {
+        const provider = ts
+          ? url.pathname !== '/api/me' || this.meUnauthorizedHasProvider
+            ? { auth_provider: 'tailscale' }
+            : {}
+          : this.authProvider
+            ? { auth_provider: this.authProvider }
+            : {};
+        return route.fulfill({ status: 401, json: { ok: false, error: 'no_user', message_ko: '먼저 계정을 고르거나 만들어 주세요', ...provider } });
+      }
       if (url.pathname === '/api/me') {
         if (this.meDelayMs) await new Promise((r) => setTimeout(r, this.meDelayMs));
-        return route.fulfill({ json: { ok: true, user: me } });
+        return route.fulfill({ json: { ok: true, user: me, ...(this.authProvider ? { auth_provider: this.authProvider } : {}) } });
       }
       if (url.pathname === '/api/sync') {
         this.syncCalls++;

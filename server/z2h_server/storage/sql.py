@@ -200,12 +200,43 @@ class SqlAdapter(StorageAdapter):
             return [dict(r) for r in conn.execute(stmt).mappings()]
 
     def add_identity(self, user_id: str, provider: str, subject: str) -> None:
+        a = schema.auth_identity
         with self._lock, self.engine.begin() as conn:
-            conn.execute(
-                sa.insert(schema.auth_identity).values(
-                    provider=provider, subject=subject, user_id=user_id, created_at=self._now()
-                )
-            )
+            taken = conn.execute(
+                sa.select(a.c.user_id).where(a.c.provider == provider, a.c.subject == subject)
+            ).first()
+            if taken is not None:
+                # subject 는 이메일일 수 있어 오류 글에 넣지 않는다
+                raise ValueError("이 로그인은 이미 다른 연결에 쓰이고 있습니다")
+            # 없는 user_id 는 지금처럼 FK 오류(IntegrityError). 오류 글의 SQL 값은 엔진 설정(hide_parameters)으로 숨긴다
+            conn.execute(sa.insert(a).values(provider=provider, subject=subject, user_id=user_id, created_at=self._now()))
+
+    def find_identity(self, provider: str, subject: str) -> str | None:
+        a, u = schema.auth_identity, schema.users
+        stmt = (
+            sa.select(a.c.user_id)
+            .select_from(a.join(u, u.c.user_id == a.c.user_id))
+            .where(a.c.provider == provider, a.c.subject == subject)
+        )
+        with self.engine.connect() as conn:
+            return conn.execute(stmt).scalars().first()
+
+    def remove_identity(self, provider: str, subject: str) -> bool:
+        a = schema.auth_identity
+        with self._lock, self.engine.begin() as conn:
+            res = conn.execute(sa.delete(a).where(a.c.provider == provider, a.c.subject == subject))
+            return (res.rowcount or 0) > 0
+
+    def list_identities(self, provider: str) -> list[dict[str, Any]]:
+        a, u = schema.auth_identity, schema.users
+        stmt = (
+            sa.select(a.c.subject, a.c.user_id, u.c.display_name, a.c.created_at)
+            .select_from(a.join(u, u.c.user_id == a.c.user_id))
+            .where(a.c.provider == provider)
+            .order_by(a.c.created_at, a.c.subject)
+        )
+        with self.engine.connect() as conn:
+            return [dict(r) for r in conn.execute(stmt).mappings()]
 
     def create_session(self, user_id: str, session_hash: str, expires_at: str) -> None:
         with self._lock, self.engine.begin() as conn:

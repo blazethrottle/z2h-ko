@@ -56,11 +56,33 @@ export interface StateResponse {
   tables: Record<string, Record<string, unknown>[]>;
 }
 
+/**
+ * 서버가 알려 주는 로그인 길(server/API.md 1절). /api/me 성공 응답과, Tailscale 경유인데 학습 계정에 안 이어진 401 본문에 온다.
+ * dev_local: 맥미니(127.0.0.1)의 개발용 로그인. tailscale: 폰에서 Tailscale serve 로 연 화면(앱이 할 로그인 동작 없음).
+ * 칸이 없는 옛 응답은 null 로 두고 지금과 똑같이 동작한다
+ */
+export type AuthProvider = 'dev_local' | 'tailscale';
+
+export function parseAuthProvider(v: unknown): AuthProvider | null {
+  return v === 'dev_local' || v === 'tailscale' ? v : null;
+}
+
 export class NetworkError extends Error {
-  constructor(message: string, readonly status: number | null = null) {
+  constructor(
+    message: string,
+    readonly status: number | null = null,
+    /** 오류 응답의 JSON 본문(읽지 못하면 null) */
+    readonly body: unknown = null,
+  ) {
     super(message);
     this.name = 'NetworkError';
   }
+}
+
+/** 오류 응답 본문의 auth_provider. 없거나 모르는 값이면 null */
+export function errorAuthProvider(e: unknown): AuthProvider | null {
+  if (!(e instanceof NetworkError) || !e.body || typeof e.body !== 'object') return null;
+  return parseAuthProvider((e.body as { auth_provider?: unknown }).auth_provider);
 }
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -76,7 +98,15 @@ async function requestJson<T>(fetchImpl: FetchLike, url: string, init: RequestIn
   } finally {
     if (timer) clearTimeout(timer);
   }
-  if (!res.ok) throw new NetworkError(`HTTP ${res.status}`, res.status);
+  if (!res.ok) {
+    let body: unknown = null;
+    try {
+      body = await res.json();
+    } catch {
+      /* JSON 이 아닌 오류 본문 */
+    }
+    throw new NetworkError(`HTTP ${res.status}`, res.status, body);
+  }
   try {
     return (await res.json()) as T;
   } catch {
@@ -110,7 +140,13 @@ const postJson = <T>(f: FetchLike, url: string, body: unknown) =>
   requestJson<T>(f, url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });
 
 export async function getMe(f: FetchLike): Promise<Account> {
-  return (await requestJson<{ user: Account }>(f, API_PATHS.me)).user;
+  return (await getMeWithProvider(f)).user;
+}
+/** /api/me 와 로그인 길. auth_provider 는 맨 위 칸을 먼저 보고, 없으면 user 안을 본다(옛 응답은 null) */
+export async function getMeWithProvider(f: FetchLike): Promise<{ user: Account; authProvider: AuthProvider | null }> {
+  const r = await requestJson<{ user: Account; auth_provider?: unknown }>(f, API_PATHS.me);
+  const inUser = r?.user && typeof r.user === 'object' ? (r.user as { auth_provider?: unknown }).auth_provider : undefined;
+  return { user: r.user, authProvider: parseAuthProvider(r?.auth_provider) ?? parseAuthProvider(inUser) };
 }
 export function listDevAccounts(f: FetchLike): Promise<{ accounts: Account[]; current_user_id: string | null }> {
   return requestJson(f, API_PATHS.devAccounts).then((r: any) => ({ accounts: Array.isArray(r?.accounts) ? r.accounts : [], current_user_id: r?.current_user_id ?? null }));

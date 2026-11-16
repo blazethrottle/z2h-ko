@@ -4,7 +4,8 @@
 그 밖의 함수:
 - 사용자와 무관: ping, schema_version, close
 - 계정(인증 계층 AuthAdapter 전용): create_user, update_user, list_users, add_identity,
-  create_session, find_session, delete_session. 세션 찾기·지우기는 세션 값으로 찾으므로 user_id 가 첫 인자가 아니다.
+  find_identity, remove_identity, list_identities, create_session, find_session, delete_session.
+  세션·로그인 이름 찾기·지우기는 그 값으로 찾으므로 user_id 가 첫 인자가 아니다.
 """
 
 from __future__ import annotations
@@ -84,7 +85,21 @@ class StorageAdapter(ABC):
         """그 로그인 방식(provider)으로 만든 계정 목록."""
 
     @abstractmethod
-    def add_identity(self, user_id: str, provider: str, subject: str) -> None: ...
+    def add_identity(self, user_id: str, provider: str, subject: str) -> None:
+        """(provider, subject) 를 계정에 잇는다. 이미 이어진 (provider, subject) 면 ValueError(글에 subject 를 넣지 않음).
+        없는 user_id 면 저장소의 무결성 오류(SQL 어댑터는 IntegrityError)."""
+
+    @abstractmethod
+    def find_identity(self, provider: str, subject: str) -> str | None:
+        """(provider, subject) 가 이어진 계정의 user_id. 없으면 None."""
+
+    @abstractmethod
+    def remove_identity(self, provider: str, subject: str) -> bool:
+        """잇기를 끊는다. 끊은 것이 있으면 True."""
+
+    @abstractmethod
+    def list_identities(self, provider: str) -> list[dict[str, Any]]:
+        """그 로그인 방식의 잇기 목록 [{subject, user_id, display_name, created_at}] (이은 순서)."""
 
     @abstractmethod
     def create_session(self, user_id: str, session_hash: str, expires_at: str) -> None: ...

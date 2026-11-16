@@ -5,13 +5,16 @@
 
 ## 0. 공통 약속
 
-- 계정: 고정 사용자는 없다. 요청마다 현재 계정을 서버의 인증 계층(`AuthAdapter`)이 정한다. 지금은 로컬 개발 로그인(`LocalDevAuth`, 1절)뿐이고 127.0.0.1 에서만 동작한다. 계정이 없으면 학습 기록 API 는 401 `no_user`.
+- 계정: 고정 사용자는 없다. 요청마다 현재 계정을 서버의 인증 계층(`AuthAdapter`)이 정한다. 로그인 수단은 둘이고, 요청 하나는 Host 에 따라 둘 중 하나만 쓴다.
+  - 맥: 로컬 개발 로그인(`LocalDevAuth`, 1절). Host 가 `127.0.0.1`·`localhost` 인 요청.
+  - 폰: Tailscale 로그인(`TailscaleAuth`, 1-1절). 서버에 `Z2H_TAILSCALE_HOST` 를 설정했을 때만, Host 가 그 serve 이름인 요청.
+  - 계정이 없으면 학습 기록 API 는 401 `no_user`. 응답의 `auth_provider` 로 어느 수단이 맡았는지 알 수 있다.
 - 시각: 모두 시간대가 붙은 ISO 글자. 서버는 받은 시각을 `+09:00` 로 바꿔 저장한다(`2026-11-20T11:00:00.123Z` → `2026-11-20T20:00:00.123000+09:00`). 시간대가 없는 시각은 거절.
 - 오류 모양: `{"ok": false, "error": "<짧은 영어 코드>", "message_ko": "<화면에 보여도 되는 한국어>"}`
   - 400 `bad_host`(주소 틀림), `bad_since`, `bad_account`, `bad_grade`, 결과코드 오류(5절)
-  - 401 `no_user`(계정을 고르지 않음), 403 `bad_origin`(다른 사이트에서 보낸 쓰기), `not_loopback`(이 컴퓨터 밖에서 접속)
+  - 401 `no_user`(계정을 고르지 않음, 본문에 `auth_provider` 도 있음. 1-1절), 403 `bad_origin`(다른 사이트에서 보낸 쓰기), `not_loopback`(이 컴퓨터 밖에서 접속)
   - 404 `not_found`·`no_account`, 413 `too_large`(본문 1MB 초과), 422 `bad_request`(요청 모양 틀림), 500 `server_error`
-- 쓰기 요청(POST)은 `Origin` 이 있으면 `http://127.0.0.1:8787` 또는 `http://localhost:8787` 일 때만 받는다. Origin 이 없는 요청(로컬 Jupyter 의 Python `finish()` 등)은 받는다. dev 서버(4321)는 프록시에서 Origin 을 서버 주소로 바꿔 보내면 된다.
+- 쓰기 요청(POST)은 `Origin` 이 있으면 `http://127.0.0.1:8787` 또는 `http://localhost:8787`(`Z2H_TAILSCALE_HOST` 를 설정했으면 `https://<그 serve 이름>` 도) 일 때만 받는다. `Sec-Fetch-Site: cross-site` 인 쓰기도 거부한다. Origin 이 없는 요청(로컬 Jupyter 의 Python `finish()` 등)은 받는다. dev 서버(4321)는 프록시에서 Origin 을 서버 주소로 바꿔 보내면 된다.
 - 본문은 1MB 까지. 오프라인 대기열이 크면 여러 번에 나눠 보낸다(예: 200줄씩).
 
 ## 1. 계정 (로컬 개발 로그인, 127.0.0.1 전용, 비밀번호 없음)
@@ -22,7 +25,7 @@
 | `POST /api/dev-auth/accounts` `{display_name?, path_id?(기본 full), locale?}` | 새 계정을 만들고 그 계정으로 로그인. 응답 `{ok, user}` + 쿠키 `z2h_dev_session`(HttpOnly, SameSite=Strict, 30일) |
 | `POST /api/dev-auth/login` `{user_id}` | 다른 계정으로 바꾸기(쿠키 새로 받음). 없는 계정이면 404 |
 | `POST /api/dev-auth/logout` | 세션 지우기 |
-| `GET /api/me` | 현재 계정 `{ok, user}`. 없으면 401 |
+| `GET /api/me` | 현재 계정 `{ok, user, auth_provider}`. `auth_provider` 는 `"dev_local"`(맥 개발용 로그인) 또는 `"tailscale"`(폰). 없으면 401 |
 | `POST /api/me` `{path_id?, display_name?, locale?}` | 계정 칸 바꾸기. "전체 길로 바꾸기" = `{"path_id": "full"}`(기록은 그대로) |
 
 - 브라우저: 쿠키가 알아서 붙는다(`fetch` 는 같은 주소라 `credentials: 'same-origin'` 이면 됨).
@@ -32,14 +35,40 @@
 
 **개발용 로그인은 이 컴퓨터 안에서만 쓰고, 터널을 붙이면 꺼진다.** 비밀번호 없이 아무 계정으로나 들어가는 길이라 아래 중 하나라도 해당하면 `/api/dev-auth/*` 는 404, `X-Z2H-User` 머리말과 개발용 쿠키는 그 요청에서 무시(기록 API 는 401)된다.
 1. 접속한 쪽이 127.0.0.1 이 아님
-2. 프록시·터널 머리말이 있음: `CF-Connecting-IP`, `CF-Ray`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Real-IP`, `Forwarded`. 앱 dev 서버 프록시는 이 머리말을 붙이지 않게 둔다(Vite 기본값 `xfwd: false`)
-3. Host 가 `127.0.0.1`·`localhost`(포트는 상관없음)가 아님
-4. 서버 설정에 127.0.0.1·localhost 가 아닌 허용 주소(`Z2H_EXTRA_HOSTS`, 예: 터널 주소)가 하나라도 있거나 `Z2H_DEV_AUTH=0`: 개발용 로그인 자체가 꺼지고 시작 로그에 "개발용 로그인 꺼짐"이 남는다. 그때는 로그인 수단이 없어 모든 기록 API 가 401(실제 로그인은 공개 승인 뒤).
+2. 프록시·터널 머리말이 있음: `CF-Connecting-IP`, `CF-Ray`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Real-IP`, `Forwarded`, 그리고 Tailscale serve 가 붙이는 `Tailscale-User-Login`·`Tailscale-User-Name`·`Tailscale-User-Profile-Pic`. 앱 dev 서버 프록시는 이 머리말을 붙이지 않게 둔다(Vite 기본값 `xfwd: false`)
+3. Host 가 `127.0.0.1`·`localhost`(포트는 상관없음)가 아님. Host 가 serve 이름(1-1절)인 요청은 늘 여기에 해당한다
+4. 서버 설정에 127.0.0.1·localhost 가 아닌 허용 주소(`Z2H_EXTRA_HOSTS`, 예: 터널 주소)가 하나라도 있거나 `Z2H_DEV_AUTH=0`: 개발용 로그인 자체가 꺼지고 시작 로그에 "개발용 로그인 꺼짐"이 남는다. 그때는 맥 쪽 기록 API 가 401(실제 로그인은 공개 승인 뒤). `Z2H_TAILSCALE_HOST` 의 이름은 이 '바깥 주소'로 세지 않는다(같은 이름을 `Z2H_EXTRA_HOSTS` 에도 넣으면 센다).
+
+## 1-1. 폰 로그인 (Tailscale serve, `Z2H_TAILSCALE_HOST` 를 설정했을 때만)
+
+폰은 Tailscale serve(tailnet 안에서만. Funnel 은 쓰지 않음)를 거쳐 `https://<기기>.<tailnet>.ts.net` 으로 이 서버에 닿는다. 앱은 같은 주소에서 열리므로 할 일이 거의 없다.
+
+- 로그인 화면이 없다. serve 가 붙여 주는 Tailscale 로그인 이름으로 서버가 계정을 찾는다. 쿠키·`X-Z2H-User` 를 보내지 않아도 된다(보내도 무시).
+- 계정은 맥미니에서 미리 이어 둬야 한다(`python -m z2h_server link-tailscale`, README 6절). **자동 가입 없음.** 이어 두지 않은 Tailscale 계정은 모든 기록 API 가 401.
+- serve 이름 Host 에서는 `/api/dev-auth/*` 가 모두 404 다. 폰에서는 계정 만들기·바꾸기 화면을 보이지 않는다.
+- 앱이 할 일: `GET /api/me` 의 `auth_provider` 가 `"tailscale"` 이면 폰 로그인 상태. 401 이면 본문 `message_ko` 를 그대로 보인다.
+
+서버가 요청을 serve 경유로 믿는 조건(모두 충족. 하나라도 어기면 그 요청은 누구도 아니고 401)
+1. 접속한 쪽이 `127.0.0.1`
+2. `Host` 머리말이 정확히 1개이고 설정한 serve 이름과 같음(포트는 상관없음, 대소문자 무시)
+3. `Tailscale-User-Login` 머리말이 정확히 1개이고 비어 있지 않음. 인코딩된 값(`=?` 로 시작), 공백·쉼표가 든 값은 거부
+- Host 가 `127.0.0.1`·`localhost` 인 요청에 `Tailscale-User-Login` 이 있어도 믿지 않는다(serve 를 거치지 않은 요청이므로). 그런 요청은 개발용 로그인도 거부한다(1절 2번).
+- 로그인 이름은 대소문자를 가리지 않는다(소문자로 맞춰 찾음). 응답 본문에 로그인 이름을 되돌려 주지 않는다.
+
+401 본문(serve 이름 Host 로 온 요청)
+```json
+{"ok": false, "error": "no_user", "auth_provider": "tailscale",
+ "message_ko": "이 Tailscale 계정은 아직 학습 계정에 이어져 있지 않습니다. 맥미니에서 연결해 주세요(태그된 기기에서는 로그인할 수 없습니다)."}
+```
+그 밖의 요청의 401 은 `message_ko` 가 지금과 같고 `auth_provider` 는 `"dev_local"`(개발용 로그인이 꺼져 있으면 `"none"`).
+
+- 쓰기 요청의 Origin 은 `https://<serve 이름>`(포트 없이)만 받는다. serve 를 443 이 아닌 포트로 열면 그 Origin 을 `Z2H_EXTRA_ORIGINS` 에 따로 넣어야 한다.
+- 짧은 이름(`http://macmini`)이나 Tailscale IP(`100.x.y.z`)로 열면 Host 가 달라 400 `bad_host`.
 
 ## 2. `GET /api/health`
 
 ```json
-{"ok": true, "server_time": "2026-11-20T20:00:00.123456+09:00", "schema_version": "0001"}
+{"ok": true, "server_time": "2026-11-20T20:00:00.123456+09:00", "schema_version": "0002"}
 ```
 계정 없이 부를 수 있다. DB 에 닿지 못하면 503, `ok: false`.
 
@@ -108,7 +137,6 @@
 | `checkpoint_attempt` | `checkpoint_id`, `attempt_id` | `attempt_no` 서버가 매김(읽기 전용); `path_id`* 고르기(full/office_worker/investor)=기본 full; `covers` JSON 배열(DB `covers_json`); `score_ratio` 숫자(0~1); `passed` true/false; `max_hint_level_allowed` 정수(0~5)(DB `max_hint_level`); `hand_task_self_check` JSON(DB `hand_task_self_check_json`); `started_at` 시각; `at` 시각; `content_version` 글자 |
 | `diagnostic_result` | `attempt_id` | `attempt_no` 서버가 매김(읽기 전용); `answers` JSON(DB `answers_json`); `recommended_units` JSON(DB `recommended_units_json`); `at` 시각; `content_version` 글자 |
 | `taster_result` | `attempt_no`(기기가 정함, 1부터), `step_id`(T-S01 같은 맛보기 단계) | `self_reported` 고르기(similar/different) = "비슷해요/달라요"; `pasted_names_text` 긴 글; `pasted_loss_start` 숫자; `pasted_loss_end` 숫자; `share_card_id` 아이디; `at` 시각; `content_version` 글자. 붙여넣은 값은 검증하지 않은 값 |
-| `taste_result` | 없음(한 사람 1행, `key: {}`) | `done_at` 시각; `loss_start` 숫자; `loss_end` 숫자; `names` JSON 배열(DB `names_json`); `source` 고르기(colab/precomputed); `content_version` 글자 |
 | `help_note` | `note_id`(기기가 만든 UUID) | `target_id` 아이디; `goal_ko` 긴 글; `last_cell_code` 긴 글; `error_last_line` 긴 글; `env` JSON(DB `env_json`); `hints_seen` JSON 배열(DB `hints_seen_json`); `created_at` 시각; `content_version` 글자 |
 | `study_session` | `session_id`(기기가 만든 UUID) | `target_id` 아이디; `started_at` 시각; `ended_at` 시각; `active_seconds` 정수(0~); `source` 고르기(auto/manual); `content_version` 글자 |
 | `user_badge` | `badge_id` | `earned_at` 시각; `evidence` JSON(DB `evidence_json`); `content_version` 글자 |
@@ -116,6 +144,7 @@
 
 - 아이디: 영문·숫자로 시작, 영문·숫자·`-_.:` 만, 64자까지(`checkpoint_id` 16자, `share_card.kind` 32자). step_id 는 늘 글자(`L01-S14b`), 정렬은 콘텐츠의 `order` 로.
 - 동기화로 쓸 수 없는 표: `users`, `auth_identity`, `sessions`, `badge_def`, `sync_conflicts`, `applied_ops`, `sync_counter`.
+- 맛보기 기록은 `taster_result` 하나다. 예전 `taste_result` 표는 스키마 `0002` 에서 지웠다(앱이 쓴 적 없음). 그 이름으로 보내면 다른 모르는 표와 똑같이 그 줄만 `rejected`(`reason_ko`: `모르는 표입니다: taste_result`)이고 나머지 줄은 반영된다.
 - 지우기 요청은 없다(프로토타입).
 
 ### 충돌 규칙 (DESIGN.md 12.5)
@@ -135,7 +164,7 @@
   "since": null,
   "server_seq": 42,
   "server_time": "2026-11-20T20:31:05.000002+09:00",
-  "schema_version": "0001",
+  "schema_version": "0002",
   "tables": {
     "step_progress": [
       {"step_id": "L01-S14b", "path_id": "full", "status": "done", "max_hint_level": 2, "attempts": 0,
@@ -148,12 +177,12 @@
        "...": "...", "updated_at": "2026-11-20T20:31:00+09:00", "server_seq": 42}
     ],
     "rebuild_attempt": [], "mastery_state": [], "review_card": [], "grade_result": [], "user_pref": [],
-    "checkpoint_attempt": [], "diagnostic_result": [], "taster_result": [], "taste_result": [],
+    "checkpoint_attempt": [], "diagnostic_result": [], "taster_result": [],
     "help_note": [], "study_session": [], "user_badge": [], "share_card": []
   }
 }
 ```
-- 행 모양 = 열쇠 칸 + (`attempt_no`) + data 칸 전부(data-spec 이름) + `updated_at` + `server_seq`. 표 15개가 늘 다 들어 있다(없으면 빈 배열).
+- 행 모양 = 열쇠 칸 + (`attempt_no`) + data 칸 전부(data-spec 이름) + `updated_at` + `server_seq`. 표 14개가 늘 다 들어 있다(없으면 빈 배열).
 - 실습 시간 화면: 주 단위로 고친 값은 `user_pref` 의 `practice_week:{주 시작일}`, 자동 값은 `study_session`·`step_progress.active_seconds_auto`. 단계별 `active_seconds_user` 칸도 있지만 P1 화면은 주 단위 수정만 쓴다(12.5절).
 
 ## 5. `POST /api/result-code`
@@ -194,7 +223,7 @@
 
 현재 계정의 전체 JSON 백업(설정 화면 "JSON 백업 내보내기"). `Content-Disposition: attachment; filename="z2h-backup-YYYYMMDD.json"`. 이름은 4절과 같이 data-spec 이름.
 ```json
-{"format": "z2h-backup", "format_version": 1, "exported_at": "...", "schema_version": "0001", "server_seq": 42,
+{"format": "z2h-backup", "format_version": 1, "exported_at": "...", "schema_version": "0002", "server_seq": 42,
  "user_id": "...", "user": {...},
  "tables": {"step_progress": [...], "...": [...],
             "sync_conflicts": [{"conflict_id": 1, "table_name": "user_pref", "row_key": {"pref_key": "run_place"},

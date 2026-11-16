@@ -1,7 +1,9 @@
 """HTTP API (DESIGN.md 12.5). 모두 JSON.
 
 학습 기록 API 는 요청의 현재 계정(AuthAdapter)으로 처리한다. 계정이 없으면 401 no_user.
-로컬 개발 로그인(LocalDevAuth) API 는 /api/dev-auth/* 에 있다(127.0.0.1 전용).
+요청마다 먼저 그 요청을 맡을 로그인 수단 하나를 고른다(auth.for_request). Z2H_TAILSCALE_HOST 가 있으면
+Host 가 serve 이름인 요청은 TailscaleAuth, 그 밖은 개발용 로그인. 401 본문과 GET /api/me 에 그 수단(auth_provider)을 적는다.
+로컬 개발 로그인(LocalDevAuth) API 는 /api/dev-auth/* 에 있다(127.0.0.1 전용, serve 이름 Host 에서는 404).
 """
 
 from __future__ import annotations
@@ -27,7 +29,11 @@ _CHECK_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 
 
 class NoUser(Exception):
-    """현재 계정이 없음(로그인 전)."""
+    """현재 계정이 없음(로그인 전). provider = 이 요청을 맡은 로그인 수단(401 본문의 auth_provider)."""
+
+    def __init__(self, provider: str = ""):
+        self.provider = provider
+        super().__init__(provider)
 
 
 class DevAuthOff(Exception):
@@ -43,14 +49,20 @@ def _storage(request: Request) -> StorageAdapter:
 
 
 def _auth(request: Request) -> AuthAdapter:
-    return request.app.state.auth
+    """이 요청을 맡을 로그인 수단 하나. 한 요청이 두 수단에 걸치지 않는다."""
+    return request.app.state.auth.for_request(request)
+
+
+def _who(request: Request) -> tuple[AuthAdapter, str]:
+    auth = _auth(request)
+    user_id = auth.current_user_id(request)
+    if user_id is None:
+        raise NoUser(auth.provider)
+    return auth, user_id
 
 
 def _user(request: Request) -> str:
-    user_id = _auth(request).current_user_id(request)
-    if user_id is None:
-        raise NoUser()
-    return user_id
+    return _who(request)[1]
 
 
 def _public_user(user: dict[str, Any]) -> dict[str, Any]:
@@ -79,6 +91,7 @@ def _dev_auth(request: Request) -> LocalDevAuth:
 
     꺼져 있거나(터널 주소 설정·Z2H_DEV_AUTH=0), 접속한 쪽이 127.0.0.1 이 아니거나,
     프록시·터널 머리말이 있거나, Host 가 127.0.0.1·localhost 가 아니면 이 경로는 없는 것처럼 404.
+    Host 가 serve 이름이면 이 요청을 맡는 수단이 TailscaleAuth 라서 늘 404.
     """
     auth = _auth(request)
     if not isinstance(auth, LocalDevAuth) or not auth.allows(request):
@@ -144,8 +157,10 @@ def dev_logout(request: Request):
 
 @router.get("/me")
 def me(request: Request):
-    user = _storage(request).get_user(_user(request))
-    return {"ok": True, "user": _public_user(user or {})}
+    """현재 계정과 로그인 수단(auth_provider: dev_local | tailscale). 로그인 이름은 돌려주지 않는다."""
+    auth, user_id = _who(request)
+    user = _storage(request).get_user(user_id)
+    return {"ok": True, "user": _public_user(user or {}), "auth_provider": auth.provider}
 
 
 class MeBody(BaseModel):

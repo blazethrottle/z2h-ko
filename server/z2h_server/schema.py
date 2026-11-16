@@ -59,7 +59,6 @@ MASTERY_STATE = ("locked", "open", "in_progress", "almost", "mastered", "revisit
 CARD_KIND = ("concept", "predict", "hands_on")
 CARD_RESULT = ("pass", "shaky", "miss")
 GRADE_SOURCE = ("notebook", "result_code")
-TASTE_SOURCE = ("colab", "precomputed")
 TASTER_SELF_REPORTED = ("similar", "different")  # "비슷해요 / 달라요"
 SESSION_SOURCE = ("auto", "manual")
 # 공개 공유 주소는 공개 배포 승인 뒤. 지금은 private 만 받는다.
@@ -155,7 +154,7 @@ users = sa.Table(
     sa.Column("locale", sa.String(16), nullable=True),
 )
 
-# AuthAdapter 뒤. provider: dev_local(지금), email_otp·google(공개 승인 뒤)
+# AuthAdapter 뒤. provider: dev_local(맥 개발용), tailscale(폰, subject = 소문자 로그인 이름), email_otp·google(공개 승인 뒤)
 auth_identity = sa.Table(
     "auth_identity",
     metadata,
@@ -340,18 +339,7 @@ taster_result = sa.Table(
     *_common("taster_result"),
 )
 
-# 맛보기 완료 표시용(한 사람 1행, 12.5절)
-taste_result = sa.Table(
-    "taste_result",
-    metadata,
-    _user_id(primary_key=True),
-    _time("done_at", nullable=True),
-    _float("loss_start", nullable=True),
-    _float("loss_end", nullable=True),
-    _json("names_json", nullable=True),
-    _enum("source", TASTE_SOURCE, nullable=True),
-    *_common("taste_result"),
-)
+# (예전 taste_result 표는 0002 마이그레이션에서 지웠다. 맛보기 기록은 위 taster_result 하나.)
 
 help_note = sa.Table(
     "help_note",
@@ -464,7 +452,6 @@ SYNC_TABLES = (
     "checkpoint_attempt",
     "diagnostic_result",
     "taster_result",
-    "taste_result",
     "help_note",
     "study_session",
     "user_badge",

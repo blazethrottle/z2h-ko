@@ -1,9 +1,20 @@
 // 페이지마다 하나: 계정 확인 → 계정별 브라우저 저장소 + 동기화 관리자. 여러 부품(island)이 같은 것을 쓴다.
 // 계정(D43·D44, server/API.md 1절): 처음 열 때 /api/me 로 확인하고, 없으면 로컬 개발용 계정을 자동으로 고르거나 만든다.
 // 가입·로그인 화면(이메일·Google)은 만들지 않는다. 개발용 계정 바꾸기는 /settings/.
+// 폰(Tailscale serve 경유)에서는 서버가 접속자 정보로 계정을 정하므로 앱은 로그인 동작을 하지 않는다(authProvider).
 
 import { config } from '../config';
-import { NetworkError, createDevAccount, getMe, listDevAccounts, loginDevAccount, type Account, type FetchLike } from './api';
+import {
+  NetworkError,
+  createDevAccount,
+  errorAuthProvider,
+  getMeWithProvider,
+  listDevAccounts,
+  loginDevAccount,
+  type Account,
+  type AuthProvider,
+  type FetchLike,
+} from './api';
 import { LocalStore } from './sync/store';
 import { SyncManager } from './sync/manager';
 import { uuid4 } from './time';
@@ -15,6 +26,15 @@ export interface Runtime {
   sync: SyncManager;
   account: Account | null;
   accountState: AccountState;
+  /** 서버가 알려 준 로그인 길(/api/me). 옛 서버거나 아직 모르면 null. 기록 API 401 이 알려 준 값은 sync.state.authProvider */
+  authProvider: AuthProvider | null;
+}
+
+export interface EnsuredAccount {
+  account: Account | null;
+  state: AccountState;
+  /** 서버가 알려 줄 때만 있다(옛 응답에는 칸 자체가 없다) */
+  authProvider?: AuthProvider;
 }
 
 const ACCOUNT_KEY = 'z2h.account';
@@ -38,20 +58,27 @@ export function rememberAccount(a: Account | null) {
 /**
  * 지금 계정을 정한다. 있으면 그대로, 없으면(401) 개발용 계정 목록에서 마지막에 쓴 계정 → 첫 계정 → 새로 만들기 순.
  * 서버에 닿지 못하면 offline, 개발용 로그인이 막혀 있으면(예: 터널) none.
+ * Tailscale 경유(폰): 로그인은 서버가 serve 의 접속자 정보로 정한다. /api/me 401 본문이 tailscale 이면
+ * 학습 계정에 안 이어진 접속자라 개발용 로그인(그 길에서는 늘 404)을 부르지 않고 none. 이어 주는 일은 맥미니에서 명령으로만 한다.
  */
-export async function ensureAccount(f: FetchLike, last: Account | null = readLastAccount()): Promise<{ account: Account | null; state: AccountState }> {
+export async function ensureAccount(f: FetchLike, last: Account | null = readLastAccount()): Promise<EnsuredAccount> {
+  const withProvider = (r: EnsuredAccount, p: AuthProvider | null): EnsuredAccount => (p ? { ...r, authProvider: p } : r);
+  let provider: AuthProvider | null = null;
   try {
-    return { account: await getMe(f), state: 'ok' };
+    const me = await getMeWithProvider(f);
+    return withProvider({ account: me.user, state: 'ok' }, me.authProvider);
   } catch (e) {
     if (!(e instanceof NetworkError) || e.status !== 401) return { account: null, state: 'offline' };
+    provider = errorAuthProvider(e);
+    if (provider === 'tailscale') return { account: null, state: 'none', authProvider: provider };
   }
   try {
     const { accounts } = await listDevAccounts(f);
     const pick = accounts.find((a) => a.user_id === last?.user_id) ?? accounts[0];
     const account = pick ? { ...pick, ...(await loginDevAccount(f, pick.user_id)) } : await createDevAccount(f, `${config.devAccountName} 1`);
-    return { account, state: 'ok' };
+    return withProvider({ account, state: 'ok' }, provider);
   } catch (e) {
-    return { account: null, state: e instanceof NetworkError && e.status == null ? 'offline' : 'none' };
+    return withProvider({ account: null, state: e instanceof NetworkError && e.status == null ? 'offline' : 'none' }, provider);
   }
 }
 
@@ -95,7 +122,7 @@ export function getRuntime(): Promise<Runtime> {
         },
       });
       sync.start();
-      return { store, sync, account, accountState: res.account ? 'ok' : res.state };
+      return { store, sync, account, accountState: res.account ? 'ok' : res.state, authProvider: res.authProvider ?? null };
     })();
   }
   return rt;
