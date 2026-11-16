@@ -2,7 +2,7 @@
  "c1_cp_intro@390": {
   "Pretendard": 601,
   "Pretendard SemiBold": 73,
-  "Pretendard Medium": 92
+  "Pretendard Medium": 94
  },
  "c2_cp_item@390": {
   "Pretendard": 217,
@@ -16,21 +16,32 @@
   "JetBrains Mono": 530
  },
  "c4_cp_result@390": {
-  "Pretendard": 635,
+  "Pretendard": 636,
   "Pretendard SemiBold": 84,
-  "Pretendard Medium": 96
+  "Pretendard Medium": 136
+ },
+ "c5_prepared@390": {
+  "Pretendard": 671,
+  "Pretendard SemiBold": 104,
+  "Pretendard Medium": 350,
+  "JetBrains Mono": 230
+ },
+ "c6_segments@390": {
+  "Pretendard": 342,
+  "Pretendard SemiBold": 250,
+  "Pretendard Medium": 438
  },
  "card_gpt@390": {
-  "Pretendard": 266,
+  "Pretendard": 247,
   "JetBrains Mono": 88
  },
- "card_grad@390": {
-  "Pretendard": 226,
-  "JetBrains Mono": 35
- },
  "card_names@390": {
-  "Pretendard": 262,
-  "JetBrains Mono": 65
+  "Pretendard": 347,
+  "JetBrains Mono": 82
+ },
+ "card_wavenet@390": {
+  "Pretendard": 206,
+  "JetBrains Mono": 14
  },
  "s10_l08@390": {
   "Pretendard": 657,
@@ -43,8 +54,8 @@
   "Pretendard Medium": 250
  },
  "s2_lecture@390": {
-  "Pretendard": 1287,
-  "Pretendard SemiBold": 597,
+  "Pretendard": 2039,
+  "Pretendard SemiBold": 860,
   "Pretendard Medium": 60
  },
  "s3_segment@390": {
@@ -54,8 +65,8 @@
   "JetBrains Mono": 10
  },
  "s4_practice@390": {
-  "Pretendard": 944,
-  "Pretendard SemiBold": 179,
+  "Pretendard": 946,
+  "Pretendard SemiBold": 183,
   "Pretendard Medium": 214,
   "JetBrains Mono": 586
  },
@@ -88,37 +99,42 @@
   "Pretendard Medium": 522
  },
  "v2_auth@390": {
-  "Pretendard": 699,
+  "Pretendard": 687,
   "Pretendard SemiBold": 356,
   "Pretendard Medium": 68
  },
  "v2_badges@390": {
-  "Pretendard": 389,
-  "Pretendard SemiBold": 35,
-  "Pretendard Medium": 554
+  "Pretendard": 436,
+  "Pretendard SemiBold": 85,
+  "Pretendard Medium": 456
+ },
+ "v2_bridge@390": {
+  "Pretendard": 898,
+  "Pretendard SemiBold": 316,
+  "Pretendard Medium": 152
  },
  "v2_landing@390": {
-  "Pretendard": 3039,
-  "Pretendard SemiBold": 305,
-  "Pretendard Medium": 344,
-  "JetBrains Mono": 108
+  "Pretendard": 3899,
+  "Pretendard SemiBold": 499,
+  "Pretendard Medium": 914,
+  "JetBrains Mono": 266
  },
  "v2_taste_done@390": {
-  "Pretendard": 623,
-  "Pretendard SemiBold": 143,
-  "JetBrains Mono": 62,
-  "Pretendard Medium": 72
+  "Pretendard": 607,
+  "Pretendard SemiBold": 216,
+  "Pretendard Medium": 194,
+  "JetBrains Mono": 194
  },
  "v2_taste_step@390": {
-  "Pretendard": 608,
-  "Pretendard SemiBold": 96,
-  "Pretendard Medium": 262,
-  "JetBrains Mono": 180
+  "Pretendard": 742,
+  "Pretendard SemiBold": 138,
+  "Pretendard Medium": 252,
+  "JetBrains Mono": 492
  },
  "c1_cp_intro@1280": {
   "Pretendard": 604,
   "Pretendard SemiBold": 69,
-  "Pretendard Medium": 114
+  "Pretendard Medium": 116
  },
  "c2_cp_item@1280": {
   "Pretendard": 220,
@@ -132,21 +148,32 @@
   "JetBrains Mono": 530
  },
  "c4_cp_result@1280": {
-  "Pretendard": 638,
+  "Pretendard": 639,
   "Pretendard SemiBold": 80,
-  "Pretendard Medium": 118
+  "Pretendard Medium": 158
+ },
+ "c5_prepared@1280": {
+  "Pretendard": 672,
+  "Pretendard SemiBold": 101,
+  "Pretendard Medium": 374,
+  "JetBrains Mono": 230
+ },
+ "c6_segments@1280": {
+  "Pretendard": 343,
+  "Pretendard SemiBold": 248,
+  "Pretendard Medium": 464
  },
  "card_gpt@1280": {
-  "Pretendard": 266,
+  "Pretendard": 247,
   "JetBrains Mono": 88
  },
- "card_grad@1280": {
-  "Pretendard": 226,
-  "JetBrains Mono": 35
- },
  "card_names@1280": {
-  "Pretendard": 262,
-  "JetBrains Mono": 65
+  "Pretendard": 347,
+  "JetBrains Mono": 82
+ },
+ "card_wavenet@1280": {
+  "Pretendard": 206,
+  "JetBrains Mono": 14
  },
  "s10_l08@1280": {
   "Pretendard": 660,
@@ -159,19 +186,19 @@
   "Pretendard Medium": 274
  },
  "s2_lecture@1280": {
-  "Pretendard": 1324,
-  "Pretendard SemiBold": 593,
+  "Pretendard": 2088,
+  "Pretendard SemiBold": 856,
   "Pretendard Medium": 82
  },
  "s3_segment@1280": {
-  "Pretendard": 1000,
+  "Pretendard": 1087,
   "Pretendard SemiBold": 112,
   "Pretendard Medium": 580,
   "JetBrains Mono": 10
  },
  "s4_practice@1280": {
-  "Pretendard": 1326,
-  "Pretendard SemiBold": 200,
+  "Pretendard": 1328,
+  "Pretendard SemiBold": 204,
   "Pretendard Medium": 300,
   "JetBrains Mono": 586
  },
@@ -204,31 +231,36 @@
   "Pretendard Medium": 544
  },
  "v2_auth@1280": {
-  "Pretendard": 699,
+  "Pretendard": 687,
   "Pretendard SemiBold": 366,
   "Pretendard Medium": 90
  },
  "v2_badges@1280": {
-  "Pretendard": 387,
-  "Pretendard SemiBold": 31,
-  "Pretendard Medium": 550
+  "Pretendard": 440,
+  "Pretendard SemiBold": 81,
+  "Pretendard Medium": 478
+ },
+ "v2_bridge@1280": {
+  "Pretendard": 911,
+  "Pretendard SemiBold": 313,
+  "Pretendard Medium": 176
  },
  "v2_landing@1280": {
-  "Pretendard": 3041,
-  "Pretendard SemiBold": 315,
-  "Pretendard Medium": 370,
-  "JetBrains Mono": 108
+  "Pretendard": 3925,
+  "Pretendard SemiBold": 509,
+  "Pretendard Medium": 944,
+  "JetBrains Mono": 266
  },
  "v2_taste_done@1280": {
-  "Pretendard": 637,
-  "Pretendard SemiBold": 153,
-  "Pretendard Medium": 96,
-  "JetBrains Mono": 62
+  "Pretendard": 613,
+  "Pretendard SemiBold": 226,
+  "Pretendard Medium": 218,
+  "JetBrains Mono": 194
  },
  "v2_taste_step@1280": {
-  "Pretendard": 614,
-  "Pretendard SemiBold": 106,
-  "Pretendard Medium": 288,
-  "JetBrains Mono": 180
+  "Pretendard": 746,
+  "Pretendard SemiBold": 148,
+  "Pretendard Medium": 276,
+  "JetBrains Mono": 492
  }
 }

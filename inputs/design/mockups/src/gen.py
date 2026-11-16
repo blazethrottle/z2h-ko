@@ -7,7 +7,7 @@ def page(name, title, body, cur="home", back=None, wide=False):
     tabs = "".join(f'<a href="#" {"aria-current=page" if k==cur else ""}><span class="ico" aria-hidden="true">{i}</span>{t}</a>' for k,t,i in NAV)
     bk = f'<a class="back" href="#" aria-label="{back}">‹</a>' if back else ""
     return icons(f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title}</title><link rel="stylesheet" href="z2h.css"><style>{EXTRA.get(name,"")}</style></head><body>
+<title>{title}</title><link rel="stylesheet" href="z2h.css"><link rel="stylesheet" href="z2h_v2.css"><style>{EXTRA.get(name,"")}</style></head><body>
 <header class="topbar">{bk}<span class="brand">Z2H<small>제로 투 히어로 실습</small></span><nav class="topnav" aria-label="주 메뉴">{nav}</nav><span class="sync" role="status" aria-label="진도 저장됨">✓ 저장됨</span><span class="sample">예시 화면</span></header>
 <main class="{'wide' if wide else ''}">{body}</main>
 <nav class="tabbar" aria-label="주 메뉴">{tabs}</nav></body></html>''')
@@ -73,7 +73,7 @@ s1 = f'''<div class="home">
   <p class="kicker">이어서 하기</p>
   <h1 id="cont" class="t1">01 micrograd</h1>
   <p class="num"><b>단계 4 / 22</b> · Value 클래스 뼈대 <span class="cap">L01-S04</span></p>
-  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="16" aria-valuenow="3" aria-label="01 micrograd 진도 16단계 중 3단계 완료"><i style="width:18.2%"></i></div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="22" aria-valuenow="3" aria-label="01 micrograd 진도 22단계 중 3단계 완료"><i style="width:13.6%"></i></div>
   <p class="small muted">이 단계: 영상 구간 보기 → 코드 8줄 입력 → 결과 비교</p>
   <a class="btn primary block" href="#">단계 4 이어서 하기</a>
   <div class="next small"><b>다음:</b><span>단계 5 · 덧셈과 곱셈 기록하기</span></div>

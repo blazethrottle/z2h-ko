@@ -19,6 +19,19 @@
 | 9 | 프로토타입은 맥미니 저장(작은 서버 + SQLite), 나중에 여러 사용자·계정 서버 DB(예: Postgres)로 옮기기 쉽게: user_id 처음부터, 저장 계층 어댑터, 마이그레이션 파일, 배지·공유 카드 테이블 | 11/16 20:06 |
 | 10 | 실습 환경: "내 맥" 가정 버림. Colab 열기 링크가 기본, 로컬 Jupyter는 선택. 맛보기는 설치 없이 브라우저에서 | 11/16 20:06 |
 
+## 0-1. 디자인 v2·v1.3 반영 (2026-11-16 20:32 KST 디자이너 갱신)
+- 맛보기: Pyodide 없이 **Colab 8단계**로 확정. 브라우저 안 코드 실행은 범위에서 뺌(4절 A·B안 폐기).
+- 영상 구간: `video-segments.json`의 `video_segments`와 `shared_with` 기준. `shared_with`가 있으면 그 단계들 사이에서 플레이어를 유지하고 위치를 이어 감. 구간이 여럿이면 "구간 1/3" 전환기(`cueVideoById`, 재생은 안 함). 영상 없음 상태(iframe 만들지 않고 한 줄 안내).
+- D49(20:34, 디자이너 HANDOFF 20:40, X6 대체): `video_segments: []` = 영상 없는 단계. "영상 없음" 상태만 보이고 빈 플레이어(iframe)는 만들지 않음. `end_s`는 **늘 값이 있음**(null 처리 규칙 없음). 빌드 검사: `end_s`가 null·빠짐이면 **실패**, `start_s < end_s ≤ video_seconds`가 아니면 실패.
+- D43(X2): 프로토타입도 맥미니 저장이되 **처음부터 계정별 구조**. `users` 테이블과 모든 기록의 `user_id`는 실제 FK. 단일 고정 사용자를 전제로 한 코드 금지(요청마다 현재 사용자에서 user_id를 받음). 공개 서버 DB 종류·위치는 공개 출시 때 CTO 제안 + 얼큰이 승인.
+- D44(X3): 로그인은 **이메일 + Google만**, X 로그인 없음(나중 선택지). 실제 메일 발송·Google OAuth는 공개 승인 때 구현. 지금은 `AuthAdapter` 자리 + 로컬 개발용 로그인(여러 계정 만들고 전환 가능, 127.0.0.1 전용, 비밀번호 없음)만.
+- D45(X9): "X에 공유"는 X 글쓰기 창(intent)만 열고, 공유 미리 보기 버튼 바로 아래 "저장한 이미지를 첨부해 주세요" 안내. 맛보기 결과 카드(`card_names`)와 `v2_taste_done` 이름 결과 아래 "첫 모델이라 아직 서툴러요".
+- D46(X12): 랜딩 문구와 약관·개인정보 문구는 공개 전 승인 항목. 목업 "예시 화면" 표시 유지.
+- D47(X10): 단계 배지는 **누적 점검(CP) 통과**로 받음. CP1 → 언어 모델 견습, CP2 → 신경망 정비사, CP3 → GPT 제작자(수료). CP 단독 배지 없음. `c4_cp_result`에 배지 표시. 배지 부여는 `checkpoint_attempt` 통과 기록에서 서버가 계산.
+- D48(X11): 회사원·투자자 길에서만 07편 전 03·04 다리 카드 2장. 스키마에 **선택 필드**로 `bridge_card` 추가(아래 5-1). 확인 문제 결과는 복습 추천에만, 07편 잠그지 않음. 내용 원본 `pedagogy/bridge-cards-03-04.md`(작성 중).
+- **미정 X13**: 01편 최종 단계 수(v1.1 22 ↔ L01.json v1.2 26)와 새 필드 7개(`prepared_code_line_notes_ko`, `prepared_code_source_ko`, `cell_mode`, `edits`, `rerun_first`, `changed_lines_only`, `moved_code_lines`). 스키마에 **선택 필드**로만 받고(모르는 필드는 경고, 실패 아님), 단계 수는 하드코딩 금지(분모는 데이터의 단계 수).
+- **미정 X14**: 짧은 길(03·04편 건너뜀)에서 CP1(L01~L03)·CP2(L01~L06)와 단계 배지 처리. 배지 조건은 설정값 한 곳(`badge_rules`)으로 두어 나중에 바꾸기 쉽게.
+
 승인 게이트
 - 얼큰이 승인: main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제(GPU 등).
 - CEO 사전 통보: 네트워크·보안 설정 변경(Cloudflare Tunnel, Access 정책, 방화벽, 포트 개방, DNS). PM·서브는 설계·스크립트 초안까지만.
@@ -32,7 +45,7 @@
 | 0편 기초 중 1편에 필요한 단위 | 1편 선행 단위만 (추천 표시, 잠금 아님) | 예 (00-foundations.md) |
 | 랜딩 | 제품 소개, 맛보기 시작 버튼 | [자리] 교사·디자이너 설계 중 |
 | 첫 30분 맛보기 | 설치 없이 브라우저에서. 교사 VALUE_CURRICULUM.md 3절의 Colab 맛보기 코드(이름 지어내기, CPU 약 6초, 손실 3.84 → 2.47, 교사 실행 확인) | 예 (내용 확정, 화면은 design v2_taste 목업) |
-| 성취 배지 | 규칙·화면 | [자리] 테이블은 지금 설계(5절) |
+| 성취 배지 | 단계 배지 3개 = CP 통과(D47), 편 도장 10개, 맛보기 완료 표시 | 테이블 5절, 규칙은 `badge_rules` 설정 한 곳(X14 미정) |
 | 공유 카드 | 이미지 카드 | [자리] 테이블은 지금 설계, 프로토타입은 내 기기에 이미지 저장만(공개 공유 주소 없음) |
 | 2~10편 | 프로토타입 뒤 | 아님 (자료는 inputs/에 보관) |
 
@@ -43,7 +56,7 @@
 | 진도 서버 | Python FastAPI, 맥미니 127.0.0.1 바인드, 정적 파일도 제공 | 같은 코드를 서버 호스팅에 올림 |
 | 저장 | SQLite 파일 1개 (`StorageAdapter` 뒤) | Postgres 어댑터로 교체 |
 | 스키마 관리 | Alembic 마이그레이션 파일(SQLite·Postgres 둘 다 지원) | 같은 마이그레이션을 Postgres에 적용 |
-| 사용자 | 고정 단일 사용자 `user_id = 00000000-0000-4000-8000-000000000001`, 로그인 없음 | 계정·로그인 추가(인증 방식은 그때 결정, 승인 항목) |
+| 사용자 | 계정별 구조(users + FK), 로컬 개발용 로그인으로 여러 계정 전환. 고정 사용자 전제 코드 금지 | 실제 가입(이메일 코드·Google, X는 나중) 추가는 CEO 조율·공개는 승인 항목 |
 | 폰 접속 | Cloudflare Tunnel + Access(얼큰이 이메일 한정) 초안만, 실행은 CEO 사전 통보 후 | 공개 운영은 얼큰이 승인 |
 | 콘텐츠 | 저장소 안 파일(YAML/MDX), 빌드 때 스키마 검사, `content_version` 표시 | 같음 |
 
@@ -73,13 +86,15 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 → v1.1에서 교사가 Colab 기반 맛보기를 확정해 A·B는 보류. C는 Colab 예비 화면으로 사용.
 
 ## 5. 데이터 구조 (확장 대비)
-원칙: 모든 학습 기록 테이블에 `user_id`. 시간은 ISO 문자열 `+09:00`(SQLite), Postgres에서는 TIMESTAMPTZ로 같은 마이그레이션에서 매핑. SQLite 전용 기능(동적 타입 의존, `INSERT OR REPLACE` 등) 쓰지 않고 표준 SQL + 어댑터에서 upsert 처리. 필드 이름은 pedagogy/data-spec.md(snake_case)가 정본, 화면 이름은 design HANDOFF 6절 대응표로 변환.
+원칙: 모든 학습 기록 테이블에 `user_id`(users FK, ON DELETE CASCADE). 시간은 ISO 문자열 `+09:00`(SQLite), Postgres에서는 TIMESTAMPTZ로 같은 마이그레이션에서 매핑. SQLite 전용 기능(동적 타입 의존, `INSERT OR REPLACE` 등) 쓰지 않고 표준 SQL + 어댑터에서 upsert 처리. 필드 이름은 pedagogy/data-spec.md(snake_case)가 정본, 화면 이름은 design HANDOFF 6절 대응표로 변환.
 
 | 테이블 | 주요 칼럼 | 비고 |
 |---|---|---|
-| users | user_id(UUID PK), display_name, created_at, locale | 프로토타입은 1행 고정 |
+| users | user_id(UUID PK), display_name, created_at, locale | 여러 계정 가능(로컬 개발 로그인으로 생성). 다른 테이블의 user_id는 FK |
+| auth_identity | provider(dev_local 지금, email_otp·google 나중), subject, user_id(FK), created_at | AuthAdapter 뒤. 메일 발송·OAuth 미구현 |
+| sessions | session_id, user_id(FK), created_at, expires_at | 로컬 개발 로그인 세션 |
 | step_progress | user_id, step_id(문자열, 예 L01-S14b), status, max_hint_level, attempts, started_at, done_at, active_seconds_auto, active_seconds_user, updated_at | PK(user_id, step_id) |
-| question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, at | PK(user_id, question_id, attempt_no) |
+| question_attempt | user_id, question_id(문자열, CP1-Q03·F-D2 포함), attempt_no, answer_text, choice_index(객관식 고른 번호, 아니면 NULL), is_dont_know("모르겠어요"), is_correct, raw_points, max_hint_level, score_ratio, points_awarded, env_issue, context(step·checkpoint·bridge·taste), at | PK(user_id, question_id, attempt_no) |
 | rebuild_attempt | user_id, rebuild_id, passed, max_hint_level, at | |
 | mastery_state | user_id, target_id, state, steps_done_ratio, question_score_ratio, must_pass_ok, rebuild_ok, extra_checks_ok, mastered_at, updated_at | |
 | review_card | user_id, card_id, source_id, kind, interval_days, due_at, last_result, history_json, updated_at | |
@@ -88,26 +103,27 @@ graphviz: 1편 `draw_dot`은 Colab에 graphviz가 기본 설치돼 있다는 것
 | taste_result | user_id, done_at, loss_start, loss_end, names_json, source(colab/precomputed) | 맛보기 완료 표시용, 사용자가 붙여넣은 값만 |
 | help_note | user_id, target_id, goal_ko, last_cell_code, error_last_line, env_json, hints_seen_json, created_at | 사용자 화면에만, 자동 발송 없음 |
 | study_session | user_id, session_id, target_id, started_at, ended_at, active_seconds, source(auto/manual) | 실습 시간 원자료 |
-| badge_def | badge_id, name_ko, rule_json, icon, version | 규칙은 교사·디자이너 [자리] |
+| badge_def | badge_id, name_ko, rule_json, icon, version | D47: 단계 배지 3개 = CP1·CP2·CP3 통과, 편 도장 10개. rule_json은 `badge_rules` 설정에서 생성(X14 미정) |
 | user_badge | user_id, badge_id, earned_at, evidence_json | PK(user_id, badge_id) |
 | share_card | share_id(추측 불가 임의 값), user_id, kind, payload_json, image_path, visibility(기본 private), created_at, revoked_at | 공개 공유 주소는 공개 배포 승인 뒤 |
 | sync_conflicts | user_id, table_name, row_key, losing_json, at | 동기화 충돌 기록 |
 | schema_migrations | Alembic 관리 | |
 
 콘텐츠(lecture, step, question, hint, rebuild_task, mastery_rule, checkpoint)는 DB가 아니라 저장소 파일. pedagogy v1.1 반영:
-- step: `long_step`(새 코드 6~10줄이면 true, 10줄 초과 오류), `new_code_lines`, `prepared_code`(+줄별 풀이), `video_segments: [{start_s, end_s|null}]`(여러 개 가능, 없으면 []). 전체 165단계. 나눈 단계는 `L01-S14b`처럼 접미 글자라 **step_id는 늘 문자열**, 정렬은 `order` 필드로(문자열 정렬 금지).
+- step: `long_step`(새 코드 6~10줄이면 true, 10줄 초과 오류), `new_code_lines`, `prepared_code`(+줄별 풀이), `video_segments: [{start_s, end_s}]`(여러 개 가능, 없으면 [] = 영상 없는 단계, end_s 늘 필수, D49). 전체 165단계. 나눈 단계는 `L01-S14b`처럼 접미 글자라 **step_id는 늘 문자열**, 정렬은 `order` 필드로(문자열 정렬 금지).
+- 5-1 `bridge_card`(D48, 선택, 디자이너 제안 필드): `bridge_id`, `lecture_id`("L03"/"L04"), `title_ko`, `body_ko`(한 문단), `figure_ko` 또는 `mini_practice`(둘 중 하나, 선택), `questions`(1~2개, `type: "choice"`, 점수 없음, "모르겠어요" 포함), `video_segments`(03·04편 구간, 위 규칙 동일), `paths`(["office","investor"]). 응답은 `question_attempt`에 `context="bridge"`로 저장(새 테이블 없음).
 - lecture: `youtube_video_id`, `video_seconds`, `video_url`(대체 링크).
 - question: `type`에 `choice` 추가, `choices`(2개 이상), `answer_index`(0부터), `auto_grade.type: choice`, `recommend_units_if_wrong`.
 - checkpoint: CP1~CP3, 문항 40개, `covers`, `unlocks_lecture`, `items`, `question_ids`, `pass_ratio` 0.8, `max_hint_level` 2, `hand_task_format`, `fail_action`.
 - 영상 구간 정본은 `inputs/pedagogy/video-segments.json`(영상 ID·길이·챕터·단계별 구간). 빌드 때 단계 파일과 합치고 어긋나면 빌드 실패.
-- 빌드 검사 추가: long_step ↔ new_code_lines 규칙, choice의 answer_index 범위, video_segments의 end_s ≤ video_seconds. 이유: 버전 관리·검수가 쉬움. 각 기록에 `content_version`을 붙여 내용이 바뀌어도 기록이 깨지지 않게.
+- 빌드 검사 추가: long_step ↔ new_code_lines 규칙, choice의 answer_index 범위, video_segments의 end_s 필수(null이면 실패)·start_s < end_s ≤ video_seconds, X13 새 필드는 선택(모르는 필드 경고), bridge_card 선택 스키마. 이유: 버전 관리·검수가 쉬움. 각 기록에 `content_version`을 붙여 내용이 바뀌어도 기록이 깨지지 않게.
 
-영상 구간: v1.1에서 초 단위 `video_segments`로 정해짐. 임베드 `https://www.youtube-nocookie.com/embed/{youtube_video_id}?start={start_s}&end={end_s}&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=ko&hl=ko`(end_s가 null이면 end 생략), 자동 재생 없음, 늘 "유튜브에서 열기"(`video_url&t={start_s}s`). 구간이 여럿이면 구간 버튼 여러 개. decisions.md C8이 바뀌면 플레이어 부품 한 곳만 고침.
+영상 구간: v1.1에서 초 단위 `video_segments`로 정해짐. 임베드 `https://www.youtube-nocookie.com/embed/{youtube_video_id}?start={start_s}&end={end_s}&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=ko&hl=ko`(end_s 늘 있음, D49), 자동 재생 없음, 늘 "유튜브에서 열기"(`video_url&t={start_s}s`). 구간이 여럿이면 구간 버튼 여러 개. 빈 배열이면 플레이어 대신 "영상 없음" 상태.
 
 어댑터: `StorageAdapter` 인터페이스(진도 읽기·쓰기, 동기화, 배지 부여, 공유 카드 기록) → `SqliteAdapter`(지금), `PostgresAdapter`(나중). 같은 테스트 묶음을 두 어댑터에 돌리게 설계(Postgres는 나중에 로컬 컨테이너로).
 
 ## 6. 확장 경로 (프로토타입 → 일반인 서비스)
-1. 계정·로그인 추가, 고정 user_id를 실제 계정에 연결(마이그레이션 1개).
+1. AuthAdapter에 실제 가입(이메일 일회용 코드, Google) 구현. 구조는 이미 계정별이라 스키마 변경 최소.
 2. Postgres로 이전: 같은 Alembic 이력 적용 + SQLite 데이터 내보내기·가져오기 스크립트.
 3. 서버 호스팅·공개 배포·공개 공유 주소: 얼큰이 승인 항목, 비용은 그때 견적.
 4. 노트북 공개 저장소(Colab 바로 열기): 공개 배포 승인 항목, PUBLIC_RELEASE_CHECKLIST 적용.
@@ -215,7 +231,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 ## 11. 위험·결정 필요
 - 승인 필요(얼큰이): main 병합, 공개 배포, 저장소 공개 전환, 서버 공개 운영, 유료 서버·DB, 결제.
 - CEO 사전 통보: 폰 접속용 Tunnel·Access 생성.
-- 조율 중: decisions.md C1~C10(특히 C5 누적 점검 잠금, C8 영상 초 필드), 랜딩·맛보기·배지·공유 카드 내용.
+- 미정: X13(01편 최종 단계 수·새 필드 7개), X14(짧은 길의 CP·단계 배지). 공개 전 승인: 랜딩·약관·개인정보 문구(D46). 디자인 결정은 decisions.md D1~D49(20:40 HANDOFF) 기준.
 - 위험: Colab 바로 열기는 공개 저장소가 필요(프로토타입은 우회), Fable 한도 소모가 빠름, 맛보기 Pyodide 로딩 크기, 공유 카드의 개인정보(이름·진도 노출 범위는 기본 비공개).
 - 라이선스: MIT 5개 출처 표기, build-nanogpt는 링크만(PUBLIC_RELEASE_CHECKLIST).
 

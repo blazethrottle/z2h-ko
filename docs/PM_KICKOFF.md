@@ -6,7 +6,7 @@
 
 프로토타입 범위 (이것만)
 1. 앱 뼈대: 디자인 토큰, 글꼴, 상단 바·하단 탭, 영상 플레이어 부품, 동기화 상태 표시(저장됨/동기화 중/오프라인)
-2. 진도 저장: 맥미니 진도 서버(Python FastAPI, 127.0.0.1 바인드) + SQLite. 저장 계층은 `StorageAdapter` 인터페이스 뒤에 `SqliteAdapter`. 스키마는 Alembic 마이그레이션 파일로만 관리(SQLite·Postgres 둘 다 돌 수 있게 표준 SQL). 모든 학습 기록 테이블에 `user_id`(프로토타입은 고정 `00000000-0000-4000-8000-000000000001`). 배지(badge_def, user_badge)·공유 카드(share_card) 테이블도 지금 만든다. 테이블 목록은 docs/DESIGN.md 5절.
+2. 진도 저장: 맥미니 진도 서버(Python FastAPI, 127.0.0.1 바인드) + SQLite. 저장 계층은 `StorageAdapter` 인터페이스 뒤에 `SqliteAdapter`. 스키마는 Alembic 마이그레이션 파일로만 관리(SQLite·Postgres 둘 다 돌 수 있게 표준 SQL). 모든 학습 기록 테이블에 `user_id`(users FK). 고정 사용자 전제 코드 금지, 로컬 개발용 로그인으로 여러 계정 전환. 배지(badge_def, user_badge)·공유 카드(share_card) 테이블도 지금 만든다. 테이블 목록은 docs/DESIGN.md 5절.
 3. 1편 micrograd 전 과정: 단계·코드 한 줄씩 풀이·확인 문제·힌트 4단계(풀이는 제출 뒤에만)·노트북·자동 채점. 실습은 **Colab 열기가 기본**, 로컬 Jupyter는 선택. 1편 선행 기초 단위(추천 표시, 잠금 아님).
 4. 첫 30분 맛보기: 자료 확정(읽을 것 6번). 랜딩, 성취 배지, 공유 카드: design v2 목업(inputs/design/mockups/png/v2_*·card_*)이 있으나 교사·디자이너 확정 전이니 라우트·화면 뼈대·데이터 자리까지 만들고 문구는 "자료 대기" 표시.
 5. 2~10편은 하지 않는다(자료는 inputs/에 있음, 건드리지 마라).
@@ -14,9 +14,10 @@
 읽을 것 (먼저)
 1. docs/DESIGN.md (v2) 와 docs/MEASURE_M0.md
 2. inputs/ 우선순위: 화면은 inputs/design/HANDOFF.md(v1.2)가 최우선, 그다음 spec.md·tokens.json·flow.md(목업 HTML은 구조 참고만). 학습 내용·문제·힌트·진도 필드는 inputs/pedagogy/(data-spec.md 필드 이름 그대로). 영상 구간·원본 대조는 inputs/research/. DESIGN.md '0. 확정된 결정'이 모든 자료보다 우선.
-3. inputs/design/decisions.md C1~C10은 아직 조율 중이다. 특히 C5(누적 점검 화면)와 C8(영상 시작·끝 초 필드)는 구현에 영향이 있으니 확정 전엔 바꾸기 쉬운 형태(설정값·변환 함수 한 곳)로 두고, 확정되면 따른다.
+3. inputs/design/decisions.md는 D1~D49(디자이너 HANDOFF 20:40 KST)로 닫혔다. 열린 것은 X13(01편 최종 단계 수, 새 필드 7개)과 X14(짧은 길의 CP·단계 배지)뿐: 단계 수 하드코딩 금지(분모는 데이터), 새 필드는 선택 필드(모르는 필드는 경고), 배지 조건은 설정 한 곳(`badge_rules`).
 4. 이전 PM 세션이 m0-design 브랜치에 쓴 설계 확정본(v1 기준)은 참고만 하고 v2에 맞게 고쳐라.
 5. pedagogy v1.1(2026-11-16 20:16 KST) 저장 구조 변경을 그대로 따른다: 단계 `long_step`·`new_code_lines`·`prepared_code`·`video_segments[{start_s,end_s}]`, 문항 `choice`(choices, answer_index), 누적 점검 checkpoint 스키마(CP1~3, 문항 40개), 전체 165단계, step_id는 `L01-S14b`처럼 접미 글자가 있으니 늘 문자열(정렬은 order). 영상 구간 정본은 inputs/pedagogy/video-segments.json. 진도 기록에 choice 응답과 checkpoint 결과를 저장(DESIGN.md 5절).
+7. 디자인 HANDOFF 20:40: 맛보기는 Colab 8단계(브라우저 안 코드 실행 없음). 영상은 video_segments·shared_with 기준, "구간 1/3" 전환기. D49: 빈 배열 = 영상 없는 단계("영상 없음" 상태, 빈 플레이어 금지), end_s는 늘 값이 있음. null 처리 코드 넣지 말고 빌드 검사에서 end_s null·빠짐을 실패로. D43: 맥미니 저장이지만 처음부터 계정별 구조(users + 모든 기록 user_id 실제 FK), 단일 고정 사용자 전제 코드 금지. D44: 로그인은 이메일 + Google만(X 로그인 없음). 실제 메일 발송·OAuth는 공개 승인 때, 지금은 AuthAdapter 자리 + 로컬 개발용 로그인(여러 계정 전환, 127.0.0.1 전용)만. D45: "X에 공유"는 글쓰기 창만 열고 "저장한 이미지를 첨부해 주세요" 안내, 맛보기 카드에 "첫 모델이라 아직 서툴러요". D46: 랜딩·약관·개인정보 문구는 공개 전 승인 항목(목업 "예시 화면" 유지). D47: 단계 배지는 CP 통과로(CP1 언어 모델 견습, CP2 신경망 정비사, CP3 GPT 제작자), CP 단독 배지 없음, c4_cp_result에 표시. D48: 회사원·투자자 길의 03·04 다리 카드는 선택 필드 `bridge_card`(DESIGN.md 5-1), 응답은 question_attempt context="bridge", 07편 잠그지 않음.
 6. 맛보기는 inputs/pedagogy/VALUE_CURRICULUM.md 3절의 Colab 노트북이 근거(CPU 약 6초, 손실 3.84 → 2.47). 프로토타입에서 맛보기 노트북을 만들고 맥 .venv로 실행해 손실 범위를 확인하라. Colab을 못 여는 사람용 "미리 계산한 결과 보기" 화면도 둔다.
 
 산출물
