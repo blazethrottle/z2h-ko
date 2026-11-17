@@ -3,9 +3,14 @@
 // 다시 누르면 취소되어 입력칸을 다시 쓸 수 있다. 고르기 문항의 "모르겠어요" 보기와 모양·안내가 같다.
 // 결과에는 감점 없이 "모르겠어요"로 기록된다. 정답 자료는 "결과 보기" 전에 받지 않는다.
 // 두 폭(390px 폰·1280px 맥) 모두에서 돈다. 폰 폭에서는 클릭 대신 터치(tap)로 누른다.
+import fs from 'node:fs';
 import type { Locator, Page, TestInfo } from '@playwright/test';
 import { test, expect, hydrated, manifest } from './fixtures';
-import { diagnosticSummary, fillTemplate } from '../../src/lib/basics';
+import { resolveBasicsPath } from '../../src/lib/content/load.mjs';
+
+/** 교사 정본 F.json (빌드가 읽는 것과 같은 경로 규칙). 추천 단위 기대값은 앱 계산 함수가 아니라 여기서 직접 읽는다 */
+const F = JSON.parse(fs.readFileSync(resolveBasicsPath().path, 'utf8'));
+const recommendOf = (qid: string): string[] => F.questions.find((q: any) => q.question_id === qid).recommend_units_if_wrong;
 
 const DK = /모르겠어요/;
 const NOTE = '모르겠어요로 기록';
@@ -25,6 +30,19 @@ const looks = (l: Locator) =>
     const s = getComputedStyle(el);
     return { border: `${s.borderTopWidth} ${s.borderTopStyle} ${s.borderTopColor}`, bg: s.backgroundColor, radius: s.borderTopLeftRadius, minH: s.minHeight };
   });
+
+/** WCAG 대비(글자색 대 바탕색). rgb()/rgba() 글자만 받는다 */
+function contrast(fg: string, bg: string): number {
+  const lum = (c: string) => {
+    const [r, g, b] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map((v) => {
+      const x = Number(v) / 255;
+      return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
+}
 
 /** 정답 자료(/data/F/answers.json) 요청을 센다(page.request 로 테스트가 받은 것은 세지 않는다) */
 function watchAnswers(page: Page, lectureId: string) {
@@ -72,10 +90,18 @@ test('직접 입력 문항 모르겠어요: 누르면 눌림 모양·안내 문�
   await expect(input).toBeDisabled();
   await expect(input).toHaveValue('');
   expect(await looks(input), '잠긴 입력칸은 잠긴 모양').not.toEqual(inputIdle);
+  // 잠긴 칸의 흐린 안내 글("모르겠어요로 기록함")도 바탕과 4.5:1 이상
+  const ph = await input.evaluate((el) => ({ fg: getComputedStyle(el, '::placeholder').color, op: getComputedStyle(el, '::placeholder').opacity, bg: getComputedStyle(el).backgroundColor }));
+  expect(await input.getAttribute('placeholder')).toBeTruthy();
+  expect(ph.op).toBe('1');
+  expect(contrast(ph.fg, ph.bg), `안내 글 ${ph.fg} / 바탕 ${ph.bg}`).toBeGreaterThanOrEqual(4.5);
   await page.screenshot({ path: `test-results/screens/${info.project.name}_diag_dontknow_on.png`, fullPage: true });
 
   // 2) 진행: 답한 문제로 세고, 빠진 문제 안내에서 바로 빠진다(다른 문제는 남음)
   await expect(page.getByTestId('diag-progress')).toHaveText(`답한 문제 1 / ${total}`);
+  // 한 번 누를 때 읽기 프로그램 알림이 겹치지 않게 진행 줄은 알림 칸이 아니다
+  await expect(page.getByTestId('diag-progress')).not.toHaveAttribute('aria-live');
+  await expect(page.getByTestId('diag-progress')).not.toHaveAttribute('role');
   await expect(msg).toContainText('아직 답하지 않은 문제가 있습니다');
   await expect(msg).not.toContainText(qid);
 
@@ -165,22 +191,27 @@ test('모르겠어요로 낸 결과: 문항별 결과에 "모르겠어요", 감�
       await card.getByTestId(`diag-input-${q.question_id}`).fill(String(a.auto_grade.value));
     }
   }
-  await expect.soft(page.getByTestId('diag-progress')).toHaveText(`답한 문제 ${B.diagnostic.length} / ${B.diagnostic.length}`, { timeout: 3_000 });
+  await expect(page.getByTestId('diag-progress')).toHaveText(`답한 문제 ${B.diagnostic.length} / ${B.diagnostic.length}`);
   await expect(page.getByTestId('diag-msg')).toHaveCount(0);
   await page.waitForLoadState('networkidle');
   expect(answerReqs, '결과 보기 전 정답 자료 요청').toEqual([]);
   await page.getByTestId('diag-submit').click();
 
-  const rows = B.diagnostic.map((q: any) => ({ question_id: q.question_id, is_correct: !dkIds.includes(q.question_id), is_dont_know: dkIds.includes(q.question_id) }));
-  const s = diagnosticSummary(B.diagnostic, rows, B.unit_order);
-  await expect(page.getByTestId('diag-score')).toHaveText(fillTemplate(B.result_ko.score_template_ko, { correct: s.correct, total: s.total }));
+  // 기대값: 맞힌 수는 모르겠어요 2문항을 뺀 수, 추천 단위는 정본 F.json 에서 그 두 문항의 recommend_units_if_wrong
+  const total = B.diagnostic.length;
+  const correct = total - dkIds.length;
+  const recommended = new Set(dkIds.flatMap(recommendOf));
+  const notRecommended = B.diagnostic.filter((q: any) => !dkIds.includes(q.question_id)).flatMap((q: any) => recommendOf(q.question_id)).filter((u: string) => !recommended.has(u));
+  expect(recommended.size).toBeGreaterThan(0);
+  await expect(page.getByTestId('diag-score')).toHaveText(B.result_ko.score_template_ko.replace('{correct}', String(correct)).replace('{total}', String(total)));
   for (const id of dkIds) {
     const row = page.getByTestId(`diag-review-${id}`);
     await expect(row).toContainText('내 답: 모르겠어요');
     await expect(row.locator('.side')).toHaveText('모르겠어요');
     await expect(row).not.toContainText('맞음');
   }
-  for (const u of s.units) await expect(page.getByTestId('diag-units')).toContainText(u);
+  for (const u of recommended) await expect(page.getByTestId('diag-units')).toContainText(u);
+  for (const u of notRecommended) await expect(page.getByTestId('diag-units')).not.toContainText(u);
   await page.screenshot({ path: `test-results/screens/${info.project.name}_diag_dontknow_result.png`, fullPage: true });
 
   await expect.poll(() => api.opsFor('diagnostic_result').length).toBe(1);

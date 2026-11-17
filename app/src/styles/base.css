@@ -380,6 +380,8 @@ a.chip { text-decoration: none; }
 .basics-lists, .diag-grid { display: grid; gap: var(--space-4); align-items: start; }
 /* 진단 "모르겠어요" (P6-A): 잠긴 입력칸은 잠긴 모양으로, 안내 칸은 비어 있으면 자리를 차지하지 않는다 */
 .diag-grid .input:disabled { background: var(--paper-sunken); border-color: var(--line); color: var(--ink-muted); cursor: not-allowed; }
+/* 잠긴 칸의 흐린 안내 글("모르겠어요로 기록함")도 ink-muted 로 4.5:1 이상(브라우저 기본 회색은 3.8:1). 일부 브라우저의 기본 흐림(opacity)도 끈다 */
+.diag-grid .input:disabled::placeholder { color: var(--ink-muted); opacity: 1; }
 .diag-dk-note:empty { margin-top: 0; }
 @media (min-width: 1024px) {
   .basics-lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }

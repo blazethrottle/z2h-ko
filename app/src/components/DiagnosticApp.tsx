@@ -262,7 +262,8 @@ function DiagnosticAppView(p: Props) {
           <p>{msg ?? missingMsg}</p>
         </div>
       )}
-      <p class="cap num" aria-live="polite" data-testid="diag-progress">
+      {/* 알림(aria-live)은 두지 않는다: 누를 때 알림은 카드 안 안내 칸(role=status) 하나로 충분하다(P6-A 검수) */}
+      <p class="cap num" data-testid="diag-progress">
         답한 문제 {p.questions.length - missing.length} / {p.questions.length}
       </p>
       <div class="row">
