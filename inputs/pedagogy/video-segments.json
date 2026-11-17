@@ -1,0 +1,2772 @@
+{
+ "_meta": {
+  "version": "1.2",
+  "created_kst": "2026-11-16",
+  "source": "research/*.md 2절 유튜브 공식 챕터, 영상 길이는 research/README.md(yt-dlp 메타데이터)",
+  "rules_ko": [
+   "start_s는 챕터 시작 시각, end_s는 다음 챕터 시작 시각(마지막 챕터는 영상 길이). end_s에 null은 쓰지 않습니다",
+   "챕터보다 잘게 나눈 시각은 만들지 않았습니다. 같은 챕터를 쓰는 단계들은 같은 구간을 공유합니다(shared_with에 표시)",
+   "쪼갠 단계(예: L01-S14b)는 원래 단계(L01-S14)의 구간을 그대로 씁니다",
+   "video_segments 빈 목록 = 그 단계에는 영상이 없음(현재 L08-S01, S04, S08)",
+   "임베드: https://www.youtube-nocookie.com/embed/{youtube_video_id}?start={start_s}&end={end_s}, 자동 재생 없음, 유튜브에서 열기 대체 링크 함께(D16)"
+  ],
+  "changes_ko": [
+   "v1.2(2026-11-16): L01 단계를 content/L01.json 기준으로 다시 씀. S13을 S13~S13e로, S15를 S15, S15b로 나눔. L01-S13b는 뜻이 'PyTorch 비교'에서 'exp와 빼기'로 바뀌고 PyTorch 비교는 L01-S13e(1:39:31 챕터)로 옮김. S15는 1:51:04, 1:57:56 두 챕터, S15b와 S16은 2:01:12 챕터"
+  ]
+ },
+ "lectures": {
+  "L01": {
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_seconds": 8752,
+   "research_file": "research/01_micrograd.md",
+   "chapter_starts_s": [
+    0,
+    25,
+    488,
+    852,
+    1149,
+    1930,
+    3070,
+    3172,
+    4142,
+    4652,
+    4948,
+    5225,
+    5971,
+    6235,
+    6664,
+    7076,
+    7272,
+    8043,
+    8206,
+    8470,
+    8679,
+    8720
+   ]
+  },
+  "L02": {
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_seconds": 7065,
+   "research_file": "research/02_makemore_bigram.md",
+   "chapter_starts_s": [
+    0,
+    183,
+    384,
+    564,
+    765,
+    1099,
+    1254,
+    1442,
+    2177,
+    3014,
+    3650,
+    3777,
+    3926,
+    4201,
+    4433,
+    4726,
+    5177,
+    5749,
+    5916,
+    6175,
+    6469,
+    6618,
+    6871,
+    6976
+   ]
+  },
+  "L03": {
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_seconds": 4540,
+   "research_file": "research/03_makemore_mlp.md",
+   "chapter_starts_s": [
+    0,
+    108,
+    543,
+    739,
+    1115,
+    1755,
+    1793,
+    1937,
+    1969,
+    2276,
+    2485,
+    2740,
+    3200,
+    3649,
+    3927,
+    4036,
+    4306,
+    4404,
+    4495
+   ]
+  },
+  "L04": {
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_seconds": 6957,
+   "research_file": "research/04_activations_batchnorm.md",
+   "chapter_starts_s": [
+    0,
+    82,
+    259,
+    779,
+    1673,
+    2440,
+    3787,
+    3890,
+    4450,
+    4715,
+    5211,
+    5454,
+    5527,
+    5775,
+    5995,
+    6364,
+    6694
+   ]
+  },
+  "L05": {
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_seconds": 6924,
+   "research_file": "research/05_backprop_ninja.md",
+   "chapter_starts_s": [
+    0,
+    446,
+    781,
+    3917,
+    5191,
+    5797,
+    6602,
+    6864
+   ]
+  },
+  "L06": {
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_seconds": 3381,
+   "research_file": "research/06_wavenet.md",
+   "chapter_starts_s": [
+    0,
+    100,
+    416,
+    556,
+    1031,
+    1173,
+    1195,
+    1296,
+    2261,
+    2330,
+    2721,
+    2767,
+    2818,
+    2864,
+    3094,
+    3148,
+    3257,
+    3326
+   ]
+  },
+  "L07": {
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_seconds": 6980,
+   "research_file": "research/07_build_gpt.md",
+   "chapter_starts_s": [
+    0,
+    472,
+    568,
+    867,
+    1331,
+    2093,
+    2280,
+    2533,
+    2831,
+    3114,
+    3282,
+    3506,
+    3618,
+    3720,
+    4298,
+    4366,
+    4420,
+    4454,
+    4539,
+    4616,
+    4751,
+    4919,
+    5065,
+    5208,
+    5571,
+    5869,
+    6159,
+    6382,
+    6533,
+    6872
+   ]
+  },
+  "L08": {
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_seconds": 2560,
+   "research_file": "research/08_state_of_gpt.md",
+   "chapter_starts_s": [
+    0,
+    58,
+    124,
+    203,
+    493,
+    804,
+    845,
+    1127,
+    1550,
+    1607,
+    1933,
+    2235
+   ]
+  },
+  "L09": {
+   "youtube_video_id": "zduSFxRajkE",
+   "video_seconds": 8014,
+   "research_file": "research/09_gpt_tokenizer.md",
+   "chapter_starts_s": [
+    0,
+    350,
+    896,
+    1095,
+    1367,
+    1430,
+    1622,
+    1715,
+    1836,
+    2098,
+    2360,
+    2567,
+    2901,
+    3456,
+    4298,
+    4499,
+    4706,
+    5128,
+    5322,
+    6207,
+    6491,
+    6598,
+    6701,
+    7820,
+    7970
+   ]
+  },
+  "L10": {
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_seconds": 14486,
+   "research_file": "research/10_gpt2_repro.md",
+   "chapter_starts_s": [
+    0,
+    219,
+    827,
+    1688,
+    1860,
+    2011,
+    2222,
+    2507,
+    2750,
+    3173,
+    3402,
+    3720,
+    3974,
+    4427,
+    4938,
+    5294,
+    5978,
+    6495,
+    7218,
+    7614,
+    8095,
+    8466,
+    8781,
+    9249,
+    10012,
+    11421,
+    12190,
+    12503,
+    13385,
+    14181,
+    14379
+   ]
+  }
+ },
+ "steps": {
+  "L01-S01": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 488,
+     "end_s": 852
+    }
+   ],
+   "shared_with": [
+    "L01-S02"
+   ]
+  },
+  "L01-S02": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 488,
+     "end_s": 852
+    }
+   ],
+   "shared_with": [
+    "L01-S01"
+   ]
+  },
+  "L01-S03": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 852,
+     "end_s": 1149
+    }
+   ],
+   "shared_with": []
+  },
+  "L01-S04": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 1149,
+     "end_s": 1930
+    }
+   ],
+   "shared_with": [
+    "L01-S05",
+    "L01-S06"
+   ]
+  },
+  "L01-S05": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 1149,
+     "end_s": 1930
+    }
+   ],
+   "shared_with": [
+    "L01-S04",
+    "L01-S06"
+   ]
+  },
+  "L01-S06": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 1149,
+     "end_s": 1930
+    }
+   ],
+   "shared_with": [
+    "L01-S04",
+    "L01-S05"
+   ]
+  },
+  "L01-S07": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 1930,
+     "end_s": 3070
+    }
+   ],
+   "shared_with": []
+  },
+  "L01-S08": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 3070,
+     "end_s": 3172
+    }
+   ],
+   "shared_with": []
+  },
+  "L01-S09": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 3172,
+     "end_s": 4142
+    }
+   ],
+   "shared_with": [
+    "L01-S09b"
+   ]
+  },
+  "L01-S09b": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 3172,
+     "end_s": 4142
+    }
+   ],
+   "shared_with": [
+    "L01-S09"
+   ]
+  },
+  "L01-S10": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 4142,
+     "end_s": 4652
+    }
+   ],
+   "shared_with": [
+    "L01-S10b"
+   ]
+  },
+  "L01-S10b": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 4142,
+     "end_s": 4652
+    }
+   ],
+   "shared_with": [
+    "L01-S10"
+   ]
+  },
+  "L01-S11": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 4652,
+     "end_s": 4948
+    }
+   ],
+   "shared_with": [
+    "L01-S11b"
+   ]
+  },
+  "L01-S11b": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 4652,
+     "end_s": 4948
+    }
+   ],
+   "shared_with": [
+    "L01-S11"
+   ]
+  },
+  "L01-S12": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 4948,
+     "end_s": 5225
+    }
+   ],
+   "shared_with": []
+  },
+  "L01-S13": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "shared_with": [
+    "L01-S13b",
+    "L01-S13c",
+    "L01-S13d"
+   ]
+  },
+  "L01-S13b": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "shared_with": [
+    "L01-S13",
+    "L01-S13c",
+    "L01-S13d"
+   ]
+  },
+  "L01-S13c": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "shared_with": [
+    "L01-S13",
+    "L01-S13b",
+    "L01-S13d"
+   ]
+  },
+  "L01-S13d": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "shared_with": [
+    "L01-S13",
+    "L01-S13b",
+    "L01-S13c"
+   ]
+  },
+  "L01-S13e": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 5971,
+     "end_s": 6235
+    }
+   ],
+   "shared_with": []
+  },
+  "L01-S14": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 6235,
+     "end_s": 6664
+    }
+   ],
+   "shared_with": [
+    "L01-S14b",
+    "L01-S14c"
+   ]
+  },
+  "L01-S14b": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 6235,
+     "end_s": 6664
+    }
+   ],
+   "shared_with": [
+    "L01-S14",
+    "L01-S14c"
+   ]
+  },
+  "L01-S14c": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 6235,
+     "end_s": 6664
+    }
+   ],
+   "shared_with": [
+    "L01-S14",
+    "L01-S14b"
+   ]
+  },
+  "L01-S15": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 6664,
+     "end_s": 7076
+    },
+    {
+     "start_s": 7076,
+     "end_s": 7272
+    }
+   ],
+   "shared_with": []
+  },
+  "L01-S15b": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 7272,
+     "end_s": 8043
+    }
+   ],
+   "shared_with": [
+    "L01-S16"
+   ]
+  },
+  "L01-S16": {
+   "lecture_id": "L01",
+   "youtube_video_id": "VMj-3S1tku0",
+   "video_segments": [
+    {
+     "start_s": 7272,
+     "end_s": 8043
+    }
+   ],
+   "shared_with": [
+    "L01-S15b"
+   ]
+  },
+  "L02-S01": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 183,
+     "end_s": 384
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S02": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 384,
+     "end_s": 564
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S03": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 1254,
+     "end_s": 1442
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S04": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 564,
+     "end_s": 765
+    },
+    {
+     "start_s": 765,
+     "end_s": 1099
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S05": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 1099,
+     "end_s": 1254
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S06": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 1442,
+     "end_s": 2177
+    }
+   ],
+   "shared_with": [
+    "L02-S09"
+   ]
+  },
+  "L02-S07": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 2177,
+     "end_s": 3014
+    },
+    {
+     "start_s": 3650,
+     "end_s": 3777
+    }
+   ],
+   "shared_with": [
+    "L02-S08"
+   ]
+  },
+  "L02-S08": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 2177,
+     "end_s": 3014
+    },
+    {
+     "start_s": 3650,
+     "end_s": 3777
+    }
+   ],
+   "shared_with": [
+    "L02-S07"
+   ]
+  },
+  "L02-S09": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 1442,
+     "end_s": 2177
+    }
+   ],
+   "shared_with": [
+    "L02-S06"
+   ]
+  },
+  "L02-S10": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 3014,
+     "end_s": 3650
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S11": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 3926,
+     "end_s": 4201
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S12": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 4201,
+     "end_s": 4433
+    },
+    {
+     "start_s": 4433,
+     "end_s": 4726
+    },
+    {
+     "start_s": 6469,
+     "end_s": 6618
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S13": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 4726,
+     "end_s": 5177
+    },
+    {
+     "start_s": 5749,
+     "end_s": 5916
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S14": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 5916,
+     "end_s": 6175
+    },
+    {
+     "start_s": 6175,
+     "end_s": 6469
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S15": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 6618,
+     "end_s": 6871
+    }
+   ],
+   "shared_with": []
+  },
+  "L02-S16": {
+   "lecture_id": "L02",
+   "youtube_video_id": "PaCmpygFfXo",
+   "video_segments": [
+    {
+     "start_s": 6871,
+     "end_s": 6976
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S01": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 543,
+     "end_s": 739
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S02": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 739,
+     "end_s": 1115
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S03": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 1115,
+     "end_s": 1755
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S04": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 1755,
+     "end_s": 1793
+    },
+    {
+     "start_s": 1793,
+     "end_s": 1937
+    },
+    {
+     "start_s": 1969,
+     "end_s": 2276
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S05": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 2276,
+     "end_s": 2485
+    },
+    {
+     "start_s": 2485,
+     "end_s": 2740
+    }
+   ],
+   "shared_with": [
+    "L03-S06"
+   ]
+  },
+  "L03-S06": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 2485,
+     "end_s": 2740
+    }
+   ],
+   "shared_with": [
+    "L03-S05"
+   ]
+  },
+  "L03-S07": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 2740,
+     "end_s": 3200
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S08": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 3200,
+     "end_s": 3649
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S09": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 3649,
+     "end_s": 3927
+    },
+    {
+     "start_s": 4036,
+     "end_s": 4306
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S10": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 3927,
+     "end_s": 4036
+    }
+   ],
+   "shared_with": []
+  },
+  "L03-S11": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 4404,
+     "end_s": 4495
+    }
+   ],
+   "shared_with": [
+    "L03-S11b"
+   ]
+  },
+  "L03-S11b": {
+   "lecture_id": "L03",
+   "youtube_video_id": "TCH_1BHY58I",
+   "video_segments": [
+    {
+     "start_s": 4404,
+     "end_s": 4495
+    }
+   ],
+   "shared_with": [
+    "L03-S11"
+   ]
+  },
+  "L04-S01": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 82,
+     "end_s": 259
+    }
+   ],
+   "shared_with": []
+  },
+  "L04-S02": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 259,
+     "end_s": 779
+    }
+   ],
+   "shared_with": [
+    "L04-S03"
+   ]
+  },
+  "L04-S03": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 259,
+     "end_s": 779
+    }
+   ],
+   "shared_with": [
+    "L04-S02"
+   ]
+  },
+  "L04-S04": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 779,
+     "end_s": 1673
+    }
+   ],
+   "shared_with": [
+    "L04-S05"
+   ]
+  },
+  "L04-S05": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 779,
+     "end_s": 1673
+    }
+   ],
+   "shared_with": [
+    "L04-S04"
+   ]
+  },
+  "L04-S06": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 1673,
+     "end_s": 2440
+    }
+   ],
+   "shared_with": []
+  },
+  "L04-S07": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 2440,
+     "end_s": 3890
+    }
+   ],
+   "shared_with": [
+    "L04-S08",
+    "L04-S09"
+   ]
+  },
+  "L04-S08": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 2440,
+     "end_s": 3890
+    }
+   ],
+   "shared_with": [
+    "L04-S07",
+    "L04-S09"
+   ]
+  },
+  "L04-S09": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 2440,
+     "end_s": 3890
+    }
+   ],
+   "shared_with": [
+    "L04-S07",
+    "L04-S08"
+   ]
+  },
+  "L04-S10": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 4715,
+     "end_s": 5211
+    }
+   ],
+   "shared_with": [
+    "L04-S10b",
+    "L04-S10c",
+    "L04-S10d"
+   ]
+  },
+  "L04-S10b": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 4715,
+     "end_s": 5211
+    }
+   ],
+   "shared_with": [
+    "L04-S10",
+    "L04-S10c",
+    "L04-S10d"
+   ]
+  },
+  "L04-S10c": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 4715,
+     "end_s": 5211
+    }
+   ],
+   "shared_with": [
+    "L04-S10",
+    "L04-S10b",
+    "L04-S10d"
+   ]
+  },
+  "L04-S10d": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 4715,
+     "end_s": 5211
+    }
+   ],
+   "shared_with": [
+    "L04-S10",
+    "L04-S10b",
+    "L04-S10c"
+   ]
+  },
+  "L04-S11": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 5211,
+     "end_s": 5454
+    },
+    {
+     "start_s": 5454,
+     "end_s": 5527
+    },
+    {
+     "start_s": 5775,
+     "end_s": 5995
+    },
+    {
+     "start_s": 5995,
+     "end_s": 6364
+    }
+   ],
+   "shared_with": [
+    "L04-S11b",
+    "L04-S11c",
+    "L04-S11d"
+   ]
+  },
+  "L04-S11b": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 5211,
+     "end_s": 5454
+    },
+    {
+     "start_s": 5454,
+     "end_s": 5527
+    },
+    {
+     "start_s": 5775,
+     "end_s": 5995
+    },
+    {
+     "start_s": 5995,
+     "end_s": 6364
+    }
+   ],
+   "shared_with": [
+    "L04-S11",
+    "L04-S11c",
+    "L04-S11d"
+   ]
+  },
+  "L04-S11c": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 5211,
+     "end_s": 5454
+    },
+    {
+     "start_s": 5454,
+     "end_s": 5527
+    },
+    {
+     "start_s": 5775,
+     "end_s": 5995
+    },
+    {
+     "start_s": 5995,
+     "end_s": 6364
+    }
+   ],
+   "shared_with": [
+    "L04-S11",
+    "L04-S11b",
+    "L04-S11d"
+   ]
+  },
+  "L04-S11d": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 5211,
+     "end_s": 5454
+    },
+    {
+     "start_s": 5454,
+     "end_s": 5527
+    },
+    {
+     "start_s": 5775,
+     "end_s": 5995
+    },
+    {
+     "start_s": 5995,
+     "end_s": 6364
+    }
+   ],
+   "shared_with": [
+    "L04-S11",
+    "L04-S11b",
+    "L04-S11c"
+   ]
+  },
+  "L04-S12": {
+   "lecture_id": "L04",
+   "youtube_video_id": "P6sfmUTpUmc",
+   "video_segments": [
+    {
+     "start_s": 5527,
+     "end_s": 5775
+    },
+    {
+     "start_s": 6364,
+     "end_s": 6694
+    }
+   ],
+   "shared_with": []
+  },
+  "L05-S01": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 446,
+     "end_s": 781
+    }
+   ],
+   "shared_with": []
+  },
+  "L05-S02": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": [
+    "L05-S03",
+    "L05-S04",
+    "L05-S05",
+    "L05-S06",
+    "L05-S07",
+    "L05-S07b",
+    "L05-S08"
+   ]
+  },
+  "L05-S03": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S04",
+    "L05-S05",
+    "L05-S06",
+    "L05-S07",
+    "L05-S07b",
+    "L05-S08"
+   ]
+  },
+  "L05-S04": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S03",
+    "L05-S05",
+    "L05-S06",
+    "L05-S07",
+    "L05-S07b",
+    "L05-S08"
+   ]
+  },
+  "L05-S05": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S03",
+    "L05-S04",
+    "L05-S06",
+    "L05-S07",
+    "L05-S07b",
+    "L05-S08"
+   ]
+  },
+  "L05-S06": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S03",
+    "L05-S04",
+    "L05-S05",
+    "L05-S07",
+    "L05-S07b",
+    "L05-S08"
+   ]
+  },
+  "L05-S07": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    },
+    {
+     "start_s": 3917,
+     "end_s": 5191
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S03",
+    "L05-S04",
+    "L05-S05",
+    "L05-S06",
+    "L05-S07b",
+    "L05-S08"
+   ]
+  },
+  "L05-S07b": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    },
+    {
+     "start_s": 3917,
+     "end_s": 5191
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S03",
+    "L05-S04",
+    "L05-S05",
+    "L05-S06",
+    "L05-S07",
+    "L05-S08"
+   ]
+  },
+  "L05-S08": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 781,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": [
+    "L05-S02",
+    "L05-S03",
+    "L05-S04",
+    "L05-S05",
+    "L05-S06",
+    "L05-S07",
+    "L05-S07b"
+   ]
+  },
+  "L05-S09": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 5191,
+     "end_s": 5797
+    }
+   ],
+   "shared_with": []
+  },
+  "L05-S10": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 5797,
+     "end_s": 6602
+    }
+   ],
+   "shared_with": []
+  },
+  "L05-S11": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 6602,
+     "end_s": 6864
+    }
+   ],
+   "shared_with": [
+    "L05-S11b"
+   ]
+  },
+  "L05-S11b": {
+   "lecture_id": "L05",
+   "youtube_video_id": "q8SA3rM6ckI",
+   "video_segments": [
+    {
+     "start_s": 6602,
+     "end_s": 6864
+    }
+   ],
+   "shared_with": [
+    "L05-S11"
+   ]
+  },
+  "L06-S01": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 100,
+     "end_s": 416
+    },
+    {
+     "start_s": 416,
+     "end_s": 556
+    }
+   ],
+   "shared_with": []
+  },
+  "L06-S02": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 556,
+     "end_s": 1031
+    }
+   ],
+   "shared_with": [
+    "L06-S02b",
+    "L06-S03",
+    "L06-S04"
+   ]
+  },
+  "L06-S02b": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 556,
+     "end_s": 1031
+    }
+   ],
+   "shared_with": [
+    "L06-S02",
+    "L06-S03",
+    "L06-S04"
+   ]
+  },
+  "L06-S03": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 556,
+     "end_s": 1031
+    }
+   ],
+   "shared_with": [
+    "L06-S02",
+    "L06-S02b",
+    "L06-S04"
+   ]
+  },
+  "L06-S04": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 556,
+     "end_s": 1031
+    }
+   ],
+   "shared_with": [
+    "L06-S02",
+    "L06-S02b",
+    "L06-S03"
+   ]
+  },
+  "L06-S05": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 1173,
+     "end_s": 1195
+    },
+    {
+     "start_s": 1195,
+     "end_s": 1296
+    }
+   ],
+   "shared_with": []
+  },
+  "L06-S06": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 1296,
+     "end_s": 2261
+    }
+   ],
+   "shared_with": [
+    "L06-S07",
+    "L06-S08"
+   ]
+  },
+  "L06-S07": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 1296,
+     "end_s": 2261
+    }
+   ],
+   "shared_with": [
+    "L06-S06",
+    "L06-S08"
+   ]
+  },
+  "L06-S08": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 1296,
+     "end_s": 2261
+    }
+   ],
+   "shared_with": [
+    "L06-S06",
+    "L06-S07"
+   ]
+  },
+  "L06-S09": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 2330,
+     "end_s": 2721
+    },
+    {
+     "start_s": 2721,
+     "end_s": 2767
+    }
+   ],
+   "shared_with": []
+  },
+  "L06-S10": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 2767,
+     "end_s": 2818
+    }
+   ],
+   "shared_with": []
+  },
+  "L06-S11": {
+   "lecture_id": "L06",
+   "youtube_video_id": "t3YJ5hKiMQ0",
+   "video_segments": [
+    {
+     "start_s": 2864,
+     "end_s": 3094
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S01": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 472,
+     "end_s": 568
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S02": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 568,
+     "end_s": 867
+    },
+    {
+     "start_s": 867,
+     "end_s": 1331
+    }
+   ],
+   "shared_with": [
+    "L07-S03"
+   ]
+  },
+  "L07-S03": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 568,
+     "end_s": 867
+    },
+    {
+     "start_s": 867,
+     "end_s": 1331
+    }
+   ],
+   "shared_with": [
+    "L07-S02"
+   ]
+  },
+  "L07-S04": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 1331,
+     "end_s": 2093
+    }
+   ],
+   "shared_with": [
+    "L07-S04b",
+    "L07-S05"
+   ]
+  },
+  "L07-S04b": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 1331,
+     "end_s": 2093
+    }
+   ],
+   "shared_with": [
+    "L07-S04",
+    "L07-S05"
+   ]
+  },
+  "L07-S05": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 1331,
+     "end_s": 2093
+    }
+   ],
+   "shared_with": [
+    "L07-S04",
+    "L07-S04b"
+   ]
+  },
+  "L07-S06": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 2093,
+     "end_s": 2280
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S07": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 2280,
+     "end_s": 2533
+    }
+   ],
+   "shared_with": [
+    "L07-S07b",
+    "L07-S07c"
+   ]
+  },
+  "L07-S07b": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 2280,
+     "end_s": 2533
+    }
+   ],
+   "shared_with": [
+    "L07-S07",
+    "L07-S07c"
+   ]
+  },
+  "L07-S07c": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 2280,
+     "end_s": 2533
+    }
+   ],
+   "shared_with": [
+    "L07-S07",
+    "L07-S07b"
+   ]
+  },
+  "L07-S08": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 2533,
+     "end_s": 2831
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S09": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 2831,
+     "end_s": 3114
+    },
+    {
+     "start_s": 3114,
+     "end_s": 3282
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S10": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 3282,
+     "end_s": 3506
+    },
+    {
+     "start_s": 3506,
+     "end_s": 3618
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S11": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 3618,
+     "end_s": 3720
+    },
+    {
+     "start_s": 3720,
+     "end_s": 4298
+    }
+   ],
+   "shared_with": [
+    "L07-S11b",
+    "L07-S11c"
+   ]
+  },
+  "L07-S11b": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 3618,
+     "end_s": 3720
+    },
+    {
+     "start_s": 3720,
+     "end_s": 4298
+    }
+   ],
+   "shared_with": [
+    "L07-S11",
+    "L07-S11c"
+   ]
+  },
+  "L07-S11c": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 3618,
+     "end_s": 3720
+    },
+    {
+     "start_s": 3720,
+     "end_s": 4298
+    }
+   ],
+   "shared_with": [
+    "L07-S11",
+    "L07-S11b"
+   ]
+  },
+  "L07-S12": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 4298,
+     "end_s": 4751
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S13": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 4751,
+     "end_s": 4919
+    },
+    {
+     "start_s": 4919,
+     "end_s": 5065
+    },
+    {
+     "start_s": 5065,
+     "end_s": 5208
+    },
+    {
+     "start_s": 5208,
+     "end_s": 5571
+    },
+    {
+     "start_s": 5571,
+     "end_s": 5869
+    }
+   ],
+   "shared_with": [
+    "L07-S13b",
+    "L07-S13c",
+    "L07-S13d"
+   ]
+  },
+  "L07-S13b": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 4751,
+     "end_s": 4919
+    },
+    {
+     "start_s": 4919,
+     "end_s": 5065
+    },
+    {
+     "start_s": 5065,
+     "end_s": 5208
+    },
+    {
+     "start_s": 5208,
+     "end_s": 5571
+    },
+    {
+     "start_s": 5571,
+     "end_s": 5869
+    }
+   ],
+   "shared_with": [
+    "L07-S13",
+    "L07-S13c",
+    "L07-S13d"
+   ]
+  },
+  "L07-S13c": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 4751,
+     "end_s": 4919
+    },
+    {
+     "start_s": 4919,
+     "end_s": 5065
+    },
+    {
+     "start_s": 5065,
+     "end_s": 5208
+    },
+    {
+     "start_s": 5208,
+     "end_s": 5571
+    },
+    {
+     "start_s": 5571,
+     "end_s": 5869
+    }
+   ],
+   "shared_with": [
+    "L07-S13",
+    "L07-S13b",
+    "L07-S13d"
+   ]
+  },
+  "L07-S13d": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 4751,
+     "end_s": 4919
+    },
+    {
+     "start_s": 4919,
+     "end_s": 5065
+    },
+    {
+     "start_s": 5065,
+     "end_s": 5208
+    },
+    {
+     "start_s": 5208,
+     "end_s": 5571
+    },
+    {
+     "start_s": 5571,
+     "end_s": 5869
+    }
+   ],
+   "shared_with": [
+    "L07-S13",
+    "L07-S13b",
+    "L07-S13c"
+   ]
+  },
+  "L07-S14": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 5869,
+     "end_s": 6159
+    }
+   ],
+   "shared_with": []
+  },
+  "L07-S15": {
+   "lecture_id": "L07",
+   "youtube_video_id": "kCc8FmEb1nY",
+   "video_segments": [
+    {
+     "start_s": 6533,
+     "end_s": 6872
+    }
+   ],
+   "shared_with": []
+  },
+  "L08-S01": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [],
+   "shared_with": []
+  },
+  "L08-S02": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [
+    {
+     "start_s": 58,
+     "end_s": 124
+    },
+    {
+     "start_s": 124,
+     "end_s": 203
+    },
+    {
+     "start_s": 804,
+     "end_s": 845
+    },
+    {
+     "start_s": 845,
+     "end_s": 1127
+    },
+    {
+     "start_s": 203,
+     "end_s": 493
+    }
+   ],
+   "shared_with": []
+  },
+  "L08-S03": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [
+    {
+     "start_s": 493,
+     "end_s": 804
+    }
+   ],
+   "shared_with": []
+  },
+  "L08-S04": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [],
+   "shared_with": []
+  },
+  "L08-S05": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [
+    {
+     "start_s": 1127,
+     "end_s": 1550
+    }
+   ],
+   "shared_with": []
+  },
+  "L08-S06": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [
+    {
+     "start_s": 1550,
+     "end_s": 1607
+    },
+    {
+     "start_s": 1607,
+     "end_s": 1933
+    },
+    {
+     "start_s": 1933,
+     "end_s": 2235
+    }
+   ],
+   "shared_with": []
+  },
+  "L08-S07": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [
+    {
+     "start_s": 2235,
+     "end_s": 2560
+    }
+   ],
+   "shared_with": []
+  },
+  "L08-S08": {
+   "lecture_id": "L08",
+   "youtube_video_id": "bZQun8Y4L2A",
+   "video_segments": [],
+   "shared_with": []
+  },
+  "L09-S01": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 350,
+     "end_s": 896
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S02": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 896,
+     "end_s": 1095
+    },
+    {
+     "start_s": 1095,
+     "end_s": 1367
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S03": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 1430,
+     "end_s": 1622
+    },
+    {
+     "start_s": 1622,
+     "end_s": 1715
+    },
+    {
+     "start_s": 1715,
+     "end_s": 1836
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S04": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 1836,
+     "end_s": 2098
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S05": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 2098,
+     "end_s": 2360
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S06": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 2567,
+     "end_s": 2901
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S07": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 2901,
+     "end_s": 3456
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S08": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 3456,
+     "end_s": 4298
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S09": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 4298,
+     "end_s": 4499
+    },
+    {
+     "start_s": 4499,
+     "end_s": 4706
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S10": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 5128,
+     "end_s": 5322
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S11": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 4706,
+     "end_s": 5128
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S12": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 6701,
+     "end_s": 7820
+    }
+   ],
+   "shared_with": []
+  },
+  "L09-S13": {
+   "lecture_id": "L09",
+   "youtube_video_id": "zduSFxRajkE",
+   "video_segments": [
+    {
+     "start_s": 5322,
+     "end_s": 6207
+    },
+    {
+     "start_s": 6207,
+     "end_s": 6491
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S01": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 219,
+     "end_s": 827
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S02": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 827,
+     "end_s": 1688
+    }
+   ],
+   "shared_with": [
+    "L10-S02b",
+    "L10-S02c"
+   ]
+  },
+  "L10-S02b": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 827,
+     "end_s": 1688
+    }
+   ],
+   "shared_with": [
+    "L10-S02",
+    "L10-S02c"
+   ]
+  },
+  "L10-S02c": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 827,
+     "end_s": 1688
+    }
+   ],
+   "shared_with": [
+    "L10-S02",
+    "L10-S02b"
+   ]
+  },
+  "L10-S03": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 1688,
+     "end_s": 1860
+    }
+   ],
+   "shared_with": [
+    "L10-S03b",
+    "L10-S03c"
+   ]
+  },
+  "L10-S03b": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 1688,
+     "end_s": 1860
+    }
+   ],
+   "shared_with": [
+    "L10-S03",
+    "L10-S03c"
+   ]
+  },
+  "L10-S03c": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 1688,
+     "end_s": 1860
+    }
+   ],
+   "shared_with": [
+    "L10-S03",
+    "L10-S03b"
+   ]
+  },
+  "L10-S04": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 1860,
+     "end_s": 2011
+    },
+    {
+     "start_s": 2011,
+     "end_s": 2222
+    },
+    {
+     "start_s": 2222,
+     "end_s": 2507
+    }
+   ],
+   "shared_with": [
+    "L10-S04b",
+    "L10-S04c"
+   ]
+  },
+  "L10-S04b": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 1860,
+     "end_s": 2011
+    },
+    {
+     "start_s": 2011,
+     "end_s": 2222
+    },
+    {
+     "start_s": 2222,
+     "end_s": 2507
+    }
+   ],
+   "shared_with": [
+    "L10-S04",
+    "L10-S04c"
+   ]
+  },
+  "L10-S04c": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 1860,
+     "end_s": 2011
+    },
+    {
+     "start_s": 2011,
+     "end_s": 2222
+    },
+    {
+     "start_s": 2222,
+     "end_s": 2507
+    }
+   ],
+   "shared_with": [
+    "L10-S04",
+    "L10-S04b"
+   ]
+  },
+  "L10-S05": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 2507,
+     "end_s": 2750
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S06": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 2750,
+     "end_s": 3173
+    },
+    {
+     "start_s": 3173,
+     "end_s": 3402
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S07": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 3402,
+     "end_s": 3720
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S08": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 3720,
+     "end_s": 3974
+    }
+   ],
+   "shared_with": [
+    "L10-S08b"
+   ]
+  },
+  "L10-S08b": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 3720,
+     "end_s": 3974
+    }
+   ],
+   "shared_with": [
+    "L10-S08"
+   ]
+  },
+  "L10-S09": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 3974,
+     "end_s": 4427
+    },
+    {
+     "start_s": 4427,
+     "end_s": 4938
+    }
+   ],
+   "shared_with": [
+    "L10-S09b"
+   ]
+  },
+  "L10-S09b": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 3974,
+     "end_s": 4427
+    },
+    {
+     "start_s": 4427,
+     "end_s": 4938
+    }
+   ],
+   "shared_with": [
+    "L10-S09"
+   ]
+  },
+  "L10-S10": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 4938,
+     "end_s": 7218
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S11": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 7218,
+     "end_s": 7614
+    },
+    {
+     "start_s": 7614,
+     "end_s": 8095
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S12": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 8095,
+     "end_s": 8466
+    },
+    {
+     "start_s": 8466,
+     "end_s": 8781
+    },
+    {
+     "start_s": 8781,
+     "end_s": 9249
+    }
+   ],
+   "shared_with": [
+    "L10-S12b",
+    "L10-S12c"
+   ]
+  },
+  "L10-S12b": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 8095,
+     "end_s": 8466
+    },
+    {
+     "start_s": 8466,
+     "end_s": 8781
+    },
+    {
+     "start_s": 8781,
+     "end_s": 9249
+    }
+   ],
+   "shared_with": [
+    "L10-S12",
+    "L10-S12c"
+   ]
+  },
+  "L10-S12c": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 8095,
+     "end_s": 8466
+    },
+    {
+     "start_s": 8466,
+     "end_s": 8781
+    },
+    {
+     "start_s": 8781,
+     "end_s": 9249
+    }
+   ],
+   "shared_with": [
+    "L10-S12",
+    "L10-S12b"
+   ]
+  },
+  "L10-S13": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 9249,
+     "end_s": 10012
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S14": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 10012,
+     "end_s": 11421
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S15": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 11421,
+     "end_s": 12190
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S16": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 12190,
+     "end_s": 12503
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S17": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 12503,
+     "end_s": 13385
+    }
+   ],
+   "shared_with": []
+  },
+  "L10-S18": {
+   "lecture_id": "L10",
+   "youtube_video_id": "l8pRSuU81PU",
+   "video_segments": [
+    {
+     "start_s": 13385,
+     "end_s": 14181
+    },
+    {
+     "start_s": 14181,
+     "end_s": 14379
+    },
+    {
+     "start_s": 14379,
+     "end_s": 14486
+    }
+   ],
+   "shared_with": []
+  }
+ }
+}

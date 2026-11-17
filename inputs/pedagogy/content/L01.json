@@ -1,0 +1,3733 @@
+{
+ "_meta": {
+  "version": "1.2",
+  "created_kst": "2026-11-16",
+  "schema": "pedagogy/data-spec.md 2절",
+  "generated_by": "pedagogy/content/build_content.py",
+  "video_policy": "D16 youtube-nocookie 임베드, 자동 재생 없음, 유튜브에서 열기 대체 링크"
+ },
+ "lecture": {
+  "lecture_id": "L01",
+  "title_ko": "micrograd: 신경망과 역전파를 손으로 만들기",
+  "video_url": "https://www.youtube.com/watch?v=VMj-3S1tku0",
+  "youtube_video_id": "VMj-3S1tku0",
+  "video_seconds": 8752,
+  "video_minutes": 146,
+  "source_repos": [
+   "karpathy/micrograd",
+   "karpathy/nn-zero-to-hero"
+  ],
+  "env": [
+   "cpu"
+  ],
+  "objectives": [
+   {
+    "objective_id": "L01-O1",
+    "text_ko": "숫자 기울기 (f(x+h)-f(x))/h 를 계산하고 그 뜻을 말로 설명할 수 있습니다."
+   },
+   {
+    "objective_id": "L01-O2",
+    "text_ko": "+, *, tanh 노드에서 기울기가 어떻게 전달되는지(연쇄 법칙) 손으로 채울 수 있습니다."
+   },
+   {
+    "objective_id": "L01-O3",
+    "text_ko": "Value 클래스가 계산을 기록하고 backward()로 거꾸로 기울기를 채우는 과정을 줄별로 설명할 수 있습니다."
+   },
+   {
+    "objective_id": "L01-O4",
+    "text_ko": "같은 값을 두 번 쓰면 기울기를 더해야(+=) 하는 이유를 버그 예로 보여 줄 수 있습니다."
+   },
+   {
+    "objective_id": "L01-O5",
+    "text_ko": "Neuron, Layer, MLP를 만들고 학습 반복(순전파, 기울기 비우기, 역전파, 갱신)을 직접 돌릴 수 있습니다."
+   },
+   {
+    "objective_id": "L01-O6",
+    "text_ko": "같은 계산을 PyTorch로 해서 기울기가 같은지 비교할 수 있습니다."
+   }
+  ],
+  "prereq_units": [
+   "F-P1",
+   "F-P2",
+   "F-P5",
+   "F-P6",
+   "F-P7",
+   "F-M1",
+   "F-M2",
+   "F-M6"
+  ],
+  "prereq_units_optional": [
+   "F-P3",
+   "F-P4",
+   "F-P8"
+  ],
+  "prereq_lectures": [],
+  "mastery_rule_id": "L01",
+  "research_status": "merged",
+  "rewards": {
+   "stamp": {
+    "stamp_id": "STAMP-L01",
+    "name_ko": "01 micrograd 도장",
+    "condition": "mastery_state(L01) == mastered",
+    "source": "VALUE_CURRICULUM.md 2절 편 도장"
+   },
+   "badge_progress": {
+    "badge_id": "BADGE-S1",
+    "name_ko": "언어 모델 견습",
+    "requires": [
+     "mastered:L01",
+     "mastered:L02",
+     "mastered:L03",
+     "passed:CP1"
+    ],
+    "this_lecture_counts_for": "mastered:L01"
+   },
+   "artifact": {
+    "artifact_id": "ART-L01",
+    "name_ko": "내 micrograd 학습 기록 카드",
+    "from_steps": [
+     "L01-S11b",
+     "L01-S15b"
+    ],
+    "contents_ko": [
+     "S15b의 손실 20줄을 앱이 붙여 넣기 칸에서 받아 그린 손실 곡선",
+     "S11b의 계산 그래프 그림(학습자가 원하면 화면 캡처를 직접 첨부)",
+     "출처 표기: Andrej Karpathy의 공개 강의 micrograd를 따라 만든 결과"
+    ],
+    "excludes_ko": [
+     "이름, 이메일, 기기 정보, 학습 시간 기록"
+    ],
+    "share": "user_initiated_only",
+    "share_buttons": [
+     "save_image",
+     "copy_text",
+     "x_compose"
+    ],
+    "x_compose": {
+     "prefill_ko": "역전파 엔진을 직접 만들어 작은 신경망을 학습시켰어요. (Andrej Karpathy의 공개 강의 micrograd를 따라 만든 결과)",
+     "attach_image": false,
+     "note_ko": "저장한 이미지를 첨부해 주세요",
+     "auto_post": false
+    },
+    "unlock": "L01-S15b 완료(도장과 별개로 먼저 만들 수 있음)"
+   }
+  }
+ },
+ "steps": [
+  {
+   "step_id": "L01-S01",
+   "lecture_id": "L01",
+   "order": 1,
+   "title_ko": "함수 그래프 그리기",
+   "video_segments": [
+    {
+     "start_s": 488,
+     "end_s": 852
+    }
+   ],
+   "video_chapter_ko": "0:08:08 입력 1개 함수의 미분",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 아래 9줄을 입력하고 실행합니다. 앞 4줄은 이 편에서 쓸 도구를 불러오는 줄입니다(F-P8).",
+   "code": "import math\nimport random\nimport numpy as np\nimport matplotlib.pyplot as plt\ndef f(x):\n    return 3*x**2 - 4*x + 5\nxs = np.arange(-5, 5, 0.25)\nys = f(xs)\nplt.plot(xs, ys)",
+   "code_line_notes_ko": [
+    "수학 함수(tanh, exp)를 담은 도구를 불러옵니다",
+    "무작위 숫자 도구를 불러옵니다. S14에서 씁니다",
+    "숫자 목록을 한꺼번에 계산하는 도구를 np라는 짧은 이름으로 불러옵니다",
+    "그래프 그리는 도구를 plt라는 짧은 이름으로 불러옵니다",
+    "f라는 함수를 만듭니다. 숫자 x를 받습니다",
+    "3x² - 4x + 5를 계산해 돌려줍니다(**는 거듭제곱)",
+    "-5부터 5 바로 앞까지 0.25 간격으로 x 값 40개를 만듭니다",
+    "x 값 40개 모두에 f를 계산합니다",
+    "x와 f(x)를 선으로 이어 그립니다"
+   ],
+   "expected_ko": "아래로 볼록한 포물선(U 모양) 그래프가 보입니다. 가장 낮은 곳은 x가 약 0.67인 부근입니다. 그래프 위에 `[<matplotlib.lines.Line2D ...>]` 같은 글이 한 줄 보여도 정상입니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "신경망도 결국 입력을 넣으면 출력이 나오는 큰 함수입니다. 오늘은 이런 함수의 '기울기'를 직접 재고 계산합니다.",
+   "objective_ids": [
+    "L01-O1"
+   ],
+   "hint_ids": [
+    "L01-S01-H1",
+    "L01-S01-H2",
+    "L01-S01-H3",
+    "L01-S01-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S02",
+   "lecture_id": "L01",
+   "order": 2,
+   "title_ko": "숫자 기울기",
+   "video_segments": [
+    {
+     "start_s": 488,
+     "end_s": 852
+    }
+   ],
+   "video_chapter_ko": "0:08:08 입력 1개 함수의 미분",
+   "long_step": false,
+   "new_code_lines": 3,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 3줄을 입력하고 실행합니다.",
+   "code": "h = 0.0001\nx = 3.0\n(f(x + h) - f(x)) / h",
+   "code_line_notes_ko": [
+    "아주 작은 걸음 h를 정합니다",
+    "기울기를 잴 위치입니다",
+    "x를 h만큼 올렸을 때 f가 변한 양을 h로 나눕니다. 이것이 숫자 기울기입니다"
+   ],
+   "expected_ko": "약 14.0003 이 보입니다(14에 아주 가까운 수).",
+   "expected_check": {
+    "type": "value_range",
+    "min": 13.99,
+    "max": 14.01
+   },
+   "meaning_ko": "x를 아주 조금 올리면 f는 그 약 14배만큼 오릅니다. 기울기는 '조금 바꾸면 몇 배로 변하나'입니다.",
+   "objective_ids": [
+    "L01-O1"
+   ],
+   "hint_ids": [
+    "L01-S02-H1",
+    "L01-S02-H2",
+    "L01-S02-H3",
+    "L01-S02-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S03",
+   "lecture_id": "L01",
+   "order": 3,
+   "title_ko": "입력이 여러 개일 때",
+   "video_segments": [
+    {
+     "start_s": 852,
+     "end_s": 1149
+    }
+   ],
+   "video_chapter_ko": "0:14:12 입력 여러 개 함수의 미분",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 7줄을 입력하고 실행합니다. a만 조금 올려서 d가 얼마나 변하는지 봅니다.",
+   "code": "a = 2.0\nb = -3.0\nc = 10.0\nd1 = a*b + c\na += h\nd2 = a*b + c\nprint(d1, d2, (d2 - d1) / h)",
+   "code_line_notes_ko": [
+    "입력 a",
+    "입력 b",
+    "입력 c",
+    "처음 결과 d1을 계산합니다",
+    "a만 h만큼 올립니다(a = a + h와 같음)",
+    "a를 올린 뒤의 결과 d2를 계산합니다",
+    "두 결과와, d가 a에 대해 변한 비율(기울기)을 보여 줍니다"
+   ],
+   "expected_ko": "`4.0 3.999699999999999 -3.000000000010772`처럼 세 숫자가 보입니다. 마지막 숫자는 약 -3.0(b의 값)입니다. 소수 끝자리가 지저분한 것은 컴퓨터 소수 계산의 작은 오차라 정상입니다.",
+   "expected_check": {
+    "type": "value_range",
+    "min": -3.01,
+    "max": -2.99
+   },
+   "meaning_ko": "d를 a로 미분하면 b가 나옵니다. `a += h`를 `b += h`로 바꾸면 2.0(a의 값), `c += h`로 바꾸면 1.0이 나오는지 직접 해 봅니다.",
+   "objective_ids": [
+    "L01-O1"
+   ],
+   "hint_ids": [
+    "L01-S03-H1",
+    "L01-S03-H2",
+    "L01-S03-H3",
+    "L01-S03-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S04",
+   "lecture_id": "L01",
+   "order": 4,
+   "title_ko": "Value 클래스 뼈대",
+   "video_segments": [
+    {
+     "start_s": 1149,
+     "end_s": 1930
+    }
+   ],
+   "video_chapter_ko": "0:19:09 Value 객체, draw_dot 시각화",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 Value 클래스 8줄과 확인 1줄을 입력하고 실행합니다. 이 셀을 앞으로 'Value 클래스 셀'이라 부르며, S05부터 이 셀 안에 줄을 더해 갑니다.",
+   "code": "class Value:\n    def __init__(self, data, _children=(), _op=''):\n        self.data = data\n        self.grad = 0.0\n        self._prev = set(_children)\n        self._op = _op\n    def __repr__(self):\n        return f\"Value(data={self.data})\"\nValue(2.0)",
+   "code_line_notes_ko": [
+    "숫자 하나를 감싸는 상자 Value를 정의합니다(F-P6 클래스)",
+    "상자를 만들 때 실행됩니다. 숫자, 재료 값들, 계산 기호를 받습니다",
+    "실제 숫자를 담습니다",
+    "기울기 칸입니다. 처음엔 0입니다",
+    "나를 만든 재료 값들(족보)을 기억합니다",
+    "어떤 계산으로 만들어졌는지('+', '*' 등) 기억합니다",
+    "상자를 화면에 보여 줄 때의 모양을 정합니다",
+    "Value(data=숫자) 모양으로 보여 줍니다",
+    "2.0을 담은 상자를 하나 만들어 봅니다"
+   ],
+   "expected_ko": "`Value(data=2.0)`이 보입니다.",
+   "expected_check": {
+    "type": "output_match",
+    "value": "Value(data=2.0)"
+   },
+   "meaning_ko": "평범한 숫자에 '기울기 칸'과 '족보(재료 기록)'를 붙였습니다. 이 두 칸이 역전파의 전부입니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S04-H1",
+    "L01-S04-H2",
+    "L01-S04-H3",
+    "L01-S04-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S05",
+   "lecture_id": "L01",
+   "order": 5,
+   "title_ko": "덧셈과 곱셈 기록하기",
+   "video_segments": [
+    {
+     "start_s": 1149,
+     "end_s": 1930
+    }
+   ],
+   "video_chapter_ko": "0:19:09 Value 객체, draw_dot 시각화",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "Value 클래스 셀 맨 아래",
+     "action": "insert",
+     "anchor_line": null,
+     "line_count": 6
+    }
+   ],
+   "rerun_first": [],
+   "input_ko": "Value 클래스 셀의 맨 아래(`__repr__` 다음)에 6줄을 더하고 그 셀을 다시 실행합니다. 그다음 새 셀에 확인 1줄을 실행합니다.",
+   "code": "    def __add__(self, other):\n        out = Value(self.data + other.data, (self, other), '+')\n        return out\n    def __mul__(self, other):\n        out = Value(self.data * other.data, (self, other), '*')\n        return out\nprint(Value(2.0) * Value(-3.0) + Value(10.0))",
+   "code_line_notes_ko": [
+    "`+` 기호를 쓰면 실행되는 함수입니다",
+    "두 숫자를 더한 새 상자를 만들고, 재료(나와 상대)와 기호 '+'를 기록합니다",
+    "새 상자를 돌려줍니다",
+    "`*` 기호를 쓰면 실행되는 함수입니다",
+    "두 숫자를 곱한 새 상자를 만들고 재료와 기호 '*'를 기록합니다",
+    "새 상자를 돌려줍니다",
+    "곱하고 더한 결과를 보여 줍니다"
+   ],
+   "expected_ko": "`Value(data=4.0)`이 보입니다.",
+   "expected_check": {
+    "type": "output_match",
+    "value": "Value(data=4.0)"
+   },
+   "meaning_ko": "계산할 때마다 '누가 누구로 만들어졌는지'가 그물(계산 그래프)로 남습니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S05-H1",
+    "L01-S05-H2",
+    "L01-S05-H3",
+    "L01-S05-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S06",
+   "lecture_id": "L01",
+   "order": 6,
+   "title_ko": "계산 그래프 그림",
+   "video_segments": [
+    {
+     "start_s": 1149,
+     "end_s": 1930
+    }
+   ],
+   "video_chapter_ko": "0:19:09 Value 객체, draw_dot 시각화",
+   "long_step": true,
+   "new_code_lines": 6,
+   "moved_code_lines": 0,
+   "prepared_code": "from graphviz import Digraph\ndef trace(root):\n    nodes, edges = set(), set()\n    def build(v):\n        if v not in nodes:\n            nodes.add(v)\n            for child in v._prev:\n                edges.add((child, v))\n                build(child)\n    build(root)\n    return nodes, edges\ndef draw_dot(root):\n    dot = Digraph(format='svg', graph_attr={'rankdir': 'LR'})\n    nodes, edges = trace(root)\n    for n in nodes:\n        uid = str(id(n))\n        dot.node(name=uid, label=f\"data {n.data:.4f} | grad {n.grad:.4f}\", shape='record')\n        if n._op:\n            dot.node(name=uid + n._op, label=n._op)\n            dot.edge(uid + n._op, uid)\n    for n1, n2 in edges:\n        dot.edge(str(id(n1)), str(id(n2)) + n2._op)\n    return dot",
+   "prepared_code_line_notes_ko": [
+    "그림 도구 graphviz에서 그림판(Digraph)을 불러옵니다",
+    "결과 값에서 출발해 모든 상자와 연결선을 모으는 함수입니다",
+    "상자 모음과 연결선 모음을 빈 집합으로 시작합니다",
+    "값 하나를 받아 그 재료를 따라 내려가는 안쪽 함수입니다",
+    "아직 모으지 않은 값이면",
+    "상자 모음에 넣고",
+    "그 값을 만든 재료마다",
+    "재료에서 결과로 가는 선을 기록하고",
+    "재료의 재료도 같은 방법으로 모읍니다",
+    "결과 값에서 모으기를 시작합니다",
+    "모은 상자와 선을 돌려줍니다",
+    "모은 것을 그림으로 그리는 함수입니다",
+    "왼쪽에서 오른쪽으로 흐르는 그림판을 만듭니다",
+    "상자와 선을 모읍니다",
+    "상자마다",
+    "상자마다 겹치지 않는 이름표를 만듭니다",
+    "상자에 값(data)과 기울기(grad)를 소수 넷째 자리까지 적습니다",
+    "계산으로 만들어진 값이면",
+    "계산 기호(+, * 등) 동그라미를 하나 더 그리고",
+    "기호에서 결과 상자로 선을 긋습니다",
+    "기록한 선마다",
+    "재료 상자에서 결과의 계산 기호로 선을 긋습니다",
+    "그림을 돌려줍니다. 셀 마지막 줄이면 그림이 화면에 보입니다"
+   ],
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "준비 코드 셀에 그림 함수 draw_dot을 붙여 넣고 실행합니다(직접 치지 않음). 그다음 새 셀에 6줄을 입력하고 실행합니다.",
+   "code": "a = Value(2.0)\nb = Value(-3.0)\nc = Value(10.0)\ne = a*b\nd = e + c\ndraw_dot(d)",
+   "code_line_notes_ko": [
+    "값 a",
+    "값 b",
+    "값 c",
+    "a와 b를 곱한 중간 값 e",
+    "e와 c를 더한 결과 d",
+    "d에서 거슬러 올라가며 계산 그래프를 그립니다"
+   ],
+   "expected_ko": "a, b, c, e, d가 상자로, `*`와 `+`가 동그라미로 이어진 그림이 보입니다. 모든 상자의 grad는 아직 0.0000입니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "역전파는 이 그림을 오른쪽(결과)에서 왼쪽(재료)으로 거슬러 가는 일입니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S06-H1",
+    "L01-S06-H2",
+    "L01-S06-H3",
+    "L01-S06-H4"
+   ],
+   "prepared_code_source_ko": "karpathy/nn-zero-to-hero lectures/micrograd 노트북의 draw_dot를 줄여 다듬은 것(label 칸 대신 data와 grad만 표시)"
+  },
+  {
+   "step_id": "L01-S07",
+   "lecture_id": "L01",
+   "order": 7,
+   "title_ko": "손으로 기울기 채우기",
+   "video_segments": [
+    {
+     "start_s": 1930,
+     "end_s": 3070
+    }
+   ],
+   "video_chapter_ko": "0:32:10 손으로 역전파 예제 1",
+   "long_step": true,
+   "new_code_lines": 10,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 10줄을 입력하고 실행합니다. 결과 L에서 시작해 거꾸로 기울기를 직접 채웁니다.",
+   "code": "f = Value(-2.0)\nL = d * f\nL.grad = 1.0\nd.grad = f.data\nf.grad = d.data\nc.grad = d.grad\ne.grad = d.grad\na.grad = e.grad * b.data\nb.grad = e.grad * a.data\ndraw_dot(L)",
+   "code_line_notes_ko": [
+    "값 f를 하나 더 만듭니다(S01의 함수 f는 여기서 덮어써집니다)",
+    "최종 결과 L = d × f",
+    "L을 L로 미분하면 1입니다. 거꾸로 가는 출발점입니다",
+    "곱셈: d의 기울기는 상대인 f의 값입니다",
+    "곱셈: f의 기울기는 상대인 d의 값입니다",
+    "덧셈: 받은 기울기를 그대로 전합니다",
+    "덧셈: e에게도 그대로 전합니다",
+    "연쇄 법칙: 위에서 온 기울기 × 상대 값 b",
+    "연쇄 법칙: 위에서 온 기울기 × 상대 값 a",
+    "기울기가 채워진 그림을 봅니다"
+   ],
+   "expected_ko": "L의 data는 -8.0000입니다. grad: L 1.0, d -2.0, f 4.0, c -2.0, e -2.0, a 6.0, b -4.0.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "L.data": -8.0,
+     "a.grad": 6.0,
+     "b.grad": -4.0,
+     "c.grad": -2.0,
+     "f.grad": 4.0
+    }
+   },
+   "meaning_ko": "+ 는 기울기를 그대로 나눠 주고, * 는 상대 값을 곱해 전합니다. 결과에서 거꾸로 곱해 오는 것이 연쇄 법칙입니다.",
+   "objective_ids": [
+    "L01-O2"
+   ],
+   "hint_ids": [
+    "L01-S07-H1",
+    "L01-S07-H2",
+    "L01-S07-H3",
+    "L01-S07-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S08",
+   "lecture_id": "L01",
+   "order": 8,
+   "title_ko": "한 걸음 움직여 보기",
+   "video_segments": [
+    {
+     "start_s": 3070,
+     "end_s": 3172
+    }
+   ],
+   "video_chapter_ko": "0:51:10 최적화 한 단계 미리보기",
+   "long_step": true,
+   "new_code_lines": 6,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 6줄을 입력하고 실행합니다. 기울기 방향으로 값을 조금 움직이고 L을 다시 계산합니다.",
+   "code": "for v in [a, b, c, f]:\n    v.data += 0.01 * v.grad\ne = a*b\nd = e + c\nL = d * f\nprint(L.data)",
+   "code_line_notes_ko": [
+    "직접 만든 입력 값 네 개를 하나씩",
+    "기울기 방향으로 0.01배만큼 움직입니다",
+    "움직인 값으로 다시 곱하고",
+    "다시 더하고",
+    "다시 L을 계산합니다",
+    "새 L을 보여 줍니다"
+   ],
+   "expected_ko": "약 -7.29가 보입니다. 처음 -8.0보다 커졌습니다.",
+   "expected_check": {
+    "type": "value_range",
+    "min": -7.4,
+    "max": -7.2
+   },
+   "meaning_ko": "기울기는 '어느 쪽으로 움직이면 결과가 커지는지' 알려 줍니다. 학습은 이것을 반대로(손실을 줄이는 쪽으로) 쓰는 일입니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S08-H1",
+    "L01-S08-H2",
+    "L01-S08-H3",
+    "L01-S08-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S09",
+   "lecture_id": "L01",
+   "order": 9,
+   "title_ko": "뉴런 하나 계산하기",
+   "video_segments": [
+    {
+     "start_s": 3172,
+     "end_s": 4142
+    }
+   ],
+   "video_chapter_ko": "0:52:52 손으로 역전파 예제 2: 뉴런",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 7줄을 입력하고 실행합니다. 입력 2개, 가중치 2개, 편향 1개로 뉴런의 합을 계산합니다.",
+   "code": "x1 = Value(2.0)\nx2 = Value(0.0)\nw1 = Value(-3.0)\nw2 = Value(1.0)\nb = Value(6.8813735870195432)\nn = x1*w1 + x2*w2 + b\nprint(n)",
+   "code_line_notes_ko": [
+    "입력 1",
+    "입력 2",
+    "입력 1의 가중치(얼마나 중요하게 볼지)",
+    "입력 2의 가중치",
+    "편향. 계산을 보기 좋게 만들려고 영상에서 고른 값입니다",
+    "입력 × 가중치를 모두 더하고 편향을 더합니다",
+    "합을 보여 줍니다"
+   ],
+   "expected_ko": "`Value(data=0.8813735870195432)`이 보입니다.",
+   "expected_check": {
+    "type": "value_range",
+    "min": 0.8813,
+    "max": 0.8814
+   },
+   "meaning_ko": "뉴런은 '입력 × 가중치의 합 + 편향'입니다. 여기까지는 S05에서 만든 +와 *만 씁니다.",
+   "objective_ids": [
+    "L01-O2"
+   ],
+   "hint_ids": [
+    "L01-S09-H1",
+    "L01-S09-H2",
+    "L01-S09-H3",
+    "L01-S09-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S09b",
+   "lecture_id": "L01",
+   "order": 10,
+   "title_ko": "tanh 붙이기",
+   "video_segments": [
+    {
+     "start_s": 3172,
+     "end_s": 4142
+    }
+   ],
+   "video_chapter_ko": "0:52:52 손으로 역전파 예제 2: 뉴런",
+   "long_step": true,
+   "new_code_lines": 6,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "Value 클래스 셀 맨 아래",
+     "action": "insert",
+     "anchor_line": null,
+     "line_count": 4
+    }
+   ],
+   "rerun_first": [
+    "L01-S09"
+   ],
+   "input_ko": "Value 클래스 셀 맨 아래에 tanh 4줄을 더하고 다시 실행합니다. 클래스를 바꿨으니 S09 셀도 다시 실행한 뒤, 새 셀에 2줄을 실행합니다.",
+   "code": "    def tanh(self):\n        t = math.tanh(self.data)\n        out = Value(t, (self,), 'tanh')\n        return out\no = n.tanh()\ndraw_dot(o)",
+   "code_line_notes_ko": [
+    "tanh(값을 -1과 1 사이로 눌러 주는 함수, F-M5)를 Value에 붙입니다",
+    "내 숫자의 tanh를 계산해 t에 둡니다",
+    "t를 담은 새 상자, 재료는 나 하나, 기호는 'tanh'",
+    "새 상자를 돌려줍니다",
+    "뉴런 합 n에 tanh를 씌운 출력 o",
+    "o까지 이어진 그림을 봅니다"
+   ],
+   "expected_ko": "그림 맨 오른쪽 o 상자의 data가 0.7071입니다.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "o.data": 0.7071
+    }
+   },
+   "meaning_ko": "뉴런의 출력은 합에 tanh를 씌운 값입니다. 이 활성화 함수 덕분에 신경망이 곡선 모양도 배울 수 있습니다.",
+   "objective_ids": [
+    "L01-O2"
+   ],
+   "hint_ids": [
+    "L01-S09b-H1",
+    "L01-S09b-H2",
+    "L01-S09b-H3",
+    "L01-S09b-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S10",
+   "lecture_id": "L01",
+   "order": 11,
+   "title_ko": "_backward를 + 와 * 안에 넣기",
+   "video_segments": [
+    {
+     "start_s": 4142,
+     "end_s": 4652
+    }
+   ],
+   "video_chapter_ko": "1:09:02 연산별 _backward",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "`__init__` 안, `self.grad = 0.0` 바로 아래",
+     "action": "insert",
+     "anchor_line": "self.grad = 0.0",
+     "line_count": 1
+    },
+    {
+     "target_step": "L01-S04",
+     "where_ko": "`__add__` 안, `out = ...` 줄과 `return out` 사이",
+     "action": "insert",
+     "anchor_line": "out = Value(self.data + other.data, (self, other), '+')",
+     "line_count": 4
+    },
+    {
+     "target_step": "L01-S04",
+     "where_ko": "`__mul__` 안, `out = ...` 줄과 `return out` 사이",
+     "action": "insert",
+     "anchor_line": "out = Value(self.data * other.data, (self, other), '*')",
+     "line_count": 4
+    }
+   ],
+   "rerun_first": [],
+   "input_ko": "Value 클래스 셀 세 곳에 줄을 더하고 다시 실행합니다. 이 단계는 실행 결과가 따로 없고, 확인은 S10b에서 합니다.",
+   "code": "        self._backward = lambda: None\n        def _backward():\n            self.grad += out.grad\n            other.grad += out.grad\n        out._backward = _backward\n        def _backward():\n            self.grad += other.data * out.grad\n            other.grad += self.data * out.grad\n        out._backward = _backward",
+   "code_line_notes_ko": [
+    "기울기를 재료에 나눠 주는 함수 칸. 처음엔 아무것도 안 하는 함수입니다",
+    "덧셈 결과의 기울기를 재료에게 나눠 주는 함수입니다",
+    "덧셈은 받은 기울기를 그대로 전합니다. 더하기(+=)로 쌓습니다",
+    "상대에게도 그대로 전합니다",
+    "이 함수를 결과 상자에 저장해 둡니다(나중에 부름)",
+    "곱셈 결과의 기울기를 재료에게 나눠 주는 함수입니다",
+    "곱셈: 상대 값 × 받은 기울기(S07에서 손으로 한 것)",
+    "상대는 내 값 × 받은 기울기",
+    "결과 상자에 저장해 둡니다"
+   ],
+   "expected_ko": "클래스 셀이 에러 없이 실행됩니다. 화면에 따로 보이는 것은 없습니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "S07에서 손으로 한 규칙을 각 계산 안에 넣어, 결과 상자가 '내 기울기를 재료에게 어떻게 나눌지'를 스스로 알게 했습니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S10-H1",
+    "L01-S10-H2",
+    "L01-S10-H3",
+    "L01-S10-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S10b",
+   "lecture_id": "L01",
+   "order": 12,
+   "title_ko": "tanh의 _backward",
+   "video_segments": [
+    {
+     "start_s": 4142,
+     "end_s": 4652
+    }
+   ],
+   "video_chapter_ko": "1:09:02 연산별 _backward",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "`tanh` 안, `out = ...` 줄과 `return out` 사이",
+     "action": "insert",
+     "anchor_line": "out = Value(t, (self,), 'tanh')",
+     "line_count": 3
+    }
+   ],
+   "rerun_first": [
+    "L01-S09",
+    "L01-S09b"
+   ],
+   "input_ko": "tanh 안에 3줄을 더하고 클래스 셀을 다시 실행합니다. S09, S09b 셀을 다시 실행한 뒤 새 셀에 4줄을 실행합니다.",
+   "code": "        def _backward():\n            self.grad += (1 - t**2) * out.grad\n        out._backward = _backward\no.grad = 1.0\no._backward()\nn._backward()\ndraw_dot(o)",
+   "code_line_notes_ko": [
+    "tanh 결과의 기울기를 재료에게 전하는 함수입니다",
+    "tanh의 미분은 1 - t²입니다. 받은 기울기에 곱해 전합니다",
+    "결과 상자에 저장해 둡니다",
+    "출발점 o의 기울기를 1로 둡니다",
+    "o가 재료 n에게 기울기를 전합니다",
+    "n이 자기 재료(합과 b)에게 전합니다",
+    "그림으로 확인합니다"
+   ],
+   "expected_ko": "n의 grad가 0.5000, b의 grad가 0.5000입니다. 그보다 왼쪽 상자들은 아직 0입니다.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "n.grad": 0.5,
+     "b.grad": 0.5
+    }
+   },
+   "meaning_ko": "각 상자가 자기 _backward를 부르면 기울기가 한 칸씩 왼쪽으로 갑니다. 이것을 모든 상자에 순서대로 하면 역전파입니다.",
+   "objective_ids": [
+    "L01-O2",
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S10b-H1",
+    "L01-S10b-H2",
+    "L01-S10b-H3",
+    "L01-S10b-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S11",
+   "lecture_id": "L01",
+   "order": 13,
+   "title_ko": "위상 정렬",
+   "video_segments": [
+    {
+     "start_s": 4652,
+     "end_s": 4948
+    }
+   ],
+   "video_chapter_ko": "1:17:32 그래프 전체 backward()",
+   "long_step": true,
+   "new_code_lines": 10,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 10줄을 입력하고 실행합니다. 상자들을 '재료가 먼저, 결과가 나중' 순서로 줄 세웁니다.",
+   "code": "topo = []\nvisited = set()\ndef build_topo(v):\n    if v not in visited:\n        visited.add(v)\n        for child in v._prev:\n            build_topo(child)\n        topo.append(v)\nbuild_topo(o)\ntopo",
+   "code_line_notes_ko": [
+    "줄 세운 결과를 담을 빈 목록",
+    "이미 들른 상자를 기억하는 집합",
+    "상자 하나를 받아 줄 세우는 함수",
+    "아직 안 들른 상자면",
+    "들렀다고 표시하고",
+    "그 상자의 재료마다",
+    "재료를 먼저 줄 세웁니다",
+    "재료가 다 줄 선 뒤에 나를 뒤에 붙입니다",
+    "출력 o에서 시작합니다",
+    "줄 세운 목록을 보여 줍니다"
+   ],
+   "expected_ko": "Value 10개가 담긴 목록이 보입니다. 맨 뒤가 o(`Value(data=0.7071...)`)입니다.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "len(topo)": 10
+    }
+   },
+   "meaning_ko": "재료가 늘 결과보다 앞에 섭니다. 이 목록을 거꾸로 돌면, 결과 쪽 기울기가 다 모인 뒤에 재료로 넘어갑니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S11-H1",
+    "L01-S11-H2",
+    "L01-S11-H3",
+    "L01-S11-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S11b",
+   "lecture_id": "L01",
+   "order": 14,
+   "title_ko": "backward() 메서드",
+   "video_segments": [
+    {
+     "start_s": 4652,
+     "end_s": 4948
+    }
+   ],
+   "video_chapter_ko": "1:17:32 그래프 전체 backward()",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 8,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "Value 클래스 셀 맨 아래",
+     "action": "insert",
+     "anchor_line": null,
+     "line_count": 13
+    }
+   ],
+   "rerun_first": [
+    "L01-S09",
+    "L01-S09b"
+   ],
+   "input_ko": "Value 클래스 셀 맨 아래에 backward를 더합니다. 13줄 가운데 8줄은 S11에서 쓴 줄을 그대로 옮겨 붙이는 것이고, 새로 생각할 줄은 5줄입니다. 클래스 셀, S09, S09b를 다시 실행한 뒤 새 셀에 2줄을 실행합니다.",
+   "code": "    def backward(self):\n        topo = []\n        visited = set()\n        def build_topo(v):\n            if v not in visited:\n                visited.add(v)\n                for child in v._prev:\n                    build_topo(child)\n                topo.append(v)\n        build_topo(self)\n        self.grad = 1.0\n        for node in reversed(topo):\n            node._backward()\no.backward()\ndraw_dot(o)",
+   "code_line_notes_ko": [
+    "(새 줄) 이 상자에서 시작해 전체 기울기를 채우는 함수입니다",
+    "(옮긴 줄) 빈 목록",
+    "(옮긴 줄) 들른 상자 기억",
+    "(옮긴 줄) 줄 세우기 함수",
+    "(옮긴 줄) 안 들른 상자면",
+    "(옮긴 줄) 표시하고",
+    "(옮긴 줄) 재료마다",
+    "(옮긴 줄) 재료 먼저",
+    "(옮긴 줄) 그다음 나",
+    "(새 줄) o 대신 나(self)에서 시작합니다",
+    "(새 줄) 출발점 기울기는 1입니다",
+    "(새 줄) 줄 세운 목록을 거꾸로(결과부터) 돌며",
+    "(새 줄) 상자마다 재료에게 기울기를 전합니다",
+    "o에서 역전파를 한 번에 실행합니다",
+    "모든 grad가 채워진 그림을 봅니다"
+   ],
+   "expected_ko": "grad: o 1.0, n 0.5, b 0.5, x1 -1.5, w1 1.0, x2 0.5, w2 0.0.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "x1.grad": -1.5,
+     "w1.grad": 1.0,
+     "x2.grad": 0.5,
+     "w2.grad": 0.0
+    }
+   },
+   "meaning_ko": "손으로 하던 역전파가 `o.backward()` 한 줄이 되었습니다. PyTorch의 `loss.backward()`도 같은 일을 합니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S11b-H1",
+    "L01-S11b-H2",
+    "L01-S11b-H3",
+    "L01-S11b-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S12",
+   "lecture_id": "L01",
+   "order": 15,
+   "title_ko": "같은 값을 두 번 쓰는 버그",
+   "video_segments": [
+    {
+     "start_s": 4948,
+     "end_s": 5225
+    }
+   ],
+   "video_chapter_ko": "1:22:28 여러 번 쓰는 노드 버그",
+   "long_step": false,
+   "new_code_lines": 4,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 4줄을 입력하고 실행합니다.",
+   "code": "a = Value(3.0)\nb = a + a\nb.backward()\nprint(a.grad)",
+   "code_line_notes_ko": [
+    "3.0을 담은 a",
+    "a를 두 번 더합니다. b = 2a",
+    "역전파",
+    "a의 기울기를 봅니다"
+   ],
+   "expected_ko": "`2.0`이 보입니다.",
+   "expected_check": {
+    "type": "output_match",
+    "value": "2.0"
+   },
+   "meaning_ko": "a에서 b로 가는 길이 두 개라 기울기 1이 두 번 와서 2가 됩니다. S10에서 `=`가 아니라 `+=`로 쌓았기 때문입니다. (해 보기: `__add__`의 `+=`를 `=`로 바꾸면 1.0이 나오는 것을 확인하고 다시 되돌립니다.)",
+   "objective_ids": [
+    "L01-O4"
+   ],
+   "hint_ids": [
+    "L01-S12-H1",
+    "L01-S12-H2",
+    "L01-S12-H3",
+    "L01-S12-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S13",
+   "lecture_id": "L01",
+   "order": 16,
+   "title_ko": "숫자와 섞어 계산하기",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "video_chapter_ko": "1:27:05 tanh 쪼개기(더 많은 연산)",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "`__add__`의 첫 줄(`def __add__...`) 바로 아래",
+     "action": "insert",
+     "anchor_line": "def __add__(self, other):",
+     "line_count": 1
+    },
+    {
+     "target_step": "L01-S04",
+     "where_ko": "`__mul__`의 첫 줄 바로 아래",
+     "action": "insert",
+     "anchor_line": "def __mul__(self, other):",
+     "line_count": 1
+    },
+    {
+     "target_step": "L01-S04",
+     "where_ko": "Value 클래스 셀 맨 아래",
+     "action": "insert",
+     "anchor_line": null,
+     "line_count": 4
+    }
+   ],
+   "rerun_first": [],
+   "input_ko": "Value 클래스 셀 네 곳에 줄을 더하고 다시 실행한 뒤, 새 셀에 확인 1줄을 실행합니다.",
+   "code": "        other = other if isinstance(other, Value) else Value(other)\n        other = other if isinstance(other, Value) else Value(other)\n    def __radd__(self, other):\n        return self + other\n    def __rmul__(self, other):\n        return self * other\nprint(Value(2.0) + 1, 1 + Value(2.0), 2 * Value(3.0))",
+   "code_line_notes_ko": [
+    "상대가 그냥 숫자면 Value 상자로 감쌉니다",
+    "곱셈에서도 숫자를 Value로 감쌉니다",
+    "`숫자 + Value`처럼 숫자가 앞에 올 때 실행됩니다",
+    "순서를 바꿔 Value + 숫자로 계산합니다",
+    "`숫자 * Value`일 때 실행됩니다",
+    "Value * 숫자로 계산합니다",
+    "세 가지 섞어 쓰기를 한 번에 확인합니다"
+   ],
+   "expected_ko": "`Value(data=3.0) Value(data=3.0) Value(data=6.0)`이 보입니다.",
+   "expected_check": {
+    "type": "output_match",
+    "value": "Value(data=3.0) Value(data=3.0) Value(data=6.0)"
+   },
+   "meaning_ko": "이제 `a + 1`, `1 + a`, `2 * a`처럼 평범한 숫자를 섞어 쓸 수 있습니다. S15의 `sum(...)`이 0부터 더하기 때문에 `__radd__`가 꼭 필요합니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S13-H1",
+    "L01-S13-H2",
+    "L01-S13-H3",
+    "L01-S13-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S13b",
+   "lecture_id": "L01",
+   "order": 17,
+   "title_ko": "exp와 빼기",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "video_chapter_ko": "1:27:05 tanh 쪼개기(더 많은 연산)",
+   "long_step": true,
+   "new_code_lines": 10,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "Value 클래스 셀 맨 아래",
+     "action": "insert",
+     "anchor_line": null,
+     "line_count": 10
+    }
+   ],
+   "rerun_first": [],
+   "input_ko": "Value 클래스 셀 맨 아래에 10줄을 더하고 다시 실행합니다. 확인은 S13c 마지막 줄에서 함께 합니다.",
+   "code": "    def exp(self):\n        out = Value(math.exp(self.data), (self,), 'exp')\n        def _backward():\n            self.grad += out.data * out.grad\n        out._backward = _backward\n        return out\n    def __neg__(self):\n        return self * -1\n    def __sub__(self, other):\n        return self + (-other)",
+   "code_line_notes_ko": [
+    "e의 거듭제곱(exp, 지수 함수)을 Value에 붙입니다",
+    "exp를 계산한 새 상자, 재료는 나, 기호는 'exp'",
+    "기울기를 재료에게 전하는 함수",
+    "exp의 미분은 exp 자신입니다. 그래서 out.data를 곱합니다",
+    "결과 상자에 저장",
+    "새 상자를 돌려줍니다",
+    "`-a`(부호 바꾸기)일 때 실행됩니다",
+    "-1을 곱합니다. 곱셈의 _backward를 그대로 씁니다",
+    "`a - b`일 때 실행됩니다",
+    "a + (-b)로 바꿔 계산합니다"
+   ],
+   "expected_ko": "클래스 셀이 에러 없이 실행됩니다. 화면에 따로 보이는 것은 없습니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "빼기는 새 규칙 없이 '더하기 + 부호 바꾸기'로 만들었습니다. 이미 만든 연산을 조합하면 기울기도 저절로 맞습니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S13b-H1",
+    "L01-S13b-H2",
+    "L01-S13b-H3",
+    "L01-S13b-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S13c",
+   "lecture_id": "L01",
+   "order": 18,
+   "title_ko": "거듭제곱과 나누기",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "video_chapter_ko": "1:27:05 tanh 쪼개기(더 많은 연산)",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S04",
+     "where_ko": "Value 클래스 셀 맨 아래",
+     "action": "insert",
+     "anchor_line": null,
+     "line_count": 8
+    }
+   ],
+   "rerun_first": [],
+   "input_ko": "Value 클래스 셀 맨 아래에 8줄을 더하고 다시 실행한 뒤, 새 셀에 확인 1줄을 실행합니다.",
+   "code": "    def __pow__(self, other):\n        out = Value(self.data**other, (self,), f'**{other}')\n        def _backward():\n            self.grad += other * self.data**(other - 1) * out.grad\n        out._backward = _backward\n        return out\n    def __truediv__(self, other):\n        return self * other**-1\nprint(Value(3.0) - 1, Value(2.0)**2, Value(6.0) / 2, Value(0.0).exp())",
+   "code_line_notes_ko": [
+    "`a**2`처럼 거듭제곱일 때 실행됩니다. other는 보통 숫자입니다",
+    "거듭제곱한 새 상자. 기호는 '**2' 같은 글자",
+    "기울기를 전하는 함수",
+    "x^k의 미분은 k·x^(k-1)입니다",
+    "결과 상자에 저장",
+    "새 상자를 돌려줍니다",
+    "`a / b`일 때 실행됩니다",
+    "a × b의 -1제곱으로 바꿔 계산합니다",
+    "빼기, 거듭제곱, 나누기, exp를 한 번에 확인합니다"
+   ],
+   "expected_ko": "`Value(data=2.0) Value(data=4.0) Value(data=3.0) Value(data=1.0)`이 보입니다.",
+   "expected_check": {
+    "type": "output_match",
+    "value": "Value(data=2.0) Value(data=4.0) Value(data=3.0) Value(data=1.0)"
+   },
+   "meaning_ko": "나누기도 '곱하기 + 거듭제곱'으로 만들었습니다. S15의 손실 `(yout - ygt)**2`가 이 단계의 빼기와 거듭제곱을 씁니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S13c-H1",
+    "L01-S13c-H2",
+    "L01-S13c-H3",
+    "L01-S13c-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S13d",
+   "lecture_id": "L01",
+   "order": 19,
+   "title_ko": "tanh를 쪼개서 다시 계산하기",
+   "video_segments": [
+    {
+     "start_s": 5225,
+     "end_s": 5971
+    }
+   ],
+   "video_chapter_ko": "1:27:05 tanh 쪼개기(더 많은 연산)",
+   "long_step": false,
+   "new_code_lines": 4,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [
+    "L01-S09"
+   ],
+   "input_ko": "S09 셀을 다시 실행한 뒤 새 셀에 4줄을 실행합니다. tanh를 exp, 빼기, 나누기로 풀어 써서 같은 답이 나오는지 봅니다.",
+   "code": "e = (2*n).exp()\no = (e - 1) / (e + 1)\no.backward()\ndraw_dot(o)",
+   "code_line_notes_ko": [
+    "e^(2n)을 계산합니다(`2*n`에는 __rmul__이 쓰입니다)",
+    "tanh 공식 (e^(2n) - 1) / (e^(2n) + 1)",
+    "역전파",
+    "더 길어진 그림을 봅니다"
+   ],
+   "expected_ko": "o의 data는 0.7071, x1 grad -1.5, w1 grad 1.0, x2 grad 0.5, w2 grad 0.0으로 S11b와 같습니다. 그림은 상자가 더 많습니다.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "o.data": 0.7071,
+     "x1.grad": -1.5,
+     "w1.grad": 1.0
+    }
+   },
+   "meaning_ko": "같은 계산을 큰 덩어리(tanh) 하나로 하든 작은 연산 여러 개로 쪼개든 기울기는 같습니다. 덩어리를 얼마나 크게 둘지는 만드는 사람이 정합니다.",
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-S13d-H1",
+    "L01-S13d-H2",
+    "L01-S13d-H3",
+    "L01-S13d-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S13e",
+   "lecture_id": "L01",
+   "order": 20,
+   "title_ko": "PyTorch로 비교",
+   "video_segments": [
+    {
+     "start_s": 5971,
+     "end_s": 6235
+    }
+   ],
+   "video_chapter_ko": "1:39:31 PyTorch 비교",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 9줄을 입력하고 실행합니다. 같은 뉴런을 PyTorch로 계산해 기울기를 비교합니다.",
+   "code": "import torch\nx1 = torch.tensor([2.0], dtype=torch.double, requires_grad=True)\nx2 = torch.tensor([0.0], dtype=torch.double, requires_grad=True)\nw1 = torch.tensor([-3.0], dtype=torch.double, requires_grad=True)\nw2 = torch.tensor([1.0], dtype=torch.double, requires_grad=True)\nb = torch.tensor([6.8813735870195432], dtype=torch.double, requires_grad=True)\no = torch.tanh(x1*w1 + x2*w2 + b)\no.backward()\nprint(o.item(), x1.grad.item(), w1.grad.item(), x2.grad.item(), w2.grad.item())",
+   "code_line_notes_ko": [
+    "PyTorch를 불러옵니다",
+    "입력 1. double은 정밀한 소수, requires_grad는 '기울기를 구해 달라'는 표시",
+    "입력 2",
+    "가중치 1",
+    "가중치 2",
+    "편향(S09와 같은 숫자)",
+    "같은 뉴런 계산",
+    "PyTorch의 역전파",
+    "출력과 기울기 네 개를 숫자로 보여 줍니다"
+   ],
+   "expected_ko": "`0.7071067811865476 -1.4999999999999998 0.9999999999999999 0.49999999999999994 0.0`처럼, S11b와 같은 숫자(0.7071, -1.5, 1.0, 0.5, 0.0)에 아주 가까운 값이 보입니다.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "o": 0.7071,
+     "x1.grad": -1.5,
+     "w1.grad": 1.0,
+     "x2.grad": 0.5,
+     "w2.grad": 0.0
+    }
+   },
+   "meaning_ko": "우리가 만든 micrograd와 PyTorch는 같은 역전파를 합니다. PyTorch는 숫자 하나 대신 텐서(숫자 묶음)로 빠르게 할 뿐입니다.",
+   "objective_ids": [
+    "L01-O6"
+   ],
+   "hint_ids": [
+    "L01-S13e-H1",
+    "L01-S13e-H2",
+    "L01-S13e-H3",
+    "L01-S13e-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S14",
+   "lecture_id": "L01",
+   "order": 21,
+   "title_ko": "Neuron 클래스",
+   "video_segments": [
+    {
+     "start_s": 6235,
+     "end_s": 6664
+    }
+   ],
+   "video_chapter_ko": "1:43:55 MLP 라이브러리",
+   "long_step": true,
+   "new_code_lines": 10,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 Neuron 클래스 9줄과 확인 1줄을 입력하고 실행합니다.",
+   "code": "class Neuron:\n    def __init__(self, nin):\n        self.w = [Value(random.uniform(-1, 1)) for _ in range(nin)]\n        self.b = Value(random.uniform(-1, 1))\n    def __call__(self, x):\n        act = sum((wi*xi for wi, xi in zip(self.w, x)), self.b)\n        return act.tanh()\n    def parameters(self):\n        return self.w + [self.b]\nNeuron(2)([2.0, 3.0])",
+   "code_line_notes_ko": [
+    "뉴런 하나를 만드는 설계도",
+    "입력 개수 nin을 받아 뉴런을 만듭니다",
+    "입력마다 -1과 1 사이 무작위 가중치를 하나씩",
+    "무작위 편향 하나",
+    "뉴런(x)처럼 함수처럼 부르면 실행됩니다",
+    "가중치 × 입력을 모두 더하고 편향에서 시작합니다",
+    "합에 tanh를 씌워 돌려줍니다",
+    "학습으로 고칠 숫자(파라미터) 목록을 돌려주는 함수",
+    "가중치들과 편향을 한 목록으로",
+    "입력 2개짜리 뉴런을 만들어 [2.0, 3.0]을 넣어 봅니다"
+   ],
+   "expected_ko": "`Value(data=...)`가 보이고, 숫자는 -1과 1 사이입니다(무작위라 실행마다 다름).",
+   "expected_check": {
+    "type": "value_range",
+    "min": -1.0,
+    "max": 1.0
+   },
+   "meaning_ko": "S09에서 손으로 만든 뉴런을 설계도로 만들었습니다. 가중치는 무작위로 시작해 학습으로 고쳐집니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S14-H1",
+    "L01-S14-H2",
+    "L01-S14-H3",
+    "L01-S14-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S14b",
+   "lecture_id": "L01",
+   "order": 22,
+   "title_ko": "Layer 클래스",
+   "video_segments": [
+    {
+     "start_s": 6235,
+     "end_s": 6664
+    }
+   ],
+   "video_chapter_ko": "1:43:55 MLP 라이브러리",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 Layer 클래스 8줄과 확인 1줄을 입력하고 실행합니다.",
+   "code": "class Layer:\n    def __init__(self, nin, nout):\n        self.neurons = [Neuron(nin) for _ in range(nout)]\n    def __call__(self, x):\n        outs = [n(x) for n in self.neurons]\n        return outs[0] if len(outs) == 1 else outs\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\nLayer(2, 3)([2.0, 3.0])",
+   "code_line_notes_ko": [
+    "뉴런 여러 개를 한 줄로 세운 층",
+    "입력 개수 nin, 뉴런 개수 nout",
+    "뉴런을 nout개 만듭니다",
+    "층에 입력을 넣으면",
+    "뉴런마다 같은 입력을 넣어 출력을 모읍니다",
+    "출력이 하나면 목록 대신 그 값 하나만 돌려줍니다",
+    "층의 파라미터 목록",
+    "모든 뉴런의 파라미터를 한 목록으로 모읍니다",
+    "입력 2개, 뉴런 3개짜리 층에 넣어 봅니다"
+   ],
+   "expected_ko": "Value 3개가 담긴 목록이 보입니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "층은 같은 입력을 여러 뉴런이 동시에 보는 것입니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S14b-H1",
+    "L01-S14b-H2",
+    "L01-S14b-H3",
+    "L01-S14b-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S14c",
+   "lecture_id": "L01",
+   "order": 23,
+   "title_ko": "MLP 클래스와 parameters()",
+   "video_segments": [
+    {
+     "start_s": 6235,
+     "end_s": 6664
+    }
+   ],
+   "video_chapter_ko": "1:43:55 MLP 라이브러리",
+   "long_step": true,
+   "new_code_lines": 10,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 MLP 클래스 10줄을 입력하고 실행합니다(이 클래스는 한 덩어리라 나누지 않습니다).",
+   "code": "class MLP:\n    def __init__(self, nin, nouts):\n        sz = [nin] + nouts\n        self.layers = [Layer(sz[i], sz[i+1]) for i in range(len(nouts))]\n    def __call__(self, x):\n        for layer in self.layers:\n            x = layer(x)\n        return x\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]",
+   "code_line_notes_ko": [
+    "층 여러 개를 이은 신경망(다층 퍼셉트론)",
+    "입력 개수와, 층마다의 뉴런 개수 목록",
+    "예: 3과 [4, 4, 1]이면 [3, 4, 4, 1]",
+    "이웃한 크기끼리 층을 만듭니다: 3→4, 4→4, 4→1",
+    "입력을 넣으면",
+    "층마다 차례로",
+    "앞 층의 출력을 다음 층의 입력으로",
+    "마지막 층의 출력을 돌려줍니다",
+    "신경망 전체 파라미터",
+    "모든 층의 파라미터를 한 목록으로"
+   ],
+   "expected_ko": "셀이 에러 없이 실행됩니다. 화면에 따로 보이는 것은 없습니다. 파라미터 개수(41개)는 S15 첫 출력에서 확인합니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "신경망은 층을 이은 것이고, 학습이란 이 41개 숫자를 조금씩 고치는 일입니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S14c-H1",
+    "L01-S14c-H2",
+    "L01-S14c-H3",
+    "L01-S14c-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S15",
+   "lecture_id": "L01",
+   "order": 24,
+   "title_ko": "데이터와 손실",
+   "video_segments": [
+    {
+     "start_s": 6664,
+     "end_s": 7076
+    },
+    {
+     "start_s": 7076,
+     "end_s": 7272
+    }
+   ],
+   "video_chapter_ko": "1:51:04 데이터와 손실, 1:57:56 파라미터 모으기",
+   "long_step": true,
+   "new_code_lines": 7,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 7줄을 입력하고 실행합니다. 신경망의 파라미터 개수를 세고, 작은 데이터 4개와, 얼마나 틀렸는지 재는 손실을 만듭니다.",
+   "code": "n = MLP(3, [4, 4, 1])\nprint(len(n.parameters()))\nxs = [[2.0, 3.0, -1.0], [3.0, -1.0, 0.5], [0.5, 1.0, 1.0], [1.0, 1.0, -1.0]]\nys = [1.0, -1.0, -1.0, 1.0]\nypred = [n(x) for x in xs]\nloss = sum((yout - ygt)**2 for ygt, yout in zip(ys, ypred))\nprint(loss)",
+   "code_line_notes_ko": [
+    "입력 3개, 은닉층 4·4, 출력 1개인 신경망",
+    "파라미터 개수를 셉니다(3→4: 16, 4→4: 20, 4→1: 5, 합 41)",
+    "입력 예시 4개(각각 숫자 3개)",
+    "각 예시의 정답",
+    "신경망의 예측 4개",
+    "예측과 정답 차이의 제곱을 모두 더한 손실",
+    "손실을 보여 줍니다"
+   ],
+   "expected_ko": "첫 줄에 `41`, 둘째 줄에 `Value(data=...)`가 보입니다. 손실 숫자는 실행마다 다르고 보통 1에서 8 사이입니다.",
+   "expected_check": {
+    "type": "manual",
+    "values": {
+     "len(n.parameters())": 41
+    }
+   },
+   "meaning_ko": "손실은 '얼마나 틀렸나'를 숫자 하나로 모은 것입니다. 0이면 다 맞힌 것입니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S15-H1",
+    "L01-S15-H2",
+    "L01-S15-H3",
+    "L01-S15-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S15b",
+   "lecture_id": "L01",
+   "order": 25,
+   "title_ko": "학습 반복",
+   "video_segments": [
+    {
+     "start_s": 7272,
+     "end_s": 8043
+    }
+   ],
+   "video_chapter_ko": "2:01:12 경사 하강 학습",
+   "long_step": true,
+   "new_code_lines": 9,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [],
+   "rerun_first": [],
+   "input_ko": "새 셀에 9줄을 입력하고 실행합니다. 순전파, 기울기 비우기, 역전파, 갱신을 20번 반복합니다.",
+   "code": "for k in range(20):\n    ypred = [n(x) for x in xs]\n    loss = sum((yout - ygt)**2 for ygt, yout in zip(ys, ypred))\n    for p in n.parameters():\n        p.grad = 0.0\n    loss.backward()\n    for p in n.parameters():\n        p.data += -0.05 * p.grad\n    print(k, loss.data)",
+   "code_line_notes_ko": [
+    "20번 반복합니다",
+    "순전파: 예측 4개",
+    "손실 계산",
+    "파라미터마다",
+    "지난번 기울기를 비웁니다(+=로 쌓이니까)",
+    "역전파: 손실에 대한 모든 기울기",
+    "파라미터마다",
+    "기울기 반대 방향으로 0.05배 움직입니다(학습률 0.05)",
+    "반복 번호와 손실을 보여 줍니다"
+   ],
+   "expected_ko": "20줄이 보이고 손실이 대체로 줄어듭니다. 마지막 손실은 대개 0.1 아래입니다(시작값이 무작위라 실행마다 다름). 0.1 위면 셀을 한 번 더 실행해 20번 더 학습합니다.",
+   "expected_check": {
+    "type": "value_range",
+    "min": 0.0,
+    "max": 0.1,
+    "target": "마지막 줄 손실"
+   },
+   "meaning_ko": "이것이 신경망 학습의 전부입니다: 예측하고, 틀린 정도를 재고, 기울기를 구해, 반대로 조금 움직이기. 큰 AI도 같은 반복을 아주 크게 할 뿐입니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S15b-H1",
+    "L01-S15b-H2",
+    "L01-S15b-H3",
+    "L01-S15b-H4"
+   ]
+  },
+  {
+   "step_id": "L01-S16",
+   "lecture_id": "L01",
+   "order": 26,
+   "title_ko": "grad 비우기를 빼먹는 버그",
+   "video_segments": [
+    {
+     "start_s": 7272,
+     "end_s": 8043
+    }
+   ],
+   "video_chapter_ko": "2:01:12 경사 하강 학습",
+   "long_step": false,
+   "new_code_lines": 0,
+   "moved_code_lines": 0,
+   "prepared_code": null,
+   "prepared_code_line_notes_ko": null,
+   "kind": "code",
+   "edits": [
+    {
+     "target_step": "L01-S15b",
+     "where_ko": "L01-S15b 셀의 grad 비우기 2줄",
+     "action": "replace",
+     "anchor_line": null,
+     "line_count": 2
+    }
+   ],
+   "rerun_first": [
+    "L01-S15"
+   ],
+   "input_ko": "S15b 셀에서 grad 비우기 2줄 앞에 `#`을 붙여 막고, S15 셀과 S15b 셀을 다시 실행해 손실을 비교합니다. 비교한 뒤 `#`을 지워 되돌립니다. 새로 치는 코드는 없습니다.",
+   "code": "    # for p in n.parameters():\n    #     p.grad = 0.0",
+   "code_line_notes_ko": [
+    "앞에 #을 붙여 이 줄을 실행하지 않게 막습니다",
+    "기울기 비우기도 막습니다"
+   ],
+   "expected_ko": "손실이 고르게 줄지 않고 중간에 튀어 오르는 모습이 자주 보입니다(실행마다 다름). 이 작은 문제에서는 튄 뒤 오히려 더 빨리 0에 가까워지는 것처럼 보일 수도 있습니다. 쌓인 기울기가 우연히 큰 걸음이 된 것일 뿐이고, 큰 문제에서는 학습을 망칩니다. 되돌리고 다시 실행하면 S15b처럼 고르게 줄어듭니다.",
+   "expected_check": {
+    "type": "manual"
+   },
+   "meaning_ko": "기울기는 `+=`로 쌓이므로, 반복마다 비우지 않으면 지난 반복의 기울기가 섞여 걸음이 엉뚱하게 커집니다. Karpathy도 영상에서 이 실수를 했고, 문제가 쉬워서 우연히 잘 된 것처럼 보였다고 직접 말합니다.",
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-S16-H1",
+    "L01-S16-H2",
+    "L01-S16-H3",
+    "L01-S16-H4"
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "question_id": "L01-Q01",
+   "lecture_id": "L01",
+   "type": "predict",
+   "after_step": "L01-S02",
+   "prompt_ko": "f(x) = 3x² - 4x + 5 에서 x = 2/3 일 때, 숫자 기울기 (f(x + h) - f(x)) / h (h = 0.0001)는 대략 얼마일까요? 숫자로 답합니다.",
+   "code": null,
+   "answer_ko": "약 0 (실제로는 0.0003 정도). x = 2/3 은 포물선의 가장 낮은 곳이라 기울기가 0입니다.",
+   "auto_grade": {
+    "type": "numeric_range",
+    "min": -0.01,
+    "max": 0.01
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "0에 가까운 값(-0.01 ~ 0.01)"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O1"
+   ],
+   "hint_ids": []
+  },
+  {
+   "question_id": "L01-Q02",
+   "lecture_id": "L01",
+   "type": "explain",
+   "after_step": "L01-S02",
+   "prompt_ko": "S02에서 기울기가 14로 나왔습니다. '기울기가 14'라는 말을 자기 말로 한두 문장으로 설명해 보세요.",
+   "code": null,
+   "answer_ko": "x를 아주 조금 올리면, f는 그 올린 양의 약 14배만큼 오른다는 뜻입니다.",
+   "auto_grade": {
+    "type": "keywords",
+    "keywords": [
+     [
+      "조금",
+      "약간",
+      "살짝"
+     ],
+     [
+      "배"
+     ]
+    ],
+    "fallback": "manual"
+   },
+   "rubric": [
+    {
+     "point": 0.5,
+     "criterion_ko": "'아주 조금 바꾸면'에 해당하는 말"
+    },
+    {
+     "point": 0.5,
+     "criterion_ko": "'몇 배로 변한다'에 해당하는 말"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O1"
+   ],
+   "hint_ids": [
+    "L01-Q02-H1",
+    "L01-Q02-H2",
+    "L01-Q02-H3",
+    "L01-Q02-H4"
+   ]
+  },
+  {
+   "question_id": "L01-Q03",
+   "lecture_id": "L01",
+   "type": "predict",
+   "after_step": "L01-S07",
+   "prompt_ko": "d = a*b + c 이고 a = 2, b = -3, c = 10 입니다. d를 b에 대해 미분한 값(b.grad)은 얼마일까요?",
+   "code": null,
+   "answer_ko": "2.0. 곱셈은 상대 값을 곱해 전하므로 b의 기울기는 a의 값 2입니다.",
+   "auto_grade": {
+    "type": "numeric_range",
+    "min": 1.99,
+    "max": 2.01
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "정확히 2"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O2"
+   ],
+   "hint_ids": []
+  },
+  {
+   "question_id": "L01-Q04",
+   "lecture_id": "L01",
+   "type": "choice",
+   "after_step": "L01-S07",
+   "prompt_ko": "+ 노드와 * 노드가 기울기를 재료에게 전하는 방식으로 맞는 것은?",
+   "code": null,
+   "answer_ko": "+는 그대로, *는 상대 값을 곱해 전합니다(L01-S07).",
+   "choices": [
+    "+는 상대 값을 곱해 전하고, *는 그대로 전합니다",
+    "+는 받은 기울기를 그대로 전하고, *는 상대 값을 곱해 전합니다",
+    "둘 다 받은 기울기를 그대로 전합니다",
+    "모르겠어요"
+   ],
+   "answer_index": 1,
+   "auto_grade": {
+    "type": "choice"
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "정답 보기 선택"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O2"
+   ],
+   "hint_ids": [
+    "L01-Q04-H1",
+    "L01-Q04-H2",
+    "L01-Q04-H3",
+    "L01-Q04-H4"
+   ]
+  },
+  {
+   "question_id": "L01-Q05",
+   "lecture_id": "L01",
+   "type": "predict",
+   "after_step": "L01-S10b",
+   "prompt_ko": "o = tanh(n) 이고 o.data = 0.7, o.grad = 1 입니다. o._backward()를 부르면 n.grad는 얼마가 될까요?",
+   "code": null,
+   "answer_ko": "1 - 0.7² = 1 - 0.49 = 0.51",
+   "auto_grade": {
+    "type": "numeric_range",
+    "min": 0.5,
+    "max": 0.52
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "0.51"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O2"
+   ],
+   "hint_ids": []
+  },
+  {
+   "question_id": "L01-Q06",
+   "lecture_id": "L01",
+   "type": "choice",
+   "after_step": "L01-S12",
+   "prompt_ko": "누군가의 코드에서 `a = Value(3.0); b = a + a; b.backward()` 후 a.grad가 2.0이 아니라 1.0으로 나옵니다. 어디를 고쳐야 할까요?",
+   "code": "def _backward():\n    self.grad = out.grad\n    other.grad = out.grad",
+   "answer_ko": "`_backward` 안의 `=`를 `+=`로 바꿉니다. a에서 b로 가는 길이 두 개라 기울기를 쌓아야 합니다.",
+   "choices": [
+    "`backward()`의 `self.grad = 1.0`을 `2.0`으로 바꿉니다",
+    "`reversed(topo)`를 `topo`로 바꿉니다",
+    "`_backward` 안의 `=`를 `+=`로 바꿉니다",
+    "모르겠어요"
+   ],
+   "answer_index": 2,
+   "auto_grade": {
+    "type": "choice"
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "정답 보기 선택"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O4"
+   ],
+   "hint_ids": [
+    "L01-Q06-H1",
+    "L01-Q06-H2",
+    "L01-Q06-H3",
+    "L01-Q06-H4"
+   ]
+  },
+  {
+   "question_id": "L01-Q07",
+   "lecture_id": "L01",
+   "type": "explain",
+   "after_step": "L01-S11b",
+   "prompt_ko": "backward()가 위상 정렬 목록을 거꾸로(reversed) 도는 이유를 자기 말로 설명해 보세요.",
+   "code": null,
+   "answer_ko": "어떤 상자의 기울기는 그 상자를 쓴 결과 쪽 상자들에서 모두 전해져야 완성됩니다. 거꾸로 돌면 결과 쪽 기울기가 먼저 다 모인 뒤에 재료에게 나눠 줄 수 있습니다.",
+   "auto_grade": {
+    "type": "keywords",
+    "keywords": [
+     [
+      "결과",
+      "뒤",
+      "출력"
+     ],
+     [
+      "모인",
+      "모여",
+      "다 받",
+      "완성"
+     ]
+    ],
+    "fallback": "manual"
+   },
+   "rubric": [
+    {
+     "point": 0.5,
+     "criterion_ko": "결과(출력) 쪽부터 간다는 말"
+    },
+    {
+     "point": 0.5,
+     "criterion_ko": "기울기가 먼저 다 모여야 나눠 줄 수 있다는 말"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O3"
+   ],
+   "hint_ids": [
+    "L01-Q07-H1",
+    "L01-Q07-H2",
+    "L01-Q07-H3",
+    "L01-Q07-H4"
+   ]
+  },
+  {
+   "question_id": "L01-Q08",
+   "lecture_id": "L01",
+   "type": "choice",
+   "after_step": "L01-S15b",
+   "prompt_ko": "학습할수록 손실이 오히려 커집니다. 갱신 줄이 `p.data += 0.05 * p.grad` 입니다. 어떻게 고쳐야 할까요?",
+   "code": null,
+   "answer_ko": "부호를 바꿔 `-0.05`로 씁니다. 기울기는 손실이 커지는 방향이라 반대로 가야 줄어듭니다.",
+   "choices": [
+    "`p.data += 0.5 * p.grad` (더 크게)",
+    "`p.data += -0.05 * p.grad` (기울기 반대 방향으로)",
+    "`p.grad += 0.05` (기울기에 더하기)",
+    "모르겠어요"
+   ],
+   "answer_index": 1,
+   "auto_grade": {
+    "type": "choice"
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "정답 보기 선택(부호)"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-Q08-H1",
+    "L01-Q08-H2",
+    "L01-Q08-H3",
+    "L01-Q08-H4"
+   ]
+  },
+  {
+   "question_id": "L01-Q09",
+   "lecture_id": "L01",
+   "type": "choice",
+   "after_step": "L01-S16",
+   "prompt_ko": "학습 반복에서 `p.grad = 0.0` 줄이 빠져 손실이 튑니다. 이 줄은 어디에 넣어야 할까요?",
+   "code": null,
+   "answer_ko": "반복마다 `loss.backward()` 바로 앞에 넣습니다. 그래야 이번 반복의 기울기만 남습니다.",
+   "choices": [
+    "반복마다 `loss.backward()` 바로 뒤, 갱신 앞에",
+    "반복문 밖, 맨 처음에 한 번만",
+    "반복마다 `loss.backward()` 바로 앞에",
+    "모르겠어요"
+   ],
+   "answer_index": 2,
+   "auto_grade": {
+    "type": "choice"
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "정답 보기 선택(위치까지)"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": [
+    "L01-Q09-H1",
+    "L01-Q09-H2",
+    "L01-Q09-H3",
+    "L01-Q09-H4"
+   ]
+  },
+  {
+   "question_id": "L01-Q10",
+   "lecture_id": "L01",
+   "type": "predict",
+   "after_step": "L01-S15",
+   "prompt_ko": "MLP(2, [3, 1])의 파라미터는 모두 몇 개일까요?",
+   "code": null,
+   "answer_ko": "13개. 2→3 층: 3 × (2 + 1) = 9, 3→1 층: 1 × (3 + 1) = 4, 합 13.",
+   "auto_grade": {
+    "type": "exact",
+    "value": "13"
+   },
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "13"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O5"
+   ],
+   "hint_ids": []
+  },
+  {
+   "question_id": "L01-Q11",
+   "lecture_id": "L01",
+   "type": "explain",
+   "after_step": "L01-S13e",
+   "prompt_ko": "우리가 만든 micrograd와 PyTorch의 공통점 하나와 차이 하나를 말해 보세요.",
+   "code": null,
+   "answer_ko": "공통점: 같은 역전파 원리로 같은 기울기를 구합니다(S13e에서 숫자가 같음). 차이: PyTorch는 숫자 하나 대신 텐서(숫자 묶음) 단위로, 훨씬 빠르게 계산합니다.",
+   "auto_grade": {
+    "type": "keywords",
+    "keywords": [
+     [
+      "같은",
+      "똑같",
+      "역전파"
+     ],
+     [
+      "텐서",
+      "묶음",
+      "빠르"
+     ]
+    ],
+    "fallback": "manual"
+   },
+   "rubric": [
+    {
+     "point": 0.5,
+     "criterion_ko": "공통점: 같은 역전파, 같은 기울기"
+    },
+    {
+     "point": 0.5,
+     "criterion_ko": "차이: 텐서 단위, 빠름"
+    }
+   ],
+   "max_points": 1,
+   "must_pass": false,
+   "objective_ids": [
+    "L01-O6"
+   ],
+   "hint_ids": [
+    "L01-Q11-H1",
+    "L01-Q11-H2",
+    "L01-Q11-H3",
+    "L01-Q11-H4"
+   ]
+  }
+ ],
+ "rebuild_tasks": [
+  {
+   "rebuild_id": "L01-R1",
+   "lecture_id": "L01",
+   "title_ko": "Value에 +, *, tanh와 각각의 _backward",
+   "task_ko": "빈 노트북에서 Value 클래스를 다시 만듭니다: __init__, __repr__, __add__, __mul__, tanh, 그리고 각각의 _backward.",
+   "check": {
+    "type": "output_match",
+    "reference": "karpathy/micrograd engine.py 동작",
+    "test_ko": "S09 뉴런을 만들고 o._backward()와 n._backward()를 불러 n.grad 0.5, b.grad 0.5"
+   },
+   "max_hint_level_for_pass": 2,
+   "hint_ids": [
+    "L01-R1-H1",
+    "L01-R1-H2",
+    "L01-R1-H3",
+    "L01-R1-H4"
+   ]
+  },
+  {
+   "rebuild_id": "L01-R2",
+   "lecture_id": "L01",
+   "title_ko": "위상 정렬을 쓰는 backward()",
+   "task_ko": "빈 노트북에서(R1 결과 위에) backward() 메서드를 만듭니다.",
+   "check": {
+    "type": "output_match",
+    "reference": "karpathy/micrograd engine.py 동작",
+    "test_ko": "o.backward() 후 x1.grad -1.5, w1.grad 1.0, x2.grad 0.5, w2.grad 0.0"
+   },
+   "max_hint_level_for_pass": 2,
+   "hint_ids": [
+    "L01-R2-H1",
+    "L01-R2-H2",
+    "L01-R2-H3",
+    "L01-R2-H4"
+   ]
+  },
+  {
+   "rebuild_id": "L01-R3",
+   "lecture_id": "L01",
+   "title_ko": "MLP(3, [4,4,1]) 학습으로 손실 0.1 아래",
+   "task_ko": "Neuron, Layer, MLP를 만들고 S15 데이터로 학습해 손실을 0.1 아래로 내립니다. 이 조각에 필요한 Value 연산(숫자 섞기, 빼기, 거듭제곱)은 붙여 넣어도 됩니다.",
+   "check": {
+    "type": "value_range",
+    "min": 0.0,
+    "max": 0.1,
+    "target": "마지막 손실"
+   },
+   "max_hint_level_for_pass": 2,
+   "hint_ids": [
+    "L01-R3-H1",
+    "L01-R3-H2",
+    "L01-R3-H3",
+    "L01-R3-H4"
+   ]
+  }
+ ],
+ "mastery_rule": {
+  "mastery_rule_id": "L01",
+  "steps_complete_ratio": 1.0,
+  "question_score_ratio": 0.8,
+  "question_min_points": 9,
+  "rebuild_max_hint_level": 2,
+  "extra_checks": [
+   "speak_check"
+  ],
+  "speak_check": {
+   "prompt_ko": "역전파를 친구에게 세 문장으로 설명해 보세요.",
+   "rubric": [
+    {
+     "point": 1,
+     "criterion_ko": "결과에서 거꾸로 간다"
+    },
+    {
+     "point": 1,
+     "criterion_ko": "연쇄 법칙으로 곱해 전한다"
+    },
+    {
+     "point": 1,
+     "criterion_ko": "그 기울기로 값을 조정한다"
+    }
+   ],
+   "pass_points": 3,
+   "grading": "manual_self_check"
+  }
+ },
+ "hints": [
+  {
+   "hint_id": "L01-S01-H1",
+   "target_id": "L01-S01",
+   "level": 1,
+   "text_ko": "그래프가 안 보인다면, 마지막 줄이 무엇을 하는 줄인지 다시 읽어 보셨나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S01-H2",
+   "target_id": "L01-S01",
+   "level": 2,
+   "text_ko": "`def f(x):` 다음 줄은 띄어쓰기 4칸으로 들여 써야 합니다(F-P5). 에러가 `NameError: np`라면 3번째 줄 import를 실행했는지 보세요.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S01-H3",
+   "target_id": "L01-S01",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "import math\nimport random\nimport numpy as np\nimport matplotlib.pyplot as plt\ndef f(x):\n    return ___\nxs = ___\nys = f(xs)\nplt.plot(xs, ys)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S01-H4",
+   "target_id": "L01-S01",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 들여쓰기를 빠뜨리거나 `**` 대신 `^`를 쓰는 경우가 많습니다. 파이썬에서 거듭제곱은 `**`입니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S02-H1",
+   "target_id": "L01-S02",
+   "level": 1,
+   "text_ko": "f(x + h)와 f(x)의 차이를 무엇으로 나눠야 '몇 배'가 될까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S02-H2",
+   "target_id": "L01-S02",
+   "level": 2,
+   "text_ko": "숫자 기울기 공식은 (f(x+h) - f(x)) / h 입니다(F-M1). 괄호 위치를 확인하세요.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S02-H3",
+   "target_id": "L01-S02",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "___ = 0.0001\nx = 3.0\n(___) / h",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S02-H4",
+   "target_id": "L01-S02",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 괄호 없이 `f(x + h) - f(x) / h`로 쓰면 나눗셈이 먼저 계산되어 전혀 다른 숫자가 나옵니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S03-H1",
+   "target_id": "L01-S03",
+   "level": 1,
+   "text_ko": "a를 올렸더니 d가 내려갔다면, 기울기의 부호는 무엇일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S03-H2",
+   "target_id": "L01-S03",
+   "level": 2,
+   "text_ko": "곱셈 a*b에서 a를 조금 올리면 결과는 b배만큼 변합니다(F-M2). 마지막 줄은 (d2 - d1) / h 입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S03-H3",
+   "target_id": "L01-S03",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "a = 2.0\nb = -3.0\nc = 10.0\nd1 = a*b + c\n___\nd2 = a*b + c\nprint(d1, d2, ___)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S03-H4",
+   "target_id": "L01-S03",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: S02 셀을 실행하지 않아 h가 없다는 NameError가 나는 경우가 많습니다. 위 셀부터 차례로 실행하세요.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S04-H1",
+   "target_id": "L01-S04",
+   "level": 1,
+   "text_ko": "`__init__` 안의 줄들은 어느 만큼 들여 써야 할까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S04-H2",
+   "target_id": "L01-S04",
+   "level": 2,
+   "text_ko": "클래스 안 함수는 4칸, 함수 안 줄은 8칸 들여 씁니다(F-P5, F-P6). `__init__`은 밑줄이 앞뒤로 두 개씩입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S04-H3",
+   "target_id": "L01-S04",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "class Value:\n    def __init__(self, data, _children=(), _op=''):\n        self.data = data\n        ___\n        self._prev = ___\n        self._op = _op\n    def __repr__(self):\n        return f\"Value(data={self.data})\"\nValue(2.0)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S04-H4",
+   "target_id": "L01-S04",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `__init__`을 `_init_`(밑줄 하나)로 쓰면 에러 없이 넘어가다가 `Value(2.0)`에서 에러가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S05-H1",
+   "target_id": "L01-S05",
+   "level": 1,
+   "text_ko": "결과 상자를 만들 때 재료로 넘겨야 하는 두 값은 무엇일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S05-H2",
+   "target_id": "L01-S05",
+   "level": 2,
+   "text_ko": "`Value(...)`의 두 번째 칸은 재료 묶음 `(self, other)`, 세 번째 칸은 기호입니다(S04의 `__init__`). 클래스 셀을 고친 뒤 꼭 다시 실행하세요.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S05-H3",
+   "target_id": "L01-S05",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "    def __add_____:\n        out = Value(___, (self, other), '+')\n        return out\n    def __mul__(self, other):\n        out = Value(self.data * other.data, (self, other), '*')\n        return out\nprint(Value(2.0) * Value(-3.0) + Value(10.0))",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S05-H4",
+   "target_id": "L01-S05",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 클래스 셀을 고치고 다시 실행하지 않으면 `TypeError: unsupported operand`가 납니다. 고친 클래스는 다시 실행해야 적용됩니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S06-H1",
+   "target_id": "L01-S06",
+   "level": 1,
+   "text_ko": "그림이 안 나온다면, 준비 코드 셀을 먼저 실행했나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S06-H2",
+   "target_id": "L01-S06",
+   "level": 2,
+   "text_ko": "`ExecutableNotFound` 에러는 코드가 아니라 graphviz 설치 문제입니다(F-P8, 환경 안내). Colab은 기본 설치되어 있습니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S06-H3",
+   "target_id": "L01-S06",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "a = Value(2.0)\nb = Value(-3.0)\nc = Value(10.0)\ne = ___\nd = ___\ndraw_dot(d)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S06-H4",
+   "target_id": "L01-S06",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: graphviz는 파이썬 패키지와 시스템 프로그램 둘 다 필요합니다. 코드가 맞는데 그림만 안 나오면 HELP로 환경 문제를 알립니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S07-H1",
+   "target_id": "L01-S07",
+   "level": 1,
+   "text_ko": "d가 1 늘면 L = d × f는 얼마나 변할까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S07-H2",
+   "target_id": "L01-S07",
+   "level": 2,
+   "text_ko": "곱셈 노드는 상대 값을 곱해 전하고, 덧셈 노드는 그대로 전합니다(F-M2 연쇄 법칙). 순서는 L, d와 f, c와 e, a와 b입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S07-H3",
+   "target_id": "L01-S07",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "f = Value(-2.0)\nL = d * f\nL.grad = 1.0\n___ = ___\nf.grad = d.data\nc.grad = d.grad\ne.grad = d.grad\na.grad = ___\nb.grad = e.grad * a.data\ndraw_dot(L)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S07-H4",
+   "target_id": "L01-S07",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: a.grad에 b.data만 쓰고 위에서 온 e.grad를 곱하지 않는 실수가 흔합니다. 숫자가 6.0이 아니라 -3.0이 나옵니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S08-H1",
+   "target_id": "L01-S08",
+   "level": 1,
+   "text_ko": "값을 기울기와 같은 방향으로 움직이면 L은 커질까요, 작아질까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S08-H2",
+   "target_id": "L01-S08",
+   "level": 2,
+   "text_ko": "`v.data += 0.01 * v.grad`는 기울기 방향 한 걸음입니다(F-M6 경사 하강). 그 뒤 e, d, L을 순서대로 다시 계산해야 합니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S08-H3",
+   "target_id": "L01-S08",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "for v in [a, b, c, f]:\n    v.data += ___\ne = a*b\nd = e + c\nL = ___\nprint(L.data)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S08-H4",
+   "target_id": "L01-S08",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 값만 바꾸고 e, d, L을 다시 계산하지 않으면 L이 그대로 -8.0으로 보입니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S09-H1",
+   "target_id": "L01-S09",
+   "level": 1,
+   "text_ko": "입력마다 무엇을 곱해서 더해야 할까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S09-H2",
+   "target_id": "L01-S09",
+   "level": 2,
+   "text_ko": "뉴런 합 = x1*w1 + x2*w2 + b 입니다(F-M3). 편향 숫자는 그대로 복사해 붙여 넣으세요.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S09-H3",
+   "target_id": "L01-S09",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "x1 = Value(2.0)\nx2 = Value(0.0)\nw1 = Value(-3.0)\nw2 = Value(1.0)\nb = Value(6.8813735870195432)\nn = ___\nprint(n)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S09-H4",
+   "target_id": "L01-S09",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 편향 숫자를 짧게 줄여 쓰면 뒤 단계의 0.7071 같은 깔끔한 숫자가 안 나옵니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S09b-H1",
+   "target_id": "L01-S09b",
+   "level": 1,
+   "text_ko": "`AttributeError: 'Value' object has no attribute 'tanh'`가 났다면, n은 언제 만든 상자일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S09b-H2",
+   "target_id": "L01-S09b",
+   "level": 2,
+   "text_ko": "클래스를 고치기 전에 만든 상자는 옛 설계도를 씁니다. 클래스 셀 실행 후 S09 셀을 다시 실행하세요(F-P6).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S09b-H3",
+   "target_id": "L01-S09b",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "    def tanh(self):\n        t = ___\n        out = Value(t, ___, 'tanh')\n        return out\no = n.tanh()\ndraw_dot(o)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S09b-H4",
+   "target_id": "L01-S09b",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 재료 묶음을 `(self)`로 쓰면 묶음이 아니라 그냥 값이 되어 에러가 납니다. 하나짜리 묶음은 `(self,)`처럼 쉼표가 필요합니다(F-P3).",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S10-H1",
+   "target_id": "L01-S10",
+   "level": 1,
+   "text_ko": "덧셈 결과의 기울기는 재료에게 어떤 모양으로 전해졌었나요(S07)?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S10-H2",
+   "target_id": "L01-S10",
+   "level": 2,
+   "text_ko": "+ 는 out.grad 그대로, * 는 상대 data × out.grad 입니다(L01-S07). `def _backward():`는 `out = ...` 줄과 같은 깊이(8칸)로 씁니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S10-H3",
+   "target_id": "L01-S10",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "        self.___ = lambda: None\n        def _backward():\n            self.grad += ___\n            other.grad += out.grad\n        out._backward = _backward\n        def _backward():\n            self.grad += ___\n            other.grad += self.data * out.grad\n        out._backward = _backward",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S10-H4",
+   "target_id": "L01-S10",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `out._backward = _backward()`처럼 괄호를 붙이면 함수를 저장하지 않고 바로 실행해 버립니다. 괄호 없이 저장합니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S10b-H1",
+   "target_id": "L01-S10b",
+   "level": 1,
+   "text_ko": "o.data가 0.7071일 때 1 - o.data²은 얼마인가요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S10b-H2",
+   "target_id": "L01-S10b",
+   "level": 2,
+   "text_ko": "tanh의 미분은 1 - t²입니다(F-M5). 0.7071² = 0.5 이므로 0.5가 나와야 합니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S10b-H3",
+   "target_id": "L01-S10b",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "        def _backward():\n            self.grad += ___\n        out._backward = _backward\no.grad = 1.0\no._backward()\nn._backward()\ndraw_dot(o)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S10b-H4",
+   "target_id": "L01-S10b",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 클래스를 고친 뒤 S09, S09b를 다시 실행하지 않으면 옛 o에는 새 _backward가 없어 grad가 0으로 남습니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S11-H1",
+   "target_id": "L01-S11",
+   "level": 1,
+   "text_ko": "나를 목록에 붙이기 전에 먼저 해야 할 일은 무엇일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S11-H2",
+   "target_id": "L01-S11",
+   "level": 2,
+   "text_ko": "재료(`v._prev`)를 모두 줄 세운 뒤에 `topo.append(v)`를 합니다. append 줄은 for 줄과 같은 깊이(8칸)입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S11-H3",
+   "target_id": "L01-S11",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "topo = []\nvisited = set()\ndef build_topo(v):\n    if ___:\n        visited.add(v)\n        for child in v._prev:\n            ___\n        ___\nbuild_topo(o)\ntopo",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S11-H4",
+   "target_id": "L01-S11",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `topo.append(v)`를 for 안(12칸)에 넣으면 같은 상자가 여러 번 들어가 목록이 10개보다 길어집니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S11b-H1",
+   "target_id": "L01-S11b",
+   "level": 1,
+   "text_ko": "출력 o의 grad는 처음에 무엇이어야 거꾸로 전할 수 있을까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S11b-H2",
+   "target_id": "L01-S11b",
+   "level": 2,
+   "text_ko": "`backward()`에서 `self.grad = 1.0`을 하고, 위상 정렬 목록을 `reversed`로 돕니다(L01-S11).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S11b-H3",
+   "target_id": "L01-S11b",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "    def backward(self):\n        topo = []\n        visited = set()\n        def build_topo(v):\n            if v not in visited:\n                visited.add(v)\n                for child in v._prev:\n                    build_topo(child)\n                topo.append(v)\n        build_topo(self)\n        ___\n        for node in ___:\n            node._backward()\no.backward()\ndraw_dot(o)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S11b-H4",
+   "target_id": "L01-S11b",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 옮긴 줄들의 들여쓰기를 4칸씩 더 넣지 않아 클래스 밖으로 빠지는 경우가 많습니다. backward 안이므로 모두 한 단계 더 들여 씁니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S12-H1",
+   "target_id": "L01-S12",
+   "level": 1,
+   "text_ko": "b = a + a에서 a가 b에 영향을 주는 길은 몇 개인가요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S12-H2",
+   "target_id": "L01-S12",
+   "level": 2,
+   "text_ko": "두 길의 기울기를 합쳐야 합니다. `_backward` 안이 `+=`인지 보세요(L01-S10).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S12-H3",
+   "target_id": "L01-S12",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "a = Value(3.0)\nb = ___\nb.backward()\nprint(___)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S12-H4",
+   "target_id": "L01-S12",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 1.0이 나온다면 S10의 `_backward`에서 `+=` 대신 `=`를 쓴 것입니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S13-H1",
+   "target_id": "L01-S13",
+   "level": 1,
+   "text_ko": "`1 + Value(2.0)`에서 파이썬은 먼저 누구의 더하기를 시도할까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13-H2",
+   "target_id": "L01-S13",
+   "level": 2,
+   "text_ko": "숫자 1은 Value를 더할 줄 모르니, 파이썬이 Value의 `__radd__`를 부릅니다(F-P6 특수 메서드).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13-H3",
+   "target_id": "L01-S13",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "        other = other if ___ else Value(other)\n        other = other if isinstance(other, Value) else Value(other)\n    def __radd__(self, other):\n        return ___\n    def __rmul__(self, other):\n        return self * other\nprint(Value(2.0) + 1, 1 + Value(2.0), 2 * Value(3.0))",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S13-H4",
+   "target_id": "L01-S13",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: isinstance 줄을 `out = ...` 줄 아래에 넣으면 감싸기 전에 계산해 `AttributeError: 'int' object has no attribute 'data'`가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S13b-H1",
+   "target_id": "L01-S13b",
+   "level": 1,
+   "text_ko": "exp(x)를 x로 미분하면 무엇이 되었나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13b-H2",
+   "target_id": "L01-S13b",
+   "level": 2,
+   "text_ko": "exp의 미분은 exp 자신이므로 `out.data`를 곱합니다(F-M2). 빼기는 `self + (-other)`입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13b-H3",
+   "target_id": "L01-S13b",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "    def exp(self):\n        out = Value(math.exp(self.data), (self,), 'exp')\n        def _backward():\n            self.grad += ___\n        out._backward = _backward\n        return out\n    def __neg__(self):\n        return ___\n    def __sub__(self, other):\n        return self + (___)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S13b-H4",
+   "target_id": "L01-S13b",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `math.exp(self.data)` 대신 `math.exp(self)`로 쓰면 상자 자체를 넣어 TypeError가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S13c-H1",
+   "target_id": "L01-S13c",
+   "level": 1,
+   "text_ko": "x²을 x로 미분하면 무엇인가요? x³은요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13c-H2",
+   "target_id": "L01-S13c",
+   "level": 2,
+   "text_ko": "거듭제곱의 미분은 other × x^(other - 1)입니다(F-M1). 나누기는 `self * other**-1`입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13c-H3",
+   "target_id": "L01-S13c",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "    def __pow__(self, other):\n        out = Value(self.data**other, (self,), f'**{other}')\n        def _backward():\n            self.grad += ___ * out.grad\n        out._backward = _backward\n        return out\n    def __truediv__(self, other):\n        return self * ___\nprint(Value(3.0) - 1, Value(2.0)**2, Value(6.0) / 2, Value(0.0).exp())",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S13c-H4",
+   "target_id": "L01-S13c",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `Value(6.0) / 2`에서 2는 숫자라 `2**-1` = 0.5가 되고, 곱셈의 isinstance 줄이 감싸 줍니다. S13을 건너뛰었다면 여기서 에러가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S13d-H1",
+   "target_id": "L01-S13d",
+   "level": 1,
+   "text_ko": "grad가 S11b보다 두 배로 나온다면, 이 셀을 두 번 실행하지 않았나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13d-H2",
+   "target_id": "L01-S13d",
+   "level": 2,
+   "text_ko": "grad는 `+=`로 쌓이므로(L01-S12) 같은 셀을 다시 돌리면 쌓입니다. S09 셀부터 다시 실행해 새 상자로 시작하세요.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13d-H3",
+   "target_id": "L01-S13d",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "e = ___\no = ___\no.backward()\ndraw_dot(o)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S13d-H4",
+   "target_id": "L01-S13d",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: S09를 다시 실행하지 않아 앞 단계 grad가 남아 숫자가 커지는 경우가 가장 흔합니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S13e-H1",
+   "target_id": "L01-S13e",
+   "level": 1,
+   "text_ko": "PyTorch에게 '이 값의 기울기를 구해 달라'고 알리는 표시는 무엇이었나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13e-H2",
+   "target_id": "L01-S13e",
+   "level": 2,
+   "text_ko": "`requires_grad=True`가 빠지면 grad가 None입니다. `.item()`은 텐서에서 숫자 하나를 꺼냅니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S13e-H3",
+   "target_id": "L01-S13e",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "import torch\nx1 = torch.tensor([2.0], dtype=torch.double, ___)\nx2 = torch.tensor([0.0], dtype=torch.double, requires_grad=True)\nw1 = torch.tensor([-3.0], dtype=torch.double, requires_grad=True)\nw2 = torch.tensor([1.0], dtype=torch.double, requires_grad=True)\nb = torch.tensor([6.8813735870195432], dtype=torch.double, requires_grad=True)\no = torch.tanh(x1*w1 + x2*w2 + b)\n___\nprint(o.item(), x1.grad.item(), w1.grad.item(), x2.grad.item(), w2.grad.item())",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S13e-H4",
+   "target_id": "L01-S13e",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 이 셀은 x1, w1, b, o를 텐서로 덮어씁니다. 이후 micrograd 실험을 다시 하려면 S09부터 다시 실행합니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S14-H1",
+   "target_id": "L01-S14",
+   "level": 1,
+   "text_ko": "뉴런 출력이 -1과 1 사이인 까닭은 마지막에 무엇을 씌웠기 때문일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S14-H2",
+   "target_id": "L01-S14",
+   "level": 2,
+   "text_ko": "`sum(..., self.b)`는 편향에서 더하기를 시작합니다. `__call__` 덕분에 `Neuron(2)(x)`처럼 부를 수 있습니다(F-P6).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S14-H3",
+   "target_id": "L01-S14",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "class Neuron:\n    def __init__(self, nin):\n        self.w = [Value(___) for _ in range(nin)]\n        self.b = Value(random.uniform(-1, 1))\n    def __call__(self, x):\n        act = sum((wi*xi for wi, xi in ___), self.b)\n        return act.tanh()\n    def parameters(self):\n        return ___\nNeuron(2)([2.0, 3.0])",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S14-H4",
+   "target_id": "L01-S14",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: S01에서 `import random`을 실행하지 않았다면 NameError가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S14b-H1",
+   "target_id": "L01-S14b",
+   "level": 1,
+   "text_ko": "뉴런 3개에 같은 입력을 넣으면 출력은 몇 개일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S14b-H2",
+   "target_id": "L01-S14b",
+   "level": 2,
+   "text_ko": "`[n(x) for n in self.neurons]`는 뉴런마다 부르는 목록 만들기입니다(F-P4).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S14b-H3",
+   "target_id": "L01-S14b",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "class Layer:\n    def __init__(self, nin, nout):\n        self.neurons = [___ for _ in range(nout)]\n    def __call__(self, x):\n        outs = [___ for n in self.neurons]\n        return outs[0] if len(outs) == 1 else outs\n    def parameters(self):\n        return [p for n in self.neurons for p in n.parameters()]\nLayer(2, 3)([2.0, 3.0])",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S14b-H4",
+   "target_id": "L01-S14b",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 이중 목록 만들기 순서를 `for p in n.parameters() for n in self.neurons`로 뒤집으면 NameError가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S14c-H1",
+   "target_id": "L01-S14c",
+   "level": 1,
+   "text_ko": "입력 3개짜리 뉴런 하나에는 숫자가 몇 개 들어 있나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S14c-H2",
+   "target_id": "L01-S14c",
+   "level": 2,
+   "text_ko": "뉴런 하나 = 입력 수만큼의 가중치 + 편향 1개(L01-S14). 3→4 층은 4 × (3 + 1) = 16입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S14c-H3",
+   "target_id": "L01-S14c",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "class MLP:\n    def __init__(self, nin, nouts):\n        sz = ___\n        self.layers = [___ for i in range(len(nouts))]\n    def __call__(self, x):\n        for layer in self.layers:\n            ___\n        return x\n    def parameters(self):\n        return [p for layer in self.layers for p in layer.parameters()]",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S14c-H4",
+   "target_id": "L01-S14c",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: parameters 줄을 빠뜨리면 S15에서 `AttributeError: 'MLP' object has no attribute 'parameters'`가 납니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S15-H1",
+   "target_id": "L01-S15",
+   "level": 1,
+   "text_ko": "예측과 정답이 같으면 (yout - ygt)**2는 얼마일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S15-H2",
+   "target_id": "L01-S15",
+   "level": 2,
+   "text_ko": "손실 = (예측 - 정답)² 의 합입니다(F-M6). `sum`은 0부터 더하므로 S13의 `__radd__`가 쓰입니다.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S15-H3",
+   "target_id": "L01-S15",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "n = MLP(3, [4, 4, 1])\nprint(len(n.parameters()))\nxs = [[2.0, 3.0, -1.0], [3.0, -1.0, 0.5], [0.5, 1.0, 1.0], [1.0, 1.0, -1.0]]\nys = [1.0, -1.0, -1.0, 1.0]\nypred = [n(x) for x in xs]\nloss = sum(___ for ygt, yout in ___)\nprint(loss)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S15-H4",
+   "target_id": "L01-S15",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `(ygt - yout)`으로 순서를 바꾸면 `숫자 - Value`라 `__rsub__`가 없어 에러가 납니다(영상 1:54 부근 댓글). 이 앱 코드처럼 `yout - ygt` 순서로 씁니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S15b-H1",
+   "target_id": "L01-S15b",
+   "level": 1,
+   "text_ko": "손실을 줄이려면 기울기와 같은 쪽으로 움직여야 할까요, 반대쪽일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S15b-H2",
+   "target_id": "L01-S15b",
+   "level": 2,
+   "text_ko": "갱신은 `p.data += -학습률 * p.grad`입니다(F-M6). 기울기 비우기는 `loss.backward()` 앞에 옵니다(L01-S12).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S15b-H3",
+   "target_id": "L01-S15b",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "for k in range(20):\n    ypred = [n(x) for x in xs]\n    loss = sum((yout - ygt)**2 for ygt, yout in zip(ys, ypred))\n    for p in n.parameters():\n        ___\n    ___\n    for p in n.parameters():\n        p.data += ___\n    print(k, loss.data)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S15b-H4",
+   "target_id": "L01-S15b",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: 학습률 부호를 +로 쓰면 손실이 커집니다. grad 비우기를 빼먹으면 S16의 버그가 생깁니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-S16-H1",
+   "target_id": "L01-S16",
+   "level": 1,
+   "text_ko": "grad를 비우지 않으면 두 번째 반복의 grad에는 무엇이 섞여 있을까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S16-H2",
+   "target_id": "L01-S16",
+   "level": 2,
+   "text_ko": "`_backward`가 `+=`로 쌓는다는 것(L01-S12)과, 반복마다 `p.grad = 0.0`을 하는 이유를 연결해 보세요.",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-S16-H3",
+   "target_id": "L01-S16",
+   "level": 3,
+   "text_ko": "빈칸을 채워 보세요.",
+   "code_with_blanks": "    # for p in n.parameters():\n    #     ___",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-S16-H4",
+   "target_id": "L01-S16",
+   "level": 4,
+   "text_ko": "정답 코드와 줄별 풀이를 봅니다. 흔한 원인: `#`을 지우는 것을 잊고 다음 편으로 넘어가지 않도록, 비교가 끝나면 꼭 되돌립니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q02-H1",
+   "target_id": "L01-Q02",
+   "level": 1,
+   "text_ko": "x를 3에서 3.0001로 올리면 f는 얼마나 변했을까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q02-H2",
+   "target_id": "L01-Q02",
+   "level": 2,
+   "text_ko": "기울기 = f가 변한 양 ÷ x를 움직인 양 입니다(L01-S02, F-M1).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q02-H3",
+   "target_id": "L01-Q02",
+   "level": 3,
+   "text_ko": "빈칸 채우기: \"x를 ___ 올리면 f는 그 약 ___배만큼 오른다.\"",
+   "code_with_blanks": "빈칸 채우기: \"x를 ___ 올리면 f는 그 약 ___배만큼 오른다.\"",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q02-H4",
+   "target_id": "L01-Q02",
+   "level": 4,
+   "text_ko": "모범 답: x를 아주 조금 올리면 f는 그 약 14배만큼 오릅니다. 흔한 원인: '14만큼 오른다'고 쓰면 '배'가 빠져 반쪽 답이 됩니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q04-H1",
+   "target_id": "L01-Q04",
+   "level": 1,
+   "text_ko": "c.grad와 a.grad를 채울 때 S07에서 각각 무엇을 썼나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q04-H2",
+   "target_id": "L01-Q04",
+   "level": 2,
+   "text_ko": "S07의 `c.grad = d.grad`(덧셈)와 `a.grad = e.grad * b.data`(곱셈)를 비교해 보세요(F-M2).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q04-H3",
+   "target_id": "L01-Q04",
+   "level": 3,
+   "text_ko": "빈칸 채우기: \"+는 기울기를 ___ 전하고, *는 ___ 값을 곱해 전한다.\"",
+   "code_with_blanks": "빈칸 채우기: \"+는 기울기를 ___ 전하고, *는 ___ 값을 곱해 전한다.\"",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q04-H4",
+   "target_id": "L01-Q04",
+   "level": 4,
+   "text_ko": "정답은 2번(+는 그대로, *는 상대 값을 곱해)입니다. 흔한 원인: 곱셈에서 '자기' 값을 곱한다고 헷갈리는 경우가 많습니다. 곱하는 것은 '상대' 값입니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q06-H1",
+   "target_id": "L01-Q06",
+   "level": 1,
+   "text_ko": "b = a + a에서 a가 b에 영향을 주는 길은 몇 개인가요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q06-H2",
+   "target_id": "L01-Q06",
+   "level": 2,
+   "text_ko": "두 길의 기울기를 합쳐야 합니다(L01-S12). 두 번째 줄이 첫 번째 줄의 값을 덮어쓰고 있지 않나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q06-H3",
+   "target_id": "L01-Q06",
+   "level": 3,
+   "text_ko": "빈칸 코드: `self.grad ___ out.grad`",
+   "code_with_blanks": "빈칸 코드: `self.grad ___ out.grad`",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q06-H4",
+   "target_id": "L01-Q06",
+   "level": 4,
+   "text_ko": "정답은 3번(`=`를 `+=`로)입니다. `=`는 덮어쓰기라 두 번째 길의 기울기가 첫 번째를 지웁니다. 흔한 원인: 출발점 값을 바꾸면 된다고 생각하기 쉽지만 다른 그래프에서는 틀립니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q07-H1",
+   "target_id": "L01-Q07",
+   "level": 1,
+   "text_ko": "재료에게 기울기를 나눠 주려면, 그 전에 내 기울기가 어떤 상태여야 할까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q07-H2",
+   "target_id": "L01-Q07",
+   "level": 2,
+   "text_ko": "위상 정렬은 '재료가 먼저, 결과가 나중' 순서입니다(L01-S11). 거꾸로 돌면 어느 쪽부터 처리될까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q07-H3",
+   "target_id": "L01-Q07",
+   "level": 3,
+   "text_ko": "빈칸 채우기: \"___ 쪽 기울기가 먼저 다 ___ 뒤에야 재료에게 나눠 줄 수 있다.\"",
+   "code_with_blanks": "빈칸 채우기: \"___ 쪽 기울기가 먼저 다 ___ 뒤에야 재료에게 나눠 줄 수 있다.\"",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q07-H4",
+   "target_id": "L01-Q07",
+   "level": 4,
+   "text_ko": "모범 답: 결과 쪽 기울기가 먼저 다 모여야 그것을 재료에게 나눠 줄 수 있기 때문입니다. 흔한 원인: '빠르게 하려고'라고 답하는 경우가 많지만 속도가 아니라 순서의 문제입니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q08-H1",
+   "target_id": "L01-Q08",
+   "level": 1,
+   "text_ko": "기울기는 손실이 커지는 쪽을 가리킬까요, 작아지는 쪽을 가리킬까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q08-H2",
+   "target_id": "L01-Q08",
+   "level": 2,
+   "text_ko": "경사 하강은 기울기 반대 방향으로 움직입니다(F-M6, L01-S08).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q08-H3",
+   "target_id": "L01-Q08",
+   "level": 3,
+   "text_ko": "빈칸 코드: `p.data += ___0.05 * p.grad`",
+   "code_with_blanks": "빈칸 코드: `p.data += ___0.05 * p.grad`",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q08-H4",
+   "target_id": "L01-Q08",
+   "level": 4,
+   "text_ko": "정답은 2번(`-0.05`)입니다. S08에서는 L을 키우려고 +로 움직였지만, 학습은 손실을 줄이는 것이라 -가 필요합니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q09-H1",
+   "target_id": "L01-Q09",
+   "level": 1,
+   "text_ko": "backward()가 기울기를 덮어쓸까요, 쌓을까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q09-H2",
+   "target_id": "L01-Q09",
+   "level": 2,
+   "text_ko": "기울기는 `+=`로 쌓입니다(L01-S12). 그러니 새로 쌓기 직전에 비워야 합니다(L01-S15b).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q09-H3",
+   "target_id": "L01-Q09",
+   "level": 3,
+   "text_ko": "빈칸 코드: `for p in n.parameters(): p.grad = 0.0` 다음 줄에 `___`",
+   "code_with_blanks": "빈칸 코드: `for p in n.parameters(): p.grad = 0.0` 다음 줄에 `___`",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q09-H4",
+   "target_id": "L01-Q09",
+   "level": 4,
+   "text_ko": "정답은 3번(`loss.backward()` 바로 앞)입니다. backward 뒤에 비우면 방금 구한 기울기를 지워 갱신이 0이 되고, 맨 처음 한 번만 비우면 두 번째 반복부터 쌓입니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-Q11-H1",
+   "target_id": "L01-Q11",
+   "level": 1,
+   "text_ko": "S13e에서 두 방법의 기울기 숫자는 어땠나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q11-H2",
+   "target_id": "L01-Q11",
+   "level": 2,
+   "text_ko": "micrograd의 Value는 숫자 하나, PyTorch의 tensor는 숫자 묶음입니다(L01-S13e).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-Q11-H3",
+   "target_id": "L01-Q11",
+   "level": 3,
+   "text_ko": "빈칸 채우기: \"둘 다 같은 ___로 기울기를 구하지만, PyTorch는 ___ 단위로 빠르게 계산한다.\"",
+   "code_with_blanks": "빈칸 채우기: \"둘 다 같은 ___로 기울기를 구하지만, PyTorch는 ___ 단위로 빠르게 계산한다.\"",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-Q11-H4",
+   "target_id": "L01-Q11",
+   "level": 4,
+   "text_ko": "모범 답: 둘 다 같은 역전파로 같은 기울기를 구하지만, PyTorch는 텐서 단위로 훨씬 빠르게 계산합니다. 흔한 원인: 차이만 쓰고 공통점을 빠뜨려 0.5점이 되는 경우가 많습니다.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-R1-H1",
+   "target_id": "L01-R1",
+   "level": 1,
+   "text_ko": "결과 상자는 무엇을 기억해야 나중에 기울기를 나눠 줄 수 있을까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-R1-H2",
+   "target_id": "L01-R1",
+   "level": 2,
+   "text_ko": "재료(_prev), 기호(_op), 그리고 _backward 함수입니다(L01-S04, L01-S10).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-R1-H3",
+   "target_id": "L01-R1",
+   "level": 3,
+   "text_ko": "빈칸 코드: `def _backward(): self.grad += ___ * out.grad` (곱셈일 때)",
+   "code_with_blanks": "빈칸 코드: `def _backward(): self.grad += ___ * out.grad` (곱셈일 때)",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-R1-H4",
+   "target_id": "L01-R1",
+   "level": 4,
+   "text_ko": "정답은 L01-S04, S05, S09b, S10, S10b 코드를 합친 것입니다. 흔한 원인: `+=` 대신 `=`.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-R2-H1",
+   "target_id": "L01-R2",
+   "level": 1,
+   "text_ko": "기울기를 나눠 주는 순서는 재료부터일까요, 결과부터일까요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-R2-H2",
+   "target_id": "L01-R2",
+   "level": 2,
+   "text_ko": "위상 정렬 목록을 만든 뒤 reversed로 돕니다. 출발점 grad는 1.0입니다(L01-S11, S11b).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-R2-H3",
+   "target_id": "L01-R2",
+   "level": 3,
+   "text_ko": "빈칸 코드: `self.grad = ___` / `for node in ___(topo): node._backward()`",
+   "code_with_blanks": "빈칸 코드: `self.grad = ___` / `for node in ___(topo): node._backward()`",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-R2-H4",
+   "target_id": "L01-R2",
+   "level": 4,
+   "text_ko": "정답은 L01-S11b 코드입니다. 흔한 원인: append를 for 안에 넣음.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  },
+  {
+   "hint_id": "L01-R3-H1",
+   "target_id": "L01-R3",
+   "level": 1,
+   "text_ko": "학습 반복의 네 동작은 무엇이었나요?",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 0,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-R3-H2",
+   "target_id": "L01-R3",
+   "level": 2,
+   "text_ko": "순전파, 기울기 비우기, 역전파, 갱신(-학습률 × 기울기) 순서입니다(L01-S15b).",
+   "code_with_blanks": null,
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": null
+   }
+  },
+  {
+   "hint_id": "L01-R3-H3",
+   "target_id": "L01-R3",
+   "level": 3,
+   "text_ko": "빈칸 코드: `p.grad = ___` / `loss.___()` / `p.data += ___ * p.grad`",
+   "code_with_blanks": "빈칸 코드: `p.grad = ___` / `loss.___()` / `p.data += ___ * p.grad`",
+   "show_solution": false,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 15
+   }
+  },
+  {
+   "hint_id": "L01-R3-H4",
+   "target_id": "L01-R3",
+   "level": 4,
+   "text_ko": "정답은 L01-S14, S14b, S14c, S15, S15b 코드입니다. 흔한 원인: 학습률 부호, grad 비우기 위치.",
+   "code_with_blanks": null,
+   "show_solution": true,
+   "unlock": {
+    "after_attempts": 1,
+    "after_minutes": 30
+   }
+  }
+ ]
+}

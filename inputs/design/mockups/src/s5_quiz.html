@@ -1,0 +1,71 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>확인 문제</title><link rel="stylesheet" href="z2h.css"><link rel="stylesheet" href="z2h_v2.css"><style>
+.qs{display:grid;gap:var(--s5)}
+@media(min-width:1024px){.qs{grid-template-columns:1fr 1fr;align-items:start}}
+.rub{list-style:none;padding:0;margin:0;display:grid;gap:var(--s2)}
+.rub label{display:flex;gap:var(--s3);align-items:flex-start;min-height:44px;padding:var(--s2) var(--s3);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--paper-raised)}
+.rub input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.rub .pt{margin-left:auto;font-size:13px;color:var(--ink-muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.score{display:flex;gap:var(--s2);align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
+.typ{display:flex;gap:var(--s2);flex-wrap:wrap}
+textarea.long{font-family:var(--font-ui);font-size:16px;min-height:120px}
+.opts{display:grid;gap:var(--s2);list-style:none;padding:0;margin:0}
+.opt{display:flex;gap:var(--s3);align-items:center;min-height:52px;padding:var(--s2) var(--s4);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--paper-raised);width:100%;text-align:left;font:inherit;color:inherit}
+.opt .mk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.opt.sel{border:2px solid var(--accent);background:var(--accent-tint)}
+.opt.sel .mk{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.opt .tag{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent)}
+@media(min-width:1024px){.qs{grid-template-columns:repeat(3,1fr)}}
+</style></head><body>
+<header class="topbar"><a class="back" href="#" aria-label="실습으로">‹</a><span class="brand">Z2H<small>제로 투 히어로 실습</small></span><nav class="topnav" aria-label="주 메뉴"><a href="#" >홈</a><a href="#" aria-current=page>강의</a><a href="#" >복습</a><a href="#" >기초</a></nav><span class="sync" role="status" aria-label="진도 저장됨"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg> 저장됨</span><span class="sample">예시 화면</span></header>
+<main class="wide"><div class="stack">
+<p class="cap">01 micrograd · 확인 문제 · 단계 1~7 범위 · 5유형 중 3개 예시</p>
+<h1 class="t1">확인 문제</h1>
+<p class="muted small">답을 내면 풀이가 열립니다. 틀린 문제는 복습 카드로 다시 나옵니다.</p>
+</div>
+<div class="qs" style="margin-top:var(--s5)">
+<section class="card stack" aria-labelledby="q0">
+ <div class="typ"><span class="badge cur">고르기</span><span class="cap">확인 문제 · type: choice · 예시 문항</span></div>
+ <h2 id="q0" class="t3">f(x) = 3x² - 4x + 5 에서 x = 2/3 의 숫자 기울기는 대략 얼마일까요?</h2>
+ <ul class="opts" role="radiogroup" aria-labelledby="q0">
+  <li><button class="opt sel" role="radio" aria-checked="true"><span class="mk">1</span><span>약 0</span><span class="tag">고름</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">2</span><span>약 14</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">3</span><span>약 -4</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">4</span><span>약 5</span></button></li>
+  <li><button class="opt" role="radio" aria-checked="false"><span class="mk">5</span><span>모르겠어요</span></button></li>
+ </ul>
+ <button class="btn block">제출</button>
+ <div class="result ok" role="status"><span class="sym" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span><div><b>맞음</b><p>x = 2/3은 포물선의 가장 낮은 점이라 조금 움직여도 f가 거의 변하지 않습니다. 그래서 기울기가 0에 가깝습니다.</p></div></div>
+ <p class="cap">고른 뒤 "제출"을 눌러야 채점됩니다. "모르겠어요"는 감점 없이 기록만 하고 복습 추천에 씁니다.</p>
+</section>
+<section class="card stack" aria-labelledby="q1">
+ <div class="typ"><span class="badge cur">결과 예측</span><span class="cap">L01-Q03 · 정확히 맞추기</span></div>
+ <h2 id="q1" class="t3"><code>d = a*b + c</code>, a=2, b=-3, c=10일 때 d에 대한 <code>b.grad</code>는?</h2>
+ <label for="a1" class="small" style="font-weight:600">내 답</label>
+ <input id="a1" type="text" value="2.0">
+ <button class="btn block">제출</button>
+ <div class="result ok" role="status"><span class="sym" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span><div><b>맞음</b><p>정답 2.0. d를 b로 미분하면 b와 곱해진 상대 값 a가 남습니다.</p></div></div>
+ <p class="score"><span class="badge">점수</span>1 / 1 · 힌트 없이</p>
+ <p class="cap">결과 예측 문제에는 힌트가 없습니다.</p>
+</section>
+<section class="card stack" aria-labelledby="q2">
+ <div class="typ"><span class="badge cur">내 말로 설명</span><span class="cap">L01-Q04 · 채점 기준으로 확인</span></div>
+ <h2 id="q2" class="t3">+ 노드와 * 노드가 기울기를 전하는 방식은 어떻게 다른가요?</h2>
+ <label for="a2" class="small" style="font-weight:600">내 설명</label>
+ <textarea id="a2" class="long">더하기는 받은 기울기를 그대로 재료에게 넘겨 준다. 곱하기는 잘 모르겠다.</textarea>
+ <p class="cap num">글자 수 제한 없음 · 제출 뒤 채점 기준이 열립니다</p>
+ <button class="btn block">제출</button>
+ <div class="stack" role="group" aria-labelledby="rb"><p id="rb" class="small" style="font-weight:600">채점 기준: 내 설명에 들어 있는 것을 고르세요</p>
+ <ul class="rub">
+  <li><label><input type="checkbox" checked><span>+는 기울기를 그대로 전한다</span><span class="pt">0.5점</span></label></li>
+  <li><label><input type="checkbox"><span>*는 상대 값을 곱해서 전한다</span><span class="pt">0.5점</span></label></li>
+ </ul></div>
+ <div class="result part" role="status"><span class="sym" aria-hidden="true">△</span><div><b>절반 (흔들림)</b><p>모범 설명: +는 그대로 전하고, *는 상대 값을 곱해 전합니다. 곱하기 쪽은 단계 7에서 손으로 채운 값을 다시 보면 확인할 수 있습니다.</p></div></div>
+ <p class="score"><span class="badge">점수</span>0.5 / 1 · 복습 카드로 다시 나옵니다</p>
+</section>
+</div>
+<div class="stack" style="margin-top:var(--s5)">
+<div class="next small"><b>다음:</b><span>L01-Q05 · tanh 노드의 기울기 (결과 예측)</span></div>
+<div class="row"><a class="btn" href="#">이전 문제</a><a class="btn primary" style="flex:1" href="#">다음 문제</a></div>
+</div></main>
+<nav class="tabbar" aria-label="주 메뉴"><a href="#" ><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/></svg></span>홈</a><a href="#" aria-current=page><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>강의</a><a href="#" ><span class="ico" aria-hidden="true">↻</span>복습</a><a href="#" ><span class="ico" aria-hidden="true">◇</span>기초</a></nav></body></html>

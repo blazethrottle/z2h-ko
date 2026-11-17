@@ -1,0 +1,56 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>홈·진도</title><link rel="stylesheet" href="z2h.css"><link rel="stylesheet" href="z2h_v2.css"><style>
+.home{display:grid;gap:var(--s5)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.stat{padding:var(--s4)}
+.lec{display:flex;align-items:center;gap:var(--s3);min-height:56px;padding:var(--s2) 0;border-top:1px solid var(--line)}
+.lec:first-child{border-top:0}
+.lec .no{width:2.2em;font-weight:700;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.lec .nm{flex:1;font-weight:600}
+.lec .nm small{display:block;font-weight:400;font-size:13px;color:var(--ink-muted)}
+.lec .meta{font-size:13px;color:var(--ink-muted);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lec.on .no{color:var(--accent)}
+.cp{font-size:13px;color:var(--ink-muted);padding:6px 0 6px 2.2em;border-top:1px dashed var(--line)}
+@media(max-width:1023px){.home>div{display:contents}.home>div>*{margin-top:0!important}.home [aria-labelledby=cont]{order:1}.home [aria-labelledby=st]{order:2}.home [aria-labelledby=rv]{order:3}.home [aria-labelledby=lecs]{order:4}.home [aria-labelledby=bs]{order:5}}
+@media(min-width:1024px){.home{grid-template-columns:1.5fr 1fr;align-items:start}.stats{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<header class="topbar"><span class="brand">Z2H<small>제로 투 히어로 실습</small></span><nav class="topnav" aria-label="주 메뉴"><a href="#" aria-current=page>홈</a><a href="#" >강의</a><a href="#" >복습</a><a href="#" >기초</a></nav><span class="sync" role="status" aria-label="진도 저장됨"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg> 저장됨</span><span class="sample">예시 화면</span></header>
+<main class="wide"><div class="home">
+<div class="stack">
+ <p class="cap">11월 16일 (월) · 예시</p>
+ <section class="card current stack" aria-labelledby="cont">
+  <p class="kicker">이어서 하기</p>
+  <h1 id="cont" class="t1">01 micrograd</h1>
+  <p class="num"><b>단계 4 / 26</b> · Value 클래스 뼈대 <span class="cap">L01-S04</span></p>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="26" aria-valuenow="3" aria-label="01 micrograd 진도 26단계 중 3단계 완료"><i style="width:11.5%"></i></div>
+  <p class="small muted">이 단계: 영상 구간 보기 → 코드 8줄 입력 → 결과 비교</p>
+  <a class="btn primary block" href="#">단계 4 이어서 하기</a>
+  <div class="next small"><b>다음:</b><span>단계 5 · 덧셈과 곱셈 기록하기</span></div>
+ </section>
+ <section class="card" aria-labelledby="lecs">
+  <div class="row"><h2 id="lecs" class="t3">강의 10편 · 169단계</h2><span class="sp"></span><span class="cap num">영상 합계 약 19.6시간</span></div>
+  <div style="margin-top:var(--s2)"><a href="#" class="lec on" style="text-decoration:none;color:inherit"><span class="no">01</span><span class="nm">micrograd</span><span class="meta"><span class="badge cur">진행 중</span><br><span class="num">3 / 26 단계</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">02</span><span class="nm">makemore</span><span class="meta"><span class="num">0 / 16 단계</span><br>영상 <span class="num">1:58</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">03</span><span class="nm">makemore MLP</span><span class="meta"><span class="num">0 / 12 단계</span><br>영상 <span class="num">1:16</span></span></a><div class="cp">누적 점검 1 (01~03편) · 통과하면 04편이 열립니다</div><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">04</span><span class="nm">Activations·BatchNorm</span><span class="meta"><span class="num">0 / 18 단계</span><br>영상 <span class="num">1:56</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">05</span><span class="nm">Backprop Ninja</span><span class="meta"><span class="num">0 / 13 단계</span><br>영상 <span class="num">1:55</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">06</span><span class="nm">WaveNet</span><span class="meta"><span class="num">0 / 12 단계</span><br>영상 <span class="num">0:56</span></span></a><div class="cp">누적 점검 2 (01~06편) · 통과하면 07편이 열립니다</div><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">07</span><span class="nm">Let's build GPT</span><span class="meta"><span class="num">0 / 23 단계</span><br>영상 <span class="num">1:56</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">08</span><span class="nm">State of GPT (강연)<small>강연 · 보기와 정리 카드</small></span><span class="meta"><span class="num">0 / 8 단계</span><br>영상 <span class="num">0:43</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">09</span><span class="nm">GPT Tokenizer</span><span class="meta"><span class="num">0 / 13 단계</span><br>영상 <span class="num">2:14</span></span></a><a href="#" class="lec" style="text-decoration:none;color:inherit"><span class="no">10</span><span class="nm">Reproduce GPT-2 124M<small>축소판 실습</small></span><span class="meta"><span class="num">0 / 28 단계</span><br>영상 <span class="num">4:01</span></span></a><div class="cp">누적 점검 3 (01~10편) · 통과하면 수료</div></div>
+ </section>
+</div>
+<div class="stack">
+ <section aria-labelledby="st" class="stack">
+  <h2 id="st" class="t3">내 진도</h2>
+  <div class="stats">
+   <div class="card stat"><p class="cap">완료 단계</p><p class="big">3</p><p class="delta">▲+3 이번 주</p></div>
+   <div class="card stat"><div class="row" style="gap:4px"><p class="cap">이번 주 실습 시간 (시:분)</p><span class="sp"></span><button class="btn ghost sm edit" aria-label="이번 주 실습 시간 수정">수정</button></div><p class="big">2:40</p><p class="delta"><span class="badge">수정됨</span> 자동 2:25</p></div>
+  </div>
+  <p class="cap">실습 시간은 화면이 열려 있고 사용 중일 때만 자동으로 셉니다. 틀리면 직접 고칠 수 있고, 고친 값에는 수정됨이 붙습니다.</p>
+ </section>
+ <section class="card stack" aria-labelledby="rv">
+  <div class="row"><h2 id="rv" class="t3">오늘 복습</h2><span class="sp"></span><span class="badge num">5장 · 약 12분</span></div>
+  <p class="small muted">하루 복습은 25분을 넘지 않게 맞춥니다.</p>
+  <a class="btn block" href="#">복습 시작</a>
+ </section>
+ <section class="card stack" aria-labelledby="bs">
+  <p class="kicker">강의 전에 권장</p>
+  <h2 id="bs" class="t3">사전 기초: 파이썬 9단위 · 수학 6단위</h2>
+  <p class="small muted num">2 / 15 단위 완료 · 01편에 필요한 단위: F-P1·P2·P5·P6·P7, F-M1·M2·M6</p>
+  <a class="btn block" href="#">기초 이어서 보기</a>
+ </section>
+</div></div></main>
+<nav class="tabbar" aria-label="주 메뉴"><a href="#" aria-current=page><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/></svg></span>홈</a><a href="#" ><span class="ico" aria-hidden="true"><svg class="ic" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>강의</a><a href="#" ><span class="ico" aria-hidden="true">↻</span>복습</a><a href="#" ><span class="ico" aria-hidden="true">◇</span>기초</a></nav></body></html>
