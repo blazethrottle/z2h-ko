@@ -4,6 +4,8 @@ import Base from '../../../layouts/Base.astro';
 import LectureApp from '../../../components/LectureApp.tsx';
 import { lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
 import { config } from '../../../config';
+import { loadBasics } from '../../../lib/content/basics.mjs';
+import { unitHref } from '../../../lib/basics';
 
 export function getStaticPaths() {
   return Object.keys(loadSite().details).map((lid) => ({ params: { lecture: lid }, props: { lid } }));
@@ -21,6 +23,7 @@ const speak = MR.speak_check
   : null;
 const nbName = L.notebook?.student ? String(L.notebook.student).split('/').pop() : null;
 const art = lectureArtifact(lid);
+const basicsReady: string[] = (loadBasics() as any).readyIds;
 ---
 <Base title={L.title_ko} nav="lectures" back="/home/">
   <LectureApp
@@ -31,7 +34,7 @@ const art = lectureArtifact(lid);
     videoSeconds={L.video_seconds}
     studyHours={L.study_hours_ko ?? null}
     objectives={L.objectives ?? []}
-    prereq={(L.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null }))}
+    prereq={(L.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null, href: unitHref(u, basicsReady) }))}
     notebook={{ name: nbName, url: L.notebook?.student_available ? notebookPublicPath(lid, L.notebook.student) : null }}
     rule={{
       steps_complete_ratio: MR.steps_complete_ratio ?? 1,

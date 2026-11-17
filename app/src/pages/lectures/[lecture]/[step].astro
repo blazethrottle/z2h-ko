@@ -4,6 +4,7 @@ import Base from '../../../layouts/Base.astro';
 import StepApp from '../../../components/StepApp.tsx';
 import { codeCredit, lectureLabel, loadSite } from '../../../lib/pageData';
 import CodeCredit from '../../../components/CodeCredit.astro';
+import { loadBasics } from '../../../lib/content/basics.mjs';
 
 export function getStaticPaths() {
   const site = loadSite();
@@ -19,6 +20,7 @@ const questions = step.question_ids.map((q: string) => d.questions.find((x: any)
 const steps = d.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, video_segments: s.video_segments }));
 const nb = d.lecture.notebook?.student ? String(d.lecture.notebook.student).split('/').pop() : null;
 const repos: string[] = d.lecture.source_repos ?? [];
+const basicsReady: string[] = (loadBasics() as any).readyIds;
 ---
 <Base title={`${step.title_ko} · 단계 ${step.order}`} nav="lectures" back={`/lectures/${lid}/`} wide>
   <StepApp
@@ -32,6 +34,7 @@ const repos: string[] = d.lecture.source_repos ?? [];
     step={step}
     steps={steps}
     questions={questions}
+    basicsReady={basicsReady}
   />
   {repos.length > 0 && <CodeCredit credit={codeCredit(repos)} />}
 </Base>

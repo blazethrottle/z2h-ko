@@ -13,7 +13,6 @@ import {
   questionSchema,
   rebuildSchema,
   stepSchema,
-  unitSchema,
 } from './schema.mjs';
 
 export const RULES = {
@@ -90,12 +89,7 @@ export function validateBundle(bundle) {
     for (const m of zodIssues(lectureListItemSchema.safeParse(l))) err(1, bundle.lecturesFile.path, `[${i}] ${m}`);
     if (l?.lecture_id) lectureListById.set(l.lecture_id, l);
   });
-  const units = bundle.unitsFile ? listOf(bundle.unitsFile.data, 'units') : null;
-  const unitIds = new Set();
-  (units ?? []).forEach((u, i) => {
-    for (const m of zodIssues(unitSchema.safeParse(u))) err(1, bundle.unitsFile.path, `[${i}] ${m}`);
-    if (u?.unit_id) unitIds.add(u.unit_id);
-  });
+  // 선행 기초 단위(prereq_units)가 실제 기초 단위인지는 기초 정본(F.json)과 함께 본다(basics.mjs checkPrereqUnits, npm run check:content)
 
   const seen = new Map();
   const claim = (id, file) => {
@@ -120,8 +114,6 @@ export function validateBundle(bundle) {
     if (lid && lectureList && !lectureListById.has(lid)) warn(bundle.lecturesFile.path, `${lid}가 lectures.yaml 에 없습니다`);
     const objectiveIds = new Set((lecture.objectives ?? []).map((o) => o?.objective_id).filter(Boolean));
     for (const o of objectiveIds) claim(o, file);
-    for (const u of [...(lecture.prereq_units ?? []), ...(lecture.prereq_units_optional ?? [])])
-      if (units && !unitIds.has(u)) warn(file, `prereq_units ${u}가 units.yaml 에 없습니다`);
 
     const steps = Array.isArray(d.steps) ? d.steps : [];
     const questions = Array.isArray(d.questions) ? d.questions : [];

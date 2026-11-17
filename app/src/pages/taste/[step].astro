@@ -23,7 +23,7 @@ const questions = step.question_ids.map((q: string) => t.questions.find((x: any)
 const site: any = loadSite();
 const firstLecture = site.lectures.find((l: any) => l.available) ?? null;
 const links = {
-  diagnostic: '/basics/',
+  diagnostic: '/basics/diagnostic/',
   basics: '/basics/',
   lecture: firstLecture ? `/lectures/${firstLecture.lecture_id}/` : '/home/',
   lectureLabel: firstLecture ? lectureLabel(firstLecture.lecture_id, firstLecture.title_ko) : '강의 01',

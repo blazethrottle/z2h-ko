@@ -30,7 +30,8 @@ interface Props {
   videoSeconds: number;
   studyHours: string | null;
   objectives: { objective_id: string; text_ko: string }[];
-  prereq: { unit_id: string; title_ko: string | null }[];
+  /** 선행 기초 단위. href: 준비된 단위는 그 단위 화면, 아니면 기초 목록 */
+  prereq: { unit_id: string; title_ko: string | null; href?: string }[];
   notebook: { name: string | null; url: string | null };
   rule: { steps_complete_ratio: number; question_score_ratio: number; question_min_points?: number; rebuild_max_hint_level: number; extra_checks: string[] };
   speak: { prompt_ko: string; rubric: string[] } | null;
@@ -126,7 +127,7 @@ function LectureAppView(p: Props) {
             {p.prereq.map((u, i) => (
               <>
                 {i > 0 && ' · '}
-                <a href="/basics/">
+                <a href={u.href ?? '/basics/'}>
                   {u.unit_id}
                   {u.title_ko ? ` ${u.title_ko}` : ''}
                 </a>

@@ -3,6 +3,8 @@
 import Base from '../../layouts/Base.astro';
 import HomeApp from '../../components/HomeApp.tsx';
 import { lectureLabel, loadSite, unitTitles } from '../../lib/pageData';
+import { loadBasics } from '../../lib/content/basics.mjs';
+import { unitHref } from '../../lib/basics';
 
 const site: any = loadSite();
 const mainId = site.lectures.find((l: any) => l.available)?.lecture_id ?? null;
@@ -22,10 +24,12 @@ const lectures = site.lectures.map((l: any) => ({
   available: l.available,
   step_count: l.step_count ?? null,
 }));
-const prereq = (d?.lecture.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null }));
+const b: any = loadBasics();
+const prereq = (d?.lecture.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null, href: unitHref(u, b.readyIds) }));
+const basics = { units: b.units.map((u: any) => ({ unit_id: u.unit_id, ready: u.ready, mastery: u.mastery })), rule: b.rule };
 ---
 <Base title="홈" nav="home" wide>
-  <HomeApp client:load lectures={lectures} main={main} prereq={prereq} />
+  <HomeApp client:load lectures={lectures} main={main} prereq={prereq} basics={basics} />
   <p class="row home-links">
     <a class="btn" href="/badges/" data-testid="home-badges">배지와 편 도장</a>
     <a class="btn" href="/share/" data-testid="home-share">공유 카드</a>

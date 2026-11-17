@@ -47,7 +47,7 @@
 **따라 하기**
 1. 둘 중 하나를 고릅니다.
    - Colab: 브라우저에서 colab.research.google.com 열기 → "새 노트" 누르기. 설치가 필요 없습니다.
-   - 맥미니: CTO 몽키가 준비한 Jupyter 실행 안내(앱 "환경 준비" 화면)를 따릅니다. 터미널(글자로 명령하는 창)에 `jupyter lab`을 치면 브라우저가 열립니다.
+   - 맥미니: 아래 실습 환경 실행 안내(앱 "환경 준비" 화면)를 따라 하세요. 터미널(글자로 명령하는 창)에 `jupyter lab`을 치면 브라우저가 열립니다.
 2. 첫 셀에 다음을 칩니다.
    ```python
    print("안녕하세요")   # print: 괄호 안의 것을 화면에 보여 줍니다
@@ -231,7 +231,7 @@ print(a(10))                        # 20
 1. `print(undefined_name)` 실행 → `NameError: name 'undefined_name' is not defined`. 뜻: 그런 이름표가 없습니다.
 2. `[1,2][5]` 실행 → `IndexError: list index out of range`. 뜻: 목록 범위를 벗어났습니다.
 3. `"a" + 1` 실행 → `TypeError`. 뜻: 글자와 숫자는 더할 수 없습니다.
-4. (F-P9 뒤) `torch.zeros(2,3) @ torch.zeros(2,3)` → `RuntimeError: mat1 and mat2 shapes cannot be multiplied`. 뜻: 행렬 모양이 맞지 않습니다. 강의 전체에서 가장 자주 보게 될 에러입니다.
+4. (F-P9 뒤) `torch.zeros(2,3) @ torch.zeros(2,3)` → `RuntimeError: mm: mat1 and mat2 shapes cannot be multiplied (2x3 and 2x3)`. 뜻: 행렬 모양이 맞지 않습니다. 강의 전체에서 가장 자주 보게 될 에러입니다.
 
 읽는 순서(앱 고정 안내): ① 맨 아래 줄의 에러 종류 ② 그 줄의 설명 ③ 위로 올라가 내 셀의 몇째 줄인지(`---->` 표시) ④ 그 줄의 변수 값을 print로 확인.
 

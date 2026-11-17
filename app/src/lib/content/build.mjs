@@ -45,7 +45,19 @@ export function reconstructCell(steps, step, targetId) {
     for (const b of blocks.filter((x) => x.target_step === targetId)) {
       const mine = s.step_id === step.step_id;
       const add = b.lines.map((text) => ({ text, isNew: mine }));
-      if (b.action === 'replace') {
+      if (b.action === 'replace' && b.anchor_line) {
+        // 기준 줄(바꾸기 전 줄)이 있는 바꾸기(사전 기초 F-M6-S02): 그 줄부터 line_count 줄을 새 줄로 바꾼다
+        let idx = -1;
+        cell.forEach((l, i) => {
+          if (idx < 0 && norm(l.text) === norm(b.anchor_line)) idx = i;
+        });
+        if (idx < 0) {
+          ok = false;
+          continue;
+        }
+        cell = [...cell.slice(0, idx), ...add, ...cell.slice(idx + b.line_count)];
+      } else if (b.action === 'replace') {
+        // 기준 줄이 없는 바꾸기(1편 L01-S16): 주석으로 막은 줄을 푸는 것처럼, 내용이 같은 줄을 찾아 바꾼다
         const want = b.lines.map(uncomment);
         const idx = cell.findIndex((_, i) => want.every((w, k) => cell[i + k] && uncomment(cell[i + k].text) === w));
         if (idx < 0) {
@@ -79,7 +91,7 @@ export function reconstructCell(steps, step, targetId) {
   return { ok, lines: cell };
 }
 
-function publicStep(s, steps, hintsByTarget, segEntry, questionsAfter) {
+export function publicStep(s, steps, hintsByTarget, segEntry, questionsAfter) {
   const { hint_ids, ...rest } = s;
   const hs = hintsByTarget.get(s.step_id) ?? [];
   const edits = s.edits?.length ? splitEdits(s) : null;
@@ -106,7 +118,7 @@ function publicStep(s, steps, hintsByTarget, segEntry, questionsAfter) {
   };
 }
 
-function publicQuestion(q, hintsByTarget) {
+export function publicQuestion(q, hintsByTarget) {
   const hs = hintsByTarget.get(q.question_id) ?? [];
   return {
     question_id: q.question_id,
@@ -127,7 +139,6 @@ function publicQuestion(q, hintsByTarget) {
 
 export function buildSite(bundle) {
   const lectureList = bundle.lecturesFile ? (listOf(bundle.lecturesFile.data, 'lectures') ?? []) : [];
-  const units = bundle.unitsFile ? (listOf(bundle.unitsFile.data, 'units') ?? []) : [];
   const segSteps = bundle.segments?.steps ?? {};
   const details = {};
   for (const lf of bundle.lectureFiles) {
@@ -202,7 +213,6 @@ export function buildSite(bundle) {
     lectures: [...byId.values()]
       .map((l) => ({ ...l, video_seconds: l.video_seconds ?? bundle.segments?.lectures?.[l.lecture_id]?.video_seconds ?? null, available: !!details[l.lecture_id] }))
       .sort((a, b) => a.lecture_id.localeCompare(b.lecture_id)),
-    units,
     details,
     stepCounts,
   };

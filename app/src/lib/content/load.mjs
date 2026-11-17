@@ -2,13 +2,14 @@
 // 강의 콘텐츠: 교사 정본 JSON (inputs/pedagogy/content/L??.json). 병합 전에는 app/tests/fixtures/pedagogy/ 의 사본
 //   (git show origin/m0-setup:inputs/pedagogy/content/L01.json 으로 꺼낸 것)을 쓴다.
 // 영상 구간 정본: 같은 곳의 video-segments.json.
-// 보조 목록(선택): lectures.yaml(10편 이름), units.yaml(기초 단위 이름). 저장소 content/ 에 있으면 그것, 없으면 fixtures/extras.
-// 바꾸기: Z2H_CONTENT_DIR, Z2H_SEGMENTS, Z2H_EXTRAS_DIR 환경 변수.
+// 보조 목록(선택): lectures.yaml(10편 이름). 저장소 content/ 에 있으면 그것, 없으면 fixtures/extras.
+// 사전 기초: 교사 정본 inputs/pedagogy/content/F.json 하나(경로는 content-config.mjs BASICS.file). 기초 단위 이름·필수 여부도 여기서 읽는다.
+// 바꾸기: Z2H_CONTENT_DIR, Z2H_SEGMENTS, Z2H_EXTRAS_DIR, Z2H_BASICS_FILE 환경 변수.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import { NAMES_TXT, NOTEBOOKS, TASTER } from '../../content-config.mjs';
+import { BASICS, NAMES_TXT, NOTEBOOKS, TASTER } from '../../content-config.mjs';
 import { splitNameLines } from '../name-filter.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -82,7 +83,6 @@ export function readBundle(paths = resolvePaths()) {
     segmentsPath: rel(paths.segmentsPath),
     lectureFiles: [],
     lecturesFile: null,
-    unitsFile: null,
     segments: null,
     licenseFiles: listDir(paths.licensesDir),
     notebookExists: {},
@@ -95,8 +95,6 @@ export function readBundle(paths = resolvePaths()) {
 
   const lf = path.join(paths.extrasDir, 'lectures.yaml');
   if (fs.existsSync(lf)) bundle.lecturesFile = readYaml(lf, bundle);
-  const uf = [path.join(paths.extrasDir, 'units.yaml'), path.join(paths.extrasDir, 'ep00-basics/units.yaml')].find((p) => fs.existsSync(p));
-  if (uf) bundle.unitsFile = readYaml(uf, bundle);
 
   try {
     bundle.segments = JSON.parse(fs.readFileSync(paths.segmentsPath, 'utf8'));
@@ -134,6 +132,34 @@ export function readTasterBundle(paths = resolvePaths()) {
   if (fs.existsSync(n)) bundle.realNames = splitNameLines(fs.readFileSync(n, 'utf8'));
   else bundle.parseErrors.push({ path: NAMES_TXT.path, message: 'names.txt 가 없습니다(NOTICE.md 의 makemore 줄을 보고 저장소에 넣어 주세요)' });
   bundle.notebookExists = fs.existsSync(path.join(paths.repoRoot, TASTER.notebook));
+  return bundle;
+}
+
+/**
+ * 사전 기초 파일: 교사 정본 F.json 하나(content-config BASICS.file). 테스트만 환경 변수 Z2H_BASICS_FILE 로 바꾼다.
+ * 파일이 없어도 경로는 돌려주고, 읽을 때 오류가 되어 검사가 실패한다(빌드 멈춤).
+ */
+export function resolveBasicsPath(env = process.env, root = REPO_ROOT) {
+  if (env.Z2H_BASICS_FILE) return { path: path.resolve(env.Z2H_BASICS_FILE), source: 'override' };
+  return { path: path.join(root, BASICS.file), source: 'canonical' };
+}
+
+/** 사전 기초 묶음 (검사 전) */
+export function readBasicsBundle(where = resolveBasicsPath(), root = REPO_ROOT) {
+  const relTo = (p) => path.relative(root, p) || p;
+  const bundle = { source: where.source, file: null, rawTexts: [], parseErrors: [] };
+  if (!fs.existsSync(where.path)) {
+    bundle.parseErrors.push({ path: relTo(where.path), message: '기초 콘텐츠(교사 정본 F.json)가 없습니다' });
+  } else {
+    const text = fs.readFileSync(where.path, 'utf8');
+    bundle.rawTexts.push({ path: relTo(where.path), text });
+    try {
+      bundle.file = { path: relTo(where.path), data: JSON.parse(text) };
+    } catch (e) {
+      bundle.file = { path: relTo(where.path), data: null };
+      bundle.parseErrors.push({ path: relTo(where.path), message: String(e?.message ?? e) });
+    }
+  }
   return bundle;
 }
 

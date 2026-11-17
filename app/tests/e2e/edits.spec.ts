@@ -12,7 +12,11 @@ test('앞 셀을 고치는 모든 단계는 바뀐 줄만 보이고, 전체 보�
       await page.goto(`/lectures/${L.lecture_id}/${s.slug}/#practice`);
       const view = page.getByTestId('edits-view');
       await expect(view).toContainText('바뀐 줄만');
-      await expect(view).toContainText('흐린 줄은 이미 있는 기준 줄입니다');
+      // 안내 한 줄은 고칠 곳 종류에 맞춘다(넣기: 기준 줄 아래에 넣음, 바꾸기: 바꾸기 전 줄을 바꿈. L01-S16 은 바꾸기)
+      await expect(view.getByTestId('edits-note-insert')).toHaveCount(s.edit_actions.includes('insert') ? 1 : 0);
+      await expect(view.getByTestId('edits-note-replace')).toHaveCount(s.edit_actions.includes('replace') ? 1 : 0);
+      if (s.edit_actions.includes('insert')) await expect(view).toContainText('흐린 줄은 이미 있는 기준 줄입니다');
+      if (!s.edit_actions.includes('insert')) await expect(view).not.toContainText('그 바로 아래에');
       await expect(view.getByTestId('edit-block').first()).toBeVisible();
       await expect(view.locator('.cl-row.new').first()).toBeVisible();
       await hydrated(page);

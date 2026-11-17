@@ -274,7 +274,7 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 ### 12.2 저장소 폴더
 ```
 app/                  웹앱 (Astro). public/fonts/, src/, scripts/, tests/
-content/              lectures.yaml(10편 목록), ep00-basics/units.yaml(1편 선행 단위),
+content/              lectures.yaml(10편 목록). 기초 단위 목록은 교사 정본 F.json에서 읽음(12.12절, units.yaml은 P5에서 지움),
                       ep01-micrograd/overlay_draft.yaml(앱 전용 칸 초안, 교사 확인 대기, 아직 화면에 쓰지 않음)
 server/               z2h_server/, alembic/, tests/. data/ 는 git 제외
 z2h_check/            채점 패키지(check, finish, 결과코드, graders/, reference/, 묶음)
@@ -377,3 +377,14 @@ inputs/               팀 입력 자료(읽기 전용)
 - 설정으로 풀 수 없게 둔 것: 서버 바인드 `127.0.0.1`(공개 때도 서버 앞에 프록시를 둔다), 프록시 머리말로 접속 주소를 믿지 않음, 쿠키 HttpOnly, 개발용 로그인 잠금.
 - DB: SQLite를 아는 코드는 저장 계층(`storage/`)과 `config.py`뿐이다. Postgres는 어댑터 하나, 드라이버, `Z2H_DB_URL`을 바꾼다(미구현, 실제 실행 미확인).
 - 공개 때 바꿀 것 전체 목록: `server/README.md` 7절과 P4 PR 본문.
+
+### 12.12 기초 탭 채우기 (CTO 2026-11-17 11:50, 추가 11:59·12:05. P5 `p5-basics`)
+얼큰이 지시: "기초 탭 지금 채워줘. 필수 단위와 진단 5문제 먼저."
+1. 정본은 교사의 `inputs/pedagogy/content/F.json` v1.1 하나다(1편 `L01.json`과 같은 최상위 키). 앱은 기초 내용을 이 파일에서만 읽고 손으로 고치지 않는다. 파일이 없으면 빌드가 멈춘다. `content/ep00-basics/units.yaml`은 같은 정보가 정본에 있어 지웠다.
+2. 여는 단위는 정본의 `status`로만 정한다. `written` 11개(F-P1~P8, F-M1, F-M2, F-M6)는 열고, `planned` 4개(F-P9, F-M3, F-M4, F-M5)는 목록에 "준비 중"으로만 보인다(누를 수 없고 주소도 없다).
+3. 진단 5문제(F-D1~F-D5)는 추천만 한다. 건너뛰기 버튼이 없고 01편을 잠그지 않는다(D24, D37). "모르겠어요"는 감점 없이 기록하고 추천에만 쓴다(D35). 진단 점수는 익힘·배지 계산에 넣지 않는다. 결과는 서버의 `diagnostic_result`에 저장한다(스키마 변경 없음).
+4. 진단 결과 문구는 정본의 `lecture.diagnostic.result_ko`를 그대로 쓴다(맞힌 수, 추천 시작 단위, 항상 붙는 F-P7·F-P9 권장, 준비 중 단위를 추천할 때의 `not_ready_ko`). 화면 틀(머리, 진단 카드의 "자동으로 건너뛰지 않음" 줄, 행 상태 표시)은 디자인 `spec.md` 8절을 따른다.
+5. 단위 화면은 1편 단계 화면을 영상 없이 다시 쓴다. 단위는 `unit_id`로 묶고 `order`로 줄 세운다. 새 칸: `read_first_ko`(실행 전 먼저 읽기), `expected_output_example`(출력 예), `kind` read(코드 없음)·optional(익힘 판정에서 뺌), `expected_check` error_match(에러가 나는 것이 정상)와 manual+figure("직접 확인했어요").
+6. 단위 "완료"는 정본 `mastery_rule` 그대로: 선택 단계를 뺀 단계 전부 + 확인 문제 점수 80% 이상 + 필수 문항 전부 통과 + 그 단위의 스스로 해 보기 통과(연 힌트 단계가 `max_hint_level_for_pass` 이하, null은 제한 없음). 스스로 해 보기는 학습자 자기 확인이다.
+7. 화면에 내지 않는 것: `mastery_rule.module_pass_ko`(세 번째 줄 "통과하면 01편이 열리고"가 3번 결정과 부딪힘, 교사 확인 필요). `mastery_rule.review`(3일 → 14일 → 졸업)는 값 검사만 하고, 복습 기능이 생길 때 쓴다.
+8. [가정, CTO·교사 확인 필요] 다시 하기: 확인 문제는 풀이를 본 뒤에도 "다시 풀기"로 다시 풀 수 있고, 스스로 해 보기는 "힌트 없이 다시 해 보기"로 힌트 단계를 새로 센다. 막으면 필수 문항 규칙 때문에 단위를 끝낼 수 없게 되어 열어 두었다. 지금은 다시 푼 답이 맞으면 온전한 점수로 친다. 이전 시도 기록은 지우지 않으므로 규칙이 정해지면 다시 계산할 수 있다.

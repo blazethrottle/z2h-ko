@@ -372,6 +372,15 @@ a.chip { text-decoration: none; }
 @media (min-width: 600px) {
   .bgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* 사전 기초 (spec 8절, 목업 s8_basics): 단위 목록 2개는 데스크톱 2열, 진단 문항은 데스크톱 3열(spec 5절) */
+.lrow .no.unit { width: 3.6em; color: var(--ink-muted); }
+.lrow .no.unit.st-now { color: var(--accent); }
+.basics-lists, .diag-grid { display: grid; gap: var(--space-4); align-items: start; }
+@media (min-width: 1024px) {
+  .basics-lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diag-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
 }
