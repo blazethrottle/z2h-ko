@@ -237,8 +237,9 @@ a.lrow:hover { background: var(--paper-sunken); }
 .practice .pside > * { order: 1; }
 .opt { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--option-h); padding: var(--space-2) var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--paper-raised); color: var(--ink); text-align: left; cursor: pointer; font-family: var(--font-ui); font-size: var(--body-size); }
 .opt .on { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line-strong); font-weight: var(--weight-bold); font-size: 14px; }
-.opt[aria-checked='true'] { border: 2px solid var(--accent); background: var(--accent-tint); }
-.opt[aria-checked='true'] .on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* 고른 보기(radio)와 켜 둔 "모르겠어요" 단추(aria-pressed, 기초 진단 직접 입력 문항)는 같은 모양 (P6-A) */
+.opt[aria-checked='true'], .opt[aria-pressed='true'] { border: 2px solid var(--accent); background: var(--accent-tint); }
+.opt[aria-checked='true'] .on, .opt[aria-pressed='true'] .on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .opt[aria-disabled='true'] { cursor: default; }
 .hint-item { border-top: 1px solid var(--line); padding-top: var(--space-3); }
 .hint-lock { display: flex; justify-content: space-between; gap: var(--space-3); color: var(--ink-muted); font-size: var(--type-small-size); }
@@ -377,6 +378,9 @@ a.chip { text-decoration: none; }
 .lrow .no.unit { width: 3.6em; color: var(--ink-muted); }
 .lrow .no.unit.st-now { color: var(--accent); }
 .basics-lists, .diag-grid { display: grid; gap: var(--space-4); align-items: start; }
+/* 진단 "모르겠어요" (P6-A): 잠긴 입력칸은 잠긴 모양으로, 안내 칸은 비어 있으면 자리를 차지하지 않는다 */
+.diag-grid .input:disabled { background: var(--paper-sunken); border-color: var(--line); color: var(--ink-muted); cursor: not-allowed; }
+.diag-dk-note:empty { margin-top: 0; }
 @media (min-width: 1024px) {
   .basics-lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .diag-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }

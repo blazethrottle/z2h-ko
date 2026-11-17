@@ -3,6 +3,10 @@
 //   약속 값이 다르면 빌드 검사가 실패하므로(content/basics.mjs) 이 화면에는 잠금·건너뛰기·힌트 부품이 아예 없다.
 // - 안내는 정본 purpose_ko + spec 8절 "자동으로 건너뛰지 않음" 줄, 결과 문구는 정본 result_ko 그대로.
 // - "모르겠어요"는 감점 없이 오답으로 기록하고 추천에만 쓴다. 직접 입력 문항은 정본 dont_know_allowed 이면 "모르겠어요" 버튼을 둔다(F-D3).
+//   이 버튼은 고르기 보기와 같은 모양(.opt, 눌리면 2px accent + accent-tint + "고름")으로 그리고, 누르면 입력칸이 잠기며
+//   "모르겠어요로 기록" 안내가 뜬다. 다시 누르면 취소된다. 고르기 문항에서 "모르겠어요" 보기를 골라도 같은 안내가 뜬다(P6-A).
+// - 진행: 다섯 문제가 한 화면에 있고 "결과 보기"는 늘 눌린다. 답한 문제 수를 버튼 위에 보이고, 빠진 문제 안내는
+//   "결과 보기"를 한 번 누른 뒤부터 답할 때마다 바로 줄어든다(P6-A).
 // - 정답(answer_index·채점 값)은 "결과 보기"를 누를 때 /data/F/answers.json 에서 불러온다(누르기 전에는 화면에 없음).
 // - 결과는 diagnostic_result 한 행(쌓이는 기록)으로 저장되어 서버로 올라간다. 익힘·배지 계산에는 쓰지 않는다. 다시 풀 수 있다.
 import { useEffect, useState } from 'preact/hooks';
@@ -37,6 +41,11 @@ interface Key {
 type Draft = { choice: number | null; text: string; dontKnow: boolean };
 const blank = (): Draft => ({ choice: null, text: '', dontKnow: false });
 
+const DONT_KNOW = /모르겠어요/;
+/** "모르겠어요"를 골랐을 때 안내(직접 입력·고르기 같은 첫 문장, 취소하는 법만 다름) */
+const DONT_KNOW_NOTE_KO = '모르겠어요로 기록합니다. 감점 없이 추천에만 씁니다.';
+const DONT_KNOW_UNDO_KO = { text: '다시 누르면 취소하고 답을 적을 수 있습니다.', choice: '다른 보기를 고르면 바뀝니다.' };
+
 function answerLine(q: DiagQuestionPub, k: Key | undefined): string | null {
   if (!k) return null;
   if (q.type === 'choice' && k.answer_index != null && q.choices) return `답: ${k.answer_index + 1}번 ${q.choices[k.answer_index]}`;
@@ -51,6 +60,8 @@ function DiagnosticAppView(p: Props) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>(() => Object.fromEntries(p.questions.map((q) => [q.question_id, blank()])));
   const [retake, setRetake] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  /** "결과 보기"를 눌러 본 뒤에만 빠진 문제를 알린다(답할 때마다 바로 다시 센다) */
+  const [tried, setTried] = useState(false);
   const [keys, setKeys] = useState<Record<string, Key> | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -71,11 +82,13 @@ function DiagnosticAppView(p: Props) {
     const d = drafts[q.question_id];
     return d.dontKnow || (q.type === 'choice' ? d.choice != null : d.text.trim() !== '');
   };
+  const missing = p.questions.filter((q) => !answered(q)).map((q) => q.question_id);
+  const missingMsg = tried && missing.length ? `아직 답하지 않은 문제가 있습니다: ${missing.join(', ')}` : null;
 
   const submit = async () => {
     setMsg(null);
-    const missing = p.questions.filter((q) => !answered(q)).map((q) => q.question_id);
-    if (missing.length) return setMsg(`아직 답하지 않은 문제가 있습니다: ${missing.join(', ')}`);
+    setTried(true);
+    if (missing.length) return;
     setBusy(true);
     try {
       const k = keys ?? (await fetchJsonOnce<Record<string, Key>>(answersUrl(p.lectureId)));
@@ -101,6 +114,7 @@ function DiagnosticAppView(p: Props) {
         content_version: p.contentVersion,
       });
       setRetake(false);
+      setTried(false);
       setDrafts(Object.fromEntries(p.questions.map((q) => [q.question_id, blank()])));
       window.scrollTo({ top: 0 });
     } catch {
@@ -159,7 +173,15 @@ function DiagnosticAppView(p: Props) {
         </ol>
         <p class="small muted">모르겠어요는 감점 없이 기록만 하고, 추천을 고를 때만 씁니다. 진단 결과는 익힘·배지에 들어가지 않습니다.</p>
         <div class="row">
-          <button type="button" class="btn" onClick={() => setRetake(true)} data-testid="diag-retake">
+          <button
+            type="button"
+            class="btn"
+            onClick={() => {
+              setTried(false);
+              setRetake(true);
+            }}
+            data-testid="diag-retake"
+          >
             다시 풀기
           </button>
           <a class="btn primary grow" href="/basics/" data-testid="diag-to-list">
@@ -176,6 +198,8 @@ function DiagnosticAppView(p: Props) {
       <div class="diag-grid">
         {p.questions.map((q, i) => {
           const d = drafts[q.question_id];
+          const isChoice = q.type === 'choice' && !!q.choices;
+          const dk = d.dontKnow || (isChoice && d.choice != null && DONT_KNOW.test(q.choices![d.choice] ?? ''));
           return (
             <article class="card stack" data-testid={`diag-${q.question_id}`} aria-labelledby={`dh-${q.question_id}`}>
               <div class="row">
@@ -187,8 +211,8 @@ function DiagnosticAppView(p: Props) {
               <h2 class="t3" id={`dh-${q.question_id}`}>
                 <Inline text={q.prompt_ko} />
               </h2>
-              {q.type === 'choice' && q.choices ? (
-                <ChoiceOptions labelledBy={`dh-${q.question_id}`} choices={q.choices} value={d.choice} locked={false} onChange={(c) => set(q.question_id, { choice: c, dontKnow: false })} />
+              {isChoice ? (
+                <ChoiceOptions labelledBy={`dh-${q.question_id}`} choices={q.choices!} value={d.choice} locked={false} onChange={(c) => set(q.question_id, { choice: c, dontKnow: false })} />
               ) : (
                 <div class="stack-sm">
                   <label class="field">
@@ -197,35 +221,50 @@ function DiagnosticAppView(p: Props) {
                       class="input"
                       value={d.text}
                       disabled={d.dontKnow}
+                      placeholder={d.dontKnow ? '모르겠어요로 기록함' : undefined}
                       onInput={(e) => set(q.question_id, { text: (e.target as HTMLInputElement).value })}
                       data-testid={`diag-input-${q.question_id}`}
                     />
                   </label>
                   {q.dont_know_allowed && (
+                    // 고르기 보기와 같은 모양의 켜고 끄는 단추(누르면 "고름", 다시 누르면 취소)
                     <button
                       type="button"
-                      class="btn"
+                      class="opt"
                       aria-pressed={d.dontKnow}
                       onClick={() => set(q.question_id, { dontKnow: !d.dontKnow, text: '' })}
                       data-testid={`diag-dont-know-${q.question_id}`}
                     >
-                      모르겠어요
+                      <span class="on" aria-hidden="true">
+                        ?
+                      </span>
+                      <span class="grow">모르겠어요</span>
+                      {d.dontKnow && <span class="cap">고름</span>}
                     </button>
                   )}
                 </div>
+              )}
+              {(isChoice || q.dont_know_allowed) && (
+                // 늘 있는 알림 칸(role=status): 모르겠어요를 고르면 글이 들어가 화면 읽기 프로그램도 읽는다. 비면 자리를 차지하지 않는다
+                <p class="small diag-dk-note" role="status" data-testid={`diag-dk-note-${q.question_id}`}>
+                  {dk ? `${DONT_KNOW_NOTE_KO} ${isChoice ? DONT_KNOW_UNDO_KO.choice : DONT_KNOW_UNDO_KO.text}` : ''}
+                </p>
               )}
             </article>
           );
         })}
       </div>
-      {msg && (
+      {(msg || missingMsg) && (
         <div class="result ng" role="status" data-testid="diag-msg">
           <span class="sym">
             <IconCross />
           </span>
-          <p>{msg}</p>
+          <p>{msg ?? missingMsg}</p>
         </div>
       )}
+      <p class="cap num" aria-live="polite" data-testid="diag-progress">
+        답한 문제 {p.questions.length - missing.length} / {p.questions.length}
+      </p>
       <div class="row">
         {latest && (
           <button type="button" class="btn" onClick={() => setRetake(false)}>
