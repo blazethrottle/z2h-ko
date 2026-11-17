@@ -95,13 +95,12 @@ export function encodeResultCodeForTest(payload: unknown): string {
   return `Z2H1.${body}.${hex8(crc32(new TextEncoder().encode(body)))}`;
 }
 
-const REBUILD_RE = /^L\d{2}-R\d+$/;
-
-/** 결과코드 → 저장할 행. 재구성 조각(L01-R2 등)은 rebuild_attempt 행도 만든다 */
+/** 결과코드 → 저장할 행. 재구성 조각(정본 rebuild_tasks 의 id)은 rebuild_attempt 행도 만든다 */
 export function resultCodeToRows(
   data: ResultPayload,
   now: string,
   hintLevelOf: (id: string) => number,
+  rebuildIds: readonly string[],
 ): {
   grade: { check_id: string; passed: boolean; message_ko: string; source: 'result_code'; at: string }[];
   rebuild: { rebuild_id: string; attempt_id: string; passed: boolean; max_hint_level: number; at: string }[];
@@ -109,8 +108,18 @@ export function resultCodeToRows(
   const at = data.at || now;
   const grade = data.results.map((r) => ({ check_id: r.check_id, passed: r.passed, message_ko: r.message_ko, source: 'result_code' as const, at }));
   const rebuild = data.results
-    .filter((r) => REBUILD_RE.test(r.check_id))
+    .filter((r) => rebuildIds.includes(r.check_id))
     // attempt_id 를 결과코드에서 정해지는 값으로: 같은 코드를 두 번 붙여 넣어도 시도는 하나 (server/API.md 권장 모양)
     .map((r) => ({ rebuild_id: r.check_id, attempt_id: `rc-${data.crc}-${r.check_id}`, passed: r.passed, max_hint_level: hintLevelOf(r.check_id), at }));
   return { grade, rebuild };
+}
+
+/**
+ * 한 번 통과한 칸은 나중 결과코드의 다시(f)로 덮지 않는다. 완성한 노트북을 처음부터 다시 돌리면 뒤 단계가 고친 앞 셀 때문에
+ * 앞 단계 칸(S12, S30, S52 등)이 f 가 될 수 있어서다(p7-notebook 실측). 덮지 않은 칸은 keptPass 로 알려 화면에 한 줄 남긴다.
+ */
+export function keepPasses<T extends { check_id: string; passed: boolean }>(rows: T[], existing: readonly { check_id?: unknown; passed?: unknown }[]): { rows: T[]; keptPass: string[] } {
+  const passed = new Set(existing.filter((e) => e.passed === true).map((e) => String(e.check_id)));
+  const keptPass = rows.filter((r) => !r.passed && passed.has(r.check_id)).map((r) => r.check_id);
+  return { rows: rows.filter((r) => !keptPass.includes(r.check_id)), keptPass };
 }

@@ -33,18 +33,18 @@ function asTaster(c: CardInput | null): TasterCardInput {
 }
 
 const TASTER = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster.json'), 'utf8'));
-const L01 = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/L01.json'), 'utf8'));
 const OUT = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster_outputs.json'), 'utf8'));
 const TOKENS = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/design/tokens.json'), 'utf8'));
 const CF = TASTER.lecture.artifact.card_fields;
 const TT: TasterCardText = { ...CF, prefill_ko: TASTER.lecture.artifact.x_compose.prefill_ko };
-const L1A = L01.lecture.rewards.artifact;
+// 편 학습 기록 카드(ART-L01) 글: 클로드 버전 L01.json 에는 rewards.artifact 가 없어 화면에 나오지 않는다(P7 결정).
+// 그리기·정리 규칙은 남아 있어 테스트용 글로 확인한다(화면 문구 검사가 아님)
 const LT: L01CardText = {
-  title_ko: L1A.name_ko,
-  credit_ko: 'Andrej Karpathy의 공개 강의 micrograd를 따라 만든 결과',
+  title_ko: '테스트용 학습 기록 카드',
+  credit_ko: '테스트용 출처 표기',
   lecture_label: '01 micrograd',
   mark: '01',
-  prefill_ko: L1A.x_compose.prefill_ko,
+  prefill_ko: '테스트용 미리 채우는 글',
 };
 const NAMES: string[] = OUT['T-S07'].trim().split('\n');
 const PERSONAL = { email: 'me@mail.com', display_name: '홍길동', user_id: 'u-1', device: 'iPhone', active_seconds: 1234, rank: 1, created_at: '2026-11-17T00:00:00+09:00' };
@@ -128,10 +128,10 @@ describe('이름 카드 (ART-TASTER) 내용', () => {
   });
 });
 
-describe('학습 기록 카드 (ART-L01): S15b 손실 줄 파싱', () => {
-  const s15b = Array.from({ length: 20 }, (_, k) => `${k} ${(4.8 / (k + 1)).toFixed(6)}`).join('\n');
+describe('학습 기록 카드 (ART-L01): "번호 손실" 줄 파싱', () => {
+  const lossLog = Array.from({ length: 20 }, (_, k) => `${k} ${(4.8 / (k + 1)).toFixed(6)}`).join('\n');
   it('"번호 손실" 20줄 → 손실 20개, 붙여 넣은 순서 그대로', () => {
-    const r = parseLossLog(s15b);
+    const r = parseLossLog(lossLog);
     expect(r.losses).toHaveLength(20);
     expect(r.losses[0]).toBe(4.8);
     expect(r.losses[19]).toBe(Number((4.8 / 20).toFixed(6)));
@@ -153,10 +153,10 @@ describe('학습 기록 카드 (ART-L01): S15b 손실 줄 파싱', () => {
     expect(r.dropped).toBe(5);
   });
   it('카드: 제목 = 정본 artifact 이름, 출처 + (비공식), 부제는 처음 → 마지막 손실', () => {
-    const s = cardSpec(sanitizeCardInput({ kind: 'ART-L01', losses: parseLossLog(s15b).losses })!, LT);
-    expect(s.title).toBe('내 micrograd 학습 기록 카드');
+    const s = cardSpec(sanitizeCardInput({ kind: 'ART-L01', losses: parseLossLog(lossLog).losses })!, LT);
+    expect(s.title).toBe(LT.title_ko);
     expect(s.sub).toBe(`01 micrograd · 손실 4.8 → ${Number((4.8 / 20).toFixed(6))}`);
-    expect(s.footText).toBe('Andrej Karpathy의 공개 강의 micrograd를 따라 만든 결과 (비공식)');
+    expect(s.footText).toBe(`${LT.credit_ko} (비공식)`);
     expect(s.box.type).toBe('chart');
   });
 });
@@ -172,7 +172,6 @@ describe('X에 공유 주소: 글쓰기 창만 연다', () => {
       expect(u.searchParams.get('text')).toBe(prefill);
     }
     expect(TASTER.lecture.artifact.x_compose.auto_post).toBe(false);
-    expect(L1A.x_compose.auto_post).toBe(false);
   });
   it('미리 채우는 글은 정본 그대로이고 개인 정보가 없다', () => {
     expect(TT.prefill_ko).toBe('30분 만에 처음 학습시킨 작은 AI가 이름을 지었어요. 첫 모델이라 아직 서툴러요. (Andrej Karpathy의 공개 강의 makemore를 따라 만든 결과)');
@@ -189,7 +188,7 @@ describe('글 복사 (사실 문장)', () => {
   });
   it('학습 기록 카드: 처음 → 마지막 손실 + 출처', () => {
     const l = sanitizeCardInput({ kind: 'ART-L01', losses: [4.8, 0.5, 0.03] })!;
-    expect(copyText(l, LT)).toBe('Z2H 01 micrograd에서 작은 신경망을 학습시켰습니다. 손실 4.8 → 0.03. (Andrej Karpathy의 공개 강의 micrograd를 따라 만든 결과, 비공식)');
+    expect(copyText(l, LT)).toBe(`Z2H 01 micrograd에서 작은 신경망을 학습시켰습니다. 손실 4.8 → 0.03. (${LT.credit_ko}, 비공식)`);
   });
 });
 

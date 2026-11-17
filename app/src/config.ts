@@ -49,7 +49,7 @@ export interface AppConfig {
   };
   /** 로그인 길별 화면. auth_provider 칸이 없거나 표에 없는 값(옛 서버, "none")이면 fallback 행 */
   auth: { fallback: AuthProvider; screens: Record<AuthProvider, AuthScreen> };
-  /** C5 누적 점검: lock(통과해야 다음 편, 기본) | recommend(권고만). P1은 1편뿐이라 화면 영향 없음 */
+  /** C5 누적 점검: lock(통과해야 다음 편) | recommend(권고만, 기본: 얼큰이 결정 "잠금 없음, 추천만", P7). 앱은 어느 쪽이든 잠그지 않고 홈 안내 글만 바뀐다 */
   checkpointLock: CheckpointLock;
   /** Colab 바로 열기 주소. null이면 "Colab에서 열기" 버튼을 숨기고 "노트북 받기 + Colab에 올리기" 안내만 */
   colabOpenUrl: string | null;
@@ -144,7 +144,7 @@ export const config: AppConfig = {
       // SettingsApp.tsx ACCOUNT_PARTS 에 그 부품을 더한다. 만들기 전까지 서버가 그 값을 보내도 fallback 행으로 보인다.
     },
   },
-  checkpointLock: 'lock',
+  checkpointLock: 'recommend',
   colabOpenUrl: null,
   numericTolerance: { rel: 1e-4, abs: 0 },
   questionScoreRatio: 0.8,

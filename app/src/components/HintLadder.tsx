@@ -15,11 +15,29 @@ export interface HintRecord {
   level: number;
   text_ko: string;
   code_with_blanks: string | null;
+  /** H3 빈칸의 답(빈칸 순서대로)과 채운 뒤 나오는 출력 */
+  blank_answers: string[] | null;
+  blank_filled_output: string | null;
+  /** H2 가 가리키는 기초 단위(또는 단계)와 그 단위 설명 카드 몇 번째 문장인지 */
+  points_to: { unit_id: string; step_id: string | null; card_line: number | null } | null;
+  /** H4(show_solution): 정답 코드와 줄별 풀이(단계 코드·문제 정답 코드·과제 정답 코드) */
   code: string | null;
   code_line_notes_ko: string[] | null;
-  /** 문제의 H4(show_solution): 풀이 */
+  /** 문제의 H4: 풀이와 정답 코드의 출력 */
   answer_ko?: string | null;
+  answer_output?: string | null;
+  /** 과제의 H4: 정답 코드 출처 */
+  source_ko?: string | null;
   why_ko: string | null;
+}
+
+/** H2 가 가리키는 곳의 주소와 이름: 단위(설명 카드 문장) 또는 단계. 내용이 준비되지 않은 단위는 기초 목록 */
+export function pointHref(pt: NonNullable<HintRecord['points_to']>, basicsReady: string[] | undefined): { href: string; label: string } {
+  const unitPage = unitHref(pt.unit_id, basicsReady);
+  const ready = unitPage !== '/basics/';
+  if (pt.step_id && ready) return { href: `${unitPage}${pt.step_id.split('-').pop()}/`, label: `기초 ${pt.step_id} 단계 다시 보기` };
+  if (pt.card_line && ready) return { href: `${unitPage}#card-${pt.card_line}`, label: `기초 ${pt.unit_id} 설명 카드 ${pt.card_line}번째 문장 보기` };
+  return { href: unitPage, label: `기초 ${pt.unit_id}로 돌아가 보기` };
 }
 
 /** 힌트 상태를 이 기기에 보관 (열람 시각·시도 기록은 동기화하지 않음, 최고 단계만 진도에 저장) */
@@ -104,7 +122,7 @@ export default function HintLadder(p: Props) {
   const next = s.opened + 1;
   const hasNext = next <= maxLevel;
   const openable = hasNext && canOpen(s, next, now, p.unlock);
-  const shownLevel = Math.min(s.opened, 4);
+  const shownLevel = Math.min(s.opened, contentMax);
 
   const open = async () => {
     if (!openable) return;
@@ -119,8 +137,16 @@ export default function HintLadder(p: Props) {
   return (
     <section class={`card stack${p.emphasize ? ' current' : ''}`} aria-label={p.ctx === 'question' ? '힌트' : '막혔나요? 힌트'} data-testid={`hints-${p.targetId}`}>
       <h2 class="t3">{p.ctx === 'question' ? '힌트' : '막혔나요?'}</h2>
-      {p.ctx === 'step' && <p class="small muted">힌트는 4단계입니다. {STEP_HINT_NOTE}</p>}
-      {p.ctx === 'rebuild' && p.noteKo && <p class="small muted">힌트는 4단계입니다. {p.noteKo}</p>}
+      {p.ctx === 'step' && (
+        <p class="small muted">
+          힌트는 {contentMax}단계입니다. {STEP_HINT_NOTE}
+        </p>
+      )}
+      {p.ctx === 'rebuild' && p.noteKo && (
+        <p class="small muted">
+          힌트는 {contentMax}단계입니다. {p.noteKo}
+        </p>
+      )}
       <div aria-live="polite" class="stack">
         {loadErr && (
           <div class="result ng" role="status">
@@ -139,13 +165,44 @@ export default function HintLadder(p: Props) {
                   <Inline text={h.text_ko} />
                 </p>
               )}
-              {lv === 2 && h && /F-[PM]\d+/.test(h.text_ko) && (
-                <a href={unitHref(h.text_ko.match(/F-[PM]\d+/)![0], p.basicsReady)} class="small" data-testid={`hint-basics-${p.targetId}`}>
-                  기초 {h.text_ko.match(/F-[PM]\d+/)![0]}로 돌아가 보기
+              {h?.points_to && (
+                <a href={pointHref(h.points_to, p.basicsReady).href} class="small" data-testid={`hint-basics-${p.targetId}`}>
+                  {pointHref(h.points_to, p.basicsReady).label}
                 </a>
               )}
               {h?.code_with_blanks && <pre class="plain-code">{h.code_with_blanks.replace(/\n+$/, '')}</pre>}
-              {lv === 4 && h?.code && <CodeBlock code={h.code} notes={h.code_line_notes_ko ?? []} heading="정답 코드 · 줄을 누르면 풀이" />}
+              {h?.blank_answers && h.blank_answers.length > 0 && (
+                <details class="small" data-testid={`hint-blanks-${p.targetId}`}>
+                  <summary class="label" style="min-height:44px;display:flex;align-items:center;cursor:pointer">
+                    빈칸 답 보기
+                  </summary>
+                  <ol>
+                    {h.blank_answers.map((x) => (
+                      <li>
+                        <code class="inline">{x}</code>
+                      </li>
+                    ))}
+                  </ol>
+                  {h.blank_filled_output != null && (
+                    <>
+                      <p class="cap">채우고 실행하면 나오는 것</p>
+                      <pre class="out">{h.blank_filled_output}</pre>
+                    </>
+                  )}
+                </details>
+              )}
+              {lv === 4 && h?.code && <CodeBlock code={h.code} notes={h.code_line_notes_ko ?? []} heading={h.code_line_notes_ko?.length ? '정답 코드 · 줄을 누르면 풀이' : '정답 코드'} />}
+              {lv === 4 && h?.answer_output && (
+                <div class="stack-sm">
+                  <p class="cap">정답 코드의 출력</p>
+                  <pre class="out">{h.answer_output}</pre>
+                </div>
+              )}
+              {lv === 4 && h?.source_ko && (
+                <p class="cap">
+                  <Inline text={h.source_ko} />
+                </p>
+              )}
               {lv === 4 && h?.answer_ko && (
                 <div class="card sunken stack-sm">
                   <p class="label">풀이</p>
@@ -184,10 +241,10 @@ export default function HintLadder(p: Props) {
       )}
       <p class="cap num">
         {p.ctx === 'step'
-          ? `이 단계 힌트 사용: ${shownLevel} / 4`
+          ? `이 단계 힌트 사용: ${shownLevel} / ${contentMax}`
           : p.ctx === 'rebuild'
-          ? `이 과제 힌트 사용: ${shownLevel} / 4`
-          : `이 문제 힌트: ${shownLevel} / 4${s.opened >= 2 ? ` · 이 문제는 ${Math.round(hintScoreRatio(s.opened) * 100)}%로 계산됩니다` : ''}`}
+          ? `이 과제 힌트 사용: ${shownLevel} / ${contentMax}`
+          : `이 문제 힌트: ${shownLevel} / ${contentMax}${s.opened >= 2 ? ` · 이 문제는 ${Math.round(hintScoreRatio(s.opened) * 100)}%로 계산됩니다` : ''}`}
       </p>
     </section>
   );

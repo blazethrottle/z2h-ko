@@ -1,4 +1,5 @@
-// 힌트 사다리 열림 조건 (hints.md 2절, decisions C4: 앱 안 "비교하기"·"제출" = 시도 1회).
+// 힌트 사다리 열림 조건 (docs/CURRICULUM.md 3-2·hints.md 2절, decisions C4: 앱 안 "비교하기"·"제출" = 시도 1회).
+// 정본 힌트마다 unlock 이 있으면 그 값이 이기고, 아래 기본값은 unlock 이 없는 힌트에만 쓴다.
 // 상태는 순수 데이터라 저장·복원이 쉽다.
 
 export interface HintState {
@@ -20,8 +21,8 @@ export interface UnlockRule {
 export const DEFAULT_UNLOCK: Record<number, { after_attempts: number; after_minutes: number | null }> = {
   1: { after_attempts: 0, after_minutes: null },
   2: { after_attempts: 1, after_minutes: null },
-  3: { after_attempts: 1, after_minutes: 15 },
-  4: { after_attempts: 1, after_minutes: 30 },
+  3: { after_attempts: 2, after_minutes: 5 },
+  4: { after_attempts: 3, after_minutes: 10 },
 };
 
 export function emptyHintState(startedAt: number): HintState {
@@ -66,7 +67,9 @@ export type HintContext = 'step' | 'question' | 'rebuild';
 export function lockText(level: number, ctx: HintContext, overrides: Record<number, UnlockRule> = {}): string {
   if (level === 5) return '정답을 넣고도 결과가 다르면 열림';
   const rule = { ...DEFAULT_UNLOCK[level], ...(overrides[level] ?? {}) };
-  const act = ctx === 'step' ? '결과를 한 번 더 비교하' : ctx === 'rebuild' ? '한 번 더 해 보고 "아직 안 돼요"를 누르' : '답을 한 번 더 내';
+  const n = rule.after_attempts ?? 0;
+  const times = n <= 1 ? '한 번 더' : `${n}번 더`;
+  const act = ctx === 'step' ? `결과를 ${times} 비교하` : ctx === 'rebuild' ? `${times} 해 보고 "아직 안 돼요"를 누르` : `답을 ${times} 내`;
   if (rule.after_minutes != null) return `${act}거나 ${rule.after_minutes}분 뒤 열림`;
   return `${act}면 열림`;
 }

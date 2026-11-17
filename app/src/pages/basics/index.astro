@@ -1,5 +1,5 @@
 ---
-// 8 사전 기초 진입 /basics/ (spec 8절, 목업 s8_basics): 머리(kicker·제목은 spec 8절, 글은 정본 intro_ko·common_format_ko 그대로),
+// 8 사전 기초 진입 /basics/ (spec 8절, 목업 s8_basics): 머리(kicker·제목은 spec 8절, 글은 정본 intro_ko 그대로),
 // 진단 카드, 단위 목록 2개, 다음 줄. 진단은 추천만 하고 단위를 건너뛰게 하지 않는다. 01편은 잠그지 않는다(D24·D37). 단위 수는 콘텐츠에서 센다.
 import Base from '../../layouts/Base.astro';
 import BasicsApp from '../../components/BasicsApp.tsx';
@@ -7,24 +7,30 @@ import Inline from '../../components/Inline.tsx';
 import { loadBasics } from '../../lib/content/basics.mjs';
 import { lectureLabel, loadSite } from '../../lib/pageData';
 
-const b: any = loadBasics();
-const site: any = loadSite();
-const first = site.lectures.find((l: any) => l.available) ?? null;
-const count = (id: string) => b.groups.find((g: any) => g.id === id)?.unit_ids.length ?? 0;
-const units = b.units.map((u: any) => ({ unit_id: u.unit_id, group: u.group, title_ko: u.title_ko, ready: u.ready, mastery: u.mastery }));
+const b = loadBasics();
+const site = loadSite();
+const first = site.lectures.find((l) => l.available) ?? null;
+const count = (id: string) => b.groups.find((g) => g.id === id)?.unit_ids.length ?? 0;
+const units = b.units.map((u) => ({ unit_id: u.unit_id, group: u.group, title_ko: u.title_ko, ready: u.ready, estimated_minutes: u.estimated_minutes, mastery: u.mastery }));
 ---
 <Base title="사전 기초" nav="basics" wide>
   <div class="stack">
     <p class="kicker">강의 전에 권장</p>
     <h1 class="t1">사전 기초: 파이썬 {count('python')}단위 · 수학 {count('math')}단위</h1>
-    <p class="muted" data-testid="basics-intro"><Inline text={b.intro_ko} /></p>
-    <p class="small muted" data-testid="basics-format"><Inline text={b.common_format_ko} /></p>
+    <div class="stack-sm" data-testid="basics-intro">
+      {b.intro_ko.map((line) => (
+        <p class="small muted">
+          <Inline text={line} />
+        </p>
+      ))}
+    </div>
     <BasicsApp
       client:load
       units={units}
       groups={b.groups}
       rule={b.rule}
-      diagnostic={{ title_ko: b.diagnostic.title_ko, purpose_ko: b.diagnostic.purpose_ko, result_ko: b.diagnostic.result_ko, questions: b.diagnostic.questions }}
+      diagnostic={{ ...b.diagnostic }}
+      rules={b.recommend}
       afterAll={first ? { href: `/lectures/${first.lecture_id}/`, label: `강의 ${lectureLabel(first.lecture_id, first.title_ko)}` } : null}
     />
   </div>

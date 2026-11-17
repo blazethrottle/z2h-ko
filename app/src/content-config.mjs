@@ -1,7 +1,7 @@
 // 콘텐츠 검사·빌드가 쓰는 설정 한 곳 (앱 설정 config.ts 와 별도: node 스크립트도 읽어야 해서 .mjs)
 
-/** 영상이 없는 단계 (D40·D49·D53). video_segments 가 빈 목록이어도 되는 단계는 여기 적힌 것뿐이다 */
-export const NO_VIDEO_STEPS = ['L08-S01', 'L08-S04', 'L08-S08'];
+/** 영상이 없는 단계 (D40·D49·D53, docs/CURRICULUM.md 결정 D14). video_segments 가 빈 목록이어도 되는 단계는 여기 적힌 것뿐이다 */
+export const NO_VIDEO_STEPS = ['L04-S36', 'L10-S47'];
 /** 맛보기 단계 id 머리말(모든 맛보기 단계는 영상 없음) */
 export const TASTER_STEP_PREFIX = 'T-S';
 
@@ -11,7 +11,7 @@ export function isNoVideoStep(stepId) {
 
 /**
  * 맛보기 (교사 정본, 손으로 고치지 않는다). 강의 콘텐츠 JSON 과 같은 폴더(inputs/pedagogy/content)에 있다.
- * outputsFile: 교사가 실제로 실행한 출력(미리 계산한 결과 화면은 이 값만 쓴다).
+ * outputsFile: 교사가 실제로 실행한 맛보기 출력(미리 계산한 결과 화면은 이 값만 쓴다).
  * notebook: 맛보기 노트북(저장소 기준). 있으면 빌드 때 dist/notebooks/taster/ 로 복사, 없으면 화면에 "노트북 준비 중".
  */
 export const TASTER = {
@@ -35,28 +35,27 @@ export const NAMES_TXT = {
 };
 
 /**
- * 사전 기초(교사 정본 F.json 하나만 읽는다. 경로는 저장소 기준이고 이 한 곳에서만 정한다). 없으면 콘텐츠 검사가 실패한다(빌드 멈춤).
+ * 사전 기초(정본 F.json 하나만 읽는다. 경로는 저장소 기준이고 이 한 곳에서만 정한다). 없으면 콘텐츠 검사가 실패한다(빌드 멈춤).
  * 테스트만 환경 변수 Z2H_BASICS_FILE 로 다른 파일(tests/fixtures/basics/F.json)을 줄 수 있다(1편 Z2H_CONTENT_DIR 과 같은 방식).
- * 화면에 여는 단위: lecture.units[].status 가 written 인 단위. planned 는 목록에 "준비 중"(누를 수 없음, 주소 없음).
- * unitMap: 00-foundations.md "단위 지도" 순서(data-spec 1절 ID 규칙). 진단 추천 단위는 이 순서로 보인다.
+ * 단위 순서는 정본 lecture.units 순서. 화면에 여는 단위: status 가 없거나 written 인 단위. planned 는 목록에 "준비 중"(누를 수 없음, 주소 없음).
  */
 export const BASICS = {
   lectureId: 'F',
   file: 'inputs/pedagogy/content/F.json',
   diagnosticUnitId: 'F-DIAG',
-  unitMap: ['F-P1', 'F-P2', 'F-P3', 'F-P4', 'F-P5', 'F-P6', 'F-P7', 'F-P8', 'F-P9', 'F-M1', 'F-M2', 'F-M3', 'F-M4', 'F-M5', 'F-M6'],
-  /** 정본 lecture.diagnostic 의 약속. 코드는 이 값대로만 동작하고(잠금·건너뛰기·힌트 화면 없음), 정본 값이 다르면 빌드 검사 실패 */
-  diagnosticPromises: { recommend_only: true, locks: false, auto_skip: false, uses_hints: false },
-  /** 단위 묶음: id 머리말과 목록 제목(spec 8절) */
+  /** 정본 lecture.diagnostic 의 약속. 코드는 이 값대로만 동작하고(잠금·힌트 화면 없음), 정본 값이 다르면 빌드 검사 실패 */
+  diagnosticPromises: { hints: false, locks_anything: false },
+  /** 단위 묶음: 정본 units[].kind 와 id 머리말, 목록 제목(spec 8절) */
   groups: [
     { id: 'python', prefix: 'F-P', label_ko: '파이썬 최소' },
     { id: 'math', prefix: 'F-M', label_ko: '수학 최소' },
   ],
-  /** expected_check·rebuild check 의 figure(그림 직접 확인) 값 → 안내 문구에 쓰는 이름. 채점에는 쓰지 않는다. 표에 없으면 이름 없이 안내 */
-  figureLabels: { parabola: '포물선', cubic: '3차 곡선' },
 };
 
-/** 편별 학생용 노트북 경로(저장소 기준). 교사 JSON 에는 노트북 칸이 없어 여기 둔다. 파일이 없으면 화면에 "노트북 준비 중" */
+/** 익힘 판정의 "단계 완료"에서 빼는 단계 종류(docs/CURRICULUM.md 3-3: 단계 완료 비율 1.0, optional 제외). 1편·기초 같이 쓴다 */
+export const MASTERY_EXCLUDED_KINDS = ['optional'];
+
+/** 편별 학생용 노트북 경로(저장소 기준). 정본 JSON 에는 노트북 칸이 없어 여기 둔다. 파일이 없으면 화면에 "노트북 준비 중" */
 export const NOTEBOOKS = {
   L01: { student: 'notebooks/ep01-micrograd/ep01_student.ipynb' },
 };

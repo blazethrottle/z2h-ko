@@ -1,6 +1,6 @@
 // 풀이 숨김: answer_ko와 H4 정답은 제출·열림 조건 전에는 화면 문서(DOM)와 페이지 HTML에 없다.
 import { test, expect, manifest } from './fixtures';
-import { answerQuestion, isRubric, wrongAttempt } from './helpers';
+import { answerQuestion, isRubric, openHintAfterAttempts, wrongAttempt } from './helpers';
 
 test('answer_ko는 제출 전 DOM·HTML에 없고, 제출 뒤에만 보인다', async ({ page, api }) => {
   const m = await manifest(page);
@@ -46,14 +46,14 @@ test('H4 정답은 열림 조건(H3 뒤 시도 1회)을 채우고 열기 전에�
   await expect(ladder.getByTestId(`hint-${step.step_id}-H1`)).toBeVisible();
   await expect(ladder.getByTestId('hint-locked-2')).toBeVisible();
   for (const lv of [2, 3, 4]) {
-    await wrongAttempt(page, step.expected_check);
+    await wrongAttempt(page, step.check);
     if (lv === 4) expect(await page.locator('body').textContent()).not.toContain(h4Marker!);
-    await ladder.getByTestId(`open-hint-${lv}`).click();
+    await openHintAfterAttempts(ladder, lv, () => wrongAttempt(page, step.check));
     await expect(ladder.getByTestId(`hint-${step.step_id}-H${lv}`)).toBeVisible();
   }
   await expect(ladder.getByTestId(`hint-${step.step_id}-H4`)).toContainText(h4Marker!);
   await expect(ladder).toContainText('이 단계 힌트 사용: 4 / 4');
-  await wrongAttempt(page, step.expected_check);
+  await wrongAttempt(page, step.check);
   await ladder.getByTestId('open-hint-5').click();
   await expect(ladder.getByRole('button', { name: '메모 만들기' })).toBeVisible();
   await expect.poll(() => api.opsFor('step_progress').some((o) => o.key.step_id === step.step_id && o.data.max_hint_level === 5)).toBe(true);
@@ -62,8 +62,9 @@ test('H4 정답은 열림 조건(H3 뒤 시도 1회)을 채우고 열기 전에�
 test('확인 문제의 H4 정답은 시도 조건을 채워 열기 전에는 DOM에 없다', async ({ page }) => {
   const m = await manifest(page);
   const L = m.lectures[0];
-  const q = L.questions.find((x: any) => x.hint_levels.includes(4));
-  test.skip(!q, 'H4가 있는 문제 없음');
+  // 예측·고르기는 한 번 내면 풀이가 열려 힌트 사다리가 닫힌다: 여러 번 틀릴 수 있는 문항으로 고른다
+  const q = L.questions.find((x: any) => x.hint_levels.includes(4) && !['predict', 'choice'].includes(x.type));
+  test.skip(!q, 'H4가 있는 설명·버그·적용 문제 없음');
   const answers = await (await page.request.get(`/data/${L.lecture_id}/answers.json`)).json();
   const hints = await (await page.request.get(`/data/${L.lecture_id}/hints.json`)).json();
   const h4 = hints[q.question_id].find((h: any) => h.level === 4);
@@ -90,7 +91,7 @@ test('확인 문제의 H4 정답은 시도 조건을 채워 열기 전에는 DOM
       expect(await page.locator('body').textContent()).not.toContain(marker);
       await expect(ladder).toContainText('이 힌트를 열면 이 문제는 0%로 계산됩니다');
     }
-    await ladder.getByTestId(`open-hint-${lv}`).click();
+    await openHintAfterAttempts(ladder, lv, wrong);
   }
   await expect(ladder.getByTestId(`hint-${q.question_id}-H4`)).toContainText(marker);
   await expect(card.getByTestId(`answer-${q.question_id}`)).toHaveCount(0);

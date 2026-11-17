@@ -3,14 +3,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   diagnosticSummary,
-  fillTemplate,
   gradeDiagnostic,
   latestDiagnostic,
   nextUnit,
-  notReadyTarget,
   rebuildPasses,
+  recommendLabelOf,
   recommendUnits,
-  splitUnitsTemplate,
   unitHref,
   unitMastery,
   unitRowState,
@@ -65,19 +63,8 @@ describe('추천 계산 (정본 recommend_rule: 틀리거나 모르겠어요인 
   });
 });
 
-describe('결과 문구 틀 (정본 result_ko 의 {correct}·{units})', () => {
-  it('{이름}을 값으로, 모르는 이름은 그대로', () => {
-    expect(fillTemplate('맞힌 문제 {correct}/5', { correct: 3 })).toBe('맞힌 문제 3/5');
-    expect(fillTemplate('{a}와 {b}', { a: 1 })).toBe('1와 {b}');
-  });
-  it('{units} 앞뒤로 나눈다(단위는 화면에서 링크·준비 중과 함께)', () => {
-    expect(splitUnitsTemplate('추천 시작 단위: {units}')).toEqual(['추천 시작 단위: ', '']);
-    expect(splitUnitsTemplate('앞 {units} 뒤')).toEqual(['앞 ', ' 뒤']);
-  });
-});
-
 describe('진단 채점 (힌트 없음, 모르겠어요는 오답 기록)', () => {
-  const choice = { type: 'choice', choices: ['3', '5', '32', '모르겠어요'] };
+  const choice = { type: 'choice', choices: ['3', '5', '32', '모르겠어요'], dont_know_index: 3 };
   const choiceKey = { answer_index: 1, auto_grade: { type: 'choice' } };
   const exact = { type: 'predict', choices: null };
   const exactKey = { answer_index: null, auto_grade: { type: 'exact', value: '8' } };
@@ -86,12 +73,13 @@ describe('진단 채점 (힌트 없음, 모르겠어요는 오답 기록)', () =
     expect(gradeDiagnostic(choice, choiceKey, { choiceIndex: 2 })).toEqual({ is_correct: false, is_dont_know: false });
     expect(gradeDiagnostic(choice, choiceKey, { choiceIndex: 3 })).toEqual({ is_correct: false, is_dont_know: true });
   });
-  it('직접 입력 exact: 앞뒤 공백은 무시', () => {
+  it('직접 입력 exact: 앞뒤 공백은 무시, 정본 accept(같은 답의 다른 표기)도 맞음', () => {
+    expect(gradeDiagnostic(exact, { answer_index: null, auto_grade: { type: 'exact', value: '6', accept: ['6.0', '6배'] } }, { text: '6배' }).is_correct).toBe(true);
     expect(gradeDiagnostic(exact, exactKey, { text: '8' }).is_correct).toBe(true);
     expect(gradeDiagnostic(exact, exactKey, { text: '  8 ' }).is_correct).toBe(true);
     expect(gradeDiagnostic(exact, exactKey, { text: '9' }).is_correct).toBe(false);
   });
-  it('직접 입력의 모르겠어요 버튼(정본 dont_know_allowed)은 틀림 + is_dont_know', () => {
+  it('직접 입력의 모르겠어요 단추(정본 allow_dont_know)는 틀림 + is_dont_know', () => {
     expect(gradeDiagnostic(exact, exactKey, { dontKnow: true })).toEqual({ is_correct: false, is_dont_know: true });
   });
   it('마지막 진단 결과는 at 이 가장 늦은 행', () => {
@@ -105,11 +93,11 @@ describe('진단 채점 (힌트 없음, 모르겠어요는 오답 기록)', () =
   });
 });
 
-describe('단위 익힘 = 정본 mastery_rule (선택 단계 제외 단계 전부 + 점수 0.8 + must_pass 전부 + 스스로 해 보기 통과)', () => {
-  const rule: BasicsRule = { steps_complete_ratio: 1, question_score_ratio: 0.8, must_pass_all: true };
+describe('단위 익힘 = 정본 mastery_rule (선택 단계 제외 단계 전부 + 점수 0.8 + must_pass 전부 + 판정에 넣는 익힘 과제 통과)', () => {
+  const rule: BasicsRule = { steps_complete_ratio: 1, question_score_ratio: 0.8 };
   const u: UnitMasteryRef = {
-    step_ids: ['F-P1-S01', 'F-P1-S02'],
-    activity_step_ids: ['F-P1-S01', 'F-P1-S02', 'F-P1-S03'], // S03 은 선택 단계
+    step_ids: ['F-P1-S1', 'F-P1-S2'],
+    activity_step_ids: ['F-P1-S1', 'F-P1-S2', 'F-P1-S3'], // S3 은 선택 단계
     questions: [
       { question_id: 'F-P1-Q1', max_points: 1, must_pass: true },
       { question_id: 'F-P1-Q2', max_points: 1, must_pass: true },
@@ -119,12 +107,12 @@ describe('단위 익힘 = 정본 mastery_rule (선택 단계 제외 단계 전�
   const done = (id: string, status = 'done') => ({ step_id: id, status });
   const att = (qid: string, ok: boolean, hint = 0) => ({ question_id: qid, is_correct: ok, points_awarded: ok ? [1, 1, 0.8, 0.5, 0][hint] : 0, max_hint_level: hint });
   const rb = (passed: boolean, hint: number) => ({ rebuild_id: 'F-P1-R1', passed, max_hint_level: hint });
-  const allSteps = [done('F-P1-S01'), done('F-P1-S02')];
+  const allSteps = [done('F-P1-S1'), done('F-P1-S2')];
   const allQs = [att('F-P1-Q1', true), att('F-P1-Q2', true)];
 
   it('기록 없음 = 아직, 하나라도 하면 지금(선택 단계·문제·스스로 해 보기 포함)', () => {
     expect(unitMastery(u, rule, [], [], []).status).toBe('todo');
-    expect(unitMastery(u, rule, [done('F-P1-S03', 'in_progress')], [], []).status).toBe('now');
+    expect(unitMastery(u, rule, [done('F-P1-S3', 'in_progress')], [], []).status).toBe('now');
     expect(unitMastery(u, rule, [], [att('F-P1-Q1', false)], []).status).toBe('now');
     expect(unitMastery(u, rule, [], [], [rb(false, 3)]).status).toBe('now');
   });
@@ -133,7 +121,7 @@ describe('단위 익힘 = 정본 mastery_rule (선택 단계 제외 단계 전�
     expect(m).toMatchObject({ status: 'done', steps_ok: true, score_ok: true, must_pass_ok: true, rebuild_ok: true, steps_done_ratio: 1, question_score_ratio: 1 });
   });
   it('단계 하나가 남으면 지금', () => {
-    expect(unitMastery(u, rule, [done('F-P1-S01')], allQs, [rb(true, 0)]).status).toBe('now');
+    expect(unitMastery(u, rule, [done('F-P1-S1')], allQs, [rb(true, 0)]).status).toBe('now');
   });
   it('점수: 힌트 비율 반영, 0.8 미만이면 지금(맞혀도 H3 이상이면 점수가 깎인다)', () => {
     const m = unitMastery(u, rule, allSteps, [att('F-P1-Q1', true, 3), att('F-P1-Q2', true)], [rb(true, 0)]);
@@ -152,11 +140,18 @@ describe('단위 익힘 = 정본 mastery_rule (선택 단계 제외 단계 전�
     expect(m.status).toBe('now');
     expect(unitMastery(five, rule, allSteps, [...four, att('F-P1-Q5', false), att('F-P1-Q5', true)], [rb(true, 0)]).status).toBe('done');
   });
-  it('must_pass_all 이 false 면 must_pass 표시가 있는 문항만 본다', () => {
-    const v: UnitMasteryRef = { ...u, questions: [{ question_id: 'F-P1-Q1', max_points: 1, must_pass: false }, ...Array.from({ length: 4 }, (_, i) => ({ question_id: `F-P1-Q${i + 2}`, max_points: 1, must_pass: false }))] };
+  it('must_pass 표시가 없는 문항은 맞힌 적이 없어도 점수만 넘으면 된다(정본 claude-1.1 기초 문항은 모두 must_pass false)', () => {
+    const v: UnitMasteryRef = { ...u, questions: Array.from({ length: 5 }, (_, i) => ({ question_id: `F-P1-Q${i + 1}`, max_points: 1, must_pass: false })) };
     const qs = [2, 3, 4, 5].map((i) => att(`F-P1-Q${i}`, true));
-    expect(unitMastery(v, { ...rule, must_pass_all: false }, allSteps, qs, [rb(true, 0)]).status).toBe('done');
-    expect(unitMastery(v, rule, allSteps, qs, [rb(true, 0)]).status).toBe('now');
+    expect(unitMastery(v, rule, allSteps, qs, [rb(true, 0)]).status).toBe('done');
+  });
+  it('판정에 넣는 익힘 과제가 없으면(rebuilds 빈 목록) 과제와 상관없이 완료', () => {
+    expect(unitMastery({ ...u, rebuilds: [] }, rule, allSteps, allQs, []).status).toBe('done');
+  });
+  it('판정 밖 익힘 과제(activity_rebuild_ids)만 해도 이 단위를 하고 있는 것(● 지금)', () => {
+    const v: UnitMasteryRef = { ...u, rebuilds: [], activity_rebuild_ids: ['F-P1-R1'] };
+    expect(unitMastery(v, rule, [], [], [rb(true, 0)]).status).toBe('now');
+    expect(unitMastery(v, rule, [], [], [{ rebuild_id: 'F-P2-R1', passed: true, max_hint_level: 0 }]).status).toBe('todo');
   });
   it('스스로 해 보기: 통과 기록이 있어야, 연 힌트가 한도를 넘으면 통과가 아니다', () => {
     expect(unitMastery(u, rule, allSteps, allQs, []).rebuild_ok).toBe(false);
@@ -178,20 +173,27 @@ describe('단위 익힘 = 정본 mastery_rule (선택 단계 제외 단계 전�
   });
 });
 
-describe('목록 행 상태 (✓ 완료 / ● 지금 / 추천 / ○ 아직 / 준비 중)', () => {
-  it('완료와 지금이 추천보다 먼저', () => {
-    expect(unitRowState(true, 'done', true)).toEqual({ key: 'done', label: '✓ 완료' });
-    expect(unitRowState(true, 'now', true)).toEqual({ key: 'now', label: '● 지금' });
-    expect(unitRowState(true, 'todo', true)).toEqual({ key: 'rec', label: '추천' });
-    expect(unitRowState(true, 'todo', false)).toEqual({ key: 'todo', label: '○ 아직' });
+describe('목록 행 상태 (✓ 완료 / ● 지금 / 추천 이름 / ○ 아직 / 준비 중)', () => {
+  it('완료와 지금이 추천보다 먼저, 추천은 정본 규칙 이름', () => {
+    expect(unitRowState(true, 'done', '처음이면 먼저')).toEqual({ key: 'done', label: '✓ 완료' });
+    expect(unitRowState(true, 'now', '처음이면 먼저')).toEqual({ key: 'now', label: '● 지금' });
+    expect(unitRowState(true, 'todo', '1편 전에 보기')).toEqual({ key: 'rec', label: '1편 전에 보기' });
+    expect(unitRowState(true, 'todo', null)).toEqual({ key: 'todo', label: '○ 아직' });
   });
-  it('준비 중 단위: 추천이면 추천을 그대로 보이고 준비 중을 붙인다', () => {
-    expect(unitRowState(false, 'todo', false)).toEqual({ key: 'coming', label: '준비 중' });
-    expect(unitRowState(false, 'todo', true)).toEqual({ key: 'coming', label: '추천 · 준비 중' });
+  it('준비 중 단위: 추천이면 추천 이름을 그대로 보이고 준비 중을 붙인다', () => {
+    expect(unitRowState(false, 'todo', null)).toEqual({ key: 'coming', label: '준비 중' });
+    expect(unitRowState(false, 'todo', '추천')).toEqual({ key: 'coming', label: '추천 · 준비 중' });
+  });
+  it('추천 이름: 진단이 추천한 단위가 먼저, 그다음 처음이면 먼저', () => {
+    const rec = { diagnostic: { label_ko: '진단 이름' }, always_first: { label_ko: '먼저 이름', units: ['F-P1', 'F-P8'] } };
+    expect(recommendLabelOf('F-P1', [], rec)).toBe('먼저 이름');
+    expect(recommendLabelOf('F-P1', ['F-P1'], rec)).toBe('진단 이름');
+    expect(recommendLabelOf('F-M1', ['F-M1'], rec)).toBe('진단 이름');
+    expect(recommendLabelOf('F-M2', ['F-M1'], rec)).toBeNull();
   });
 });
 
-describe('주소, 다음 단위, 준비 중 안내 링크', () => {
+describe('주소, 다음 단위', () => {
   const units = ORDER.map((id) => ({ unit_id: id, ready: READY.includes(id) }));
   const st = (m: Record<string, 'done' | 'now'>) => (id: string) => m[id] ?? 'todo';
   it('준비된 단위는 단위 화면, 준비 중 단위는 기초 목록', () => {
@@ -205,12 +207,6 @@ describe('주소, 다음 단위, 준비 중 안내 링크', () => {
     expect(nextUnit(units, st({ 'F-P1': 'done' }), ['F-P9', 'F-M1'])).toBe('F-M1');
     expect(nextUnit(units, st({ 'F-P1': 'done', 'F-P6': 'now' }), ['F-M1'])).toBe('F-P6');
     expect(nextUnit(units, st(Object.fromEntries(READY.map((id) => [id, 'done'] as const))), [])).toBeNull();
-  });
-  it('준비 중 단위를 추천했을 때 링크: 준비된 추천 단위 → 없으면 준비된 단위 중 첫 안 끝난 단위', () => {
-    expect(notReadyTarget(units, st({}), ['F-M3', 'F-M4'])).toBe('F-P1');
-    expect(notReadyTarget(units, st({ 'F-P1': 'done' }), ['F-M3', 'F-M4'])).toBe('F-P2');
-    expect(notReadyTarget(units, st({}), ['F-P9', 'F-M1'])).toBe('F-M1');
-    expect(notReadyTarget(units, st({ 'F-M1': 'done' }), ['F-P9', 'F-M1'])).toBe('F-P1');
   });
 });
 

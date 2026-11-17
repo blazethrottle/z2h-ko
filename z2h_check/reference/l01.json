@@ -1,119 +1,606 @@
 {
   "lecture_id": "L01",
-  "version": 1,
-  "_설명": "1편 채점 기준값과 허용 오차. 손으로 계산할 수 있는 값과 교사 정본(inputs/pedagogy/content/L01.json, c6d3e72)의 expected_check 값만 넣었다. 실행해야 아는 값은 null로 두고 옆에 '<키>_주석' 칸에 '노트북 실행 후 확정'을 적는다(노트북 작업자가 채움). 지금 null 칸은 없다. 이 파일을 고친 뒤에는 python -m z2h_check.bundle --write 로 묶음을 다시 만든다.",
-  "_출처": "강의 예제 숫자(S07 a=2, b=-3, c=10, f=-2 / S09 x1=2, x2=0, w1=-3, w2=1, b=6.8813735870195432)와 S15 데이터 xs, ys는 karpathy/nn-zero-to-hero lectures/micrograd 강의 노트북(MIT)에서 가져왔다. 범위 값은 교사 정본 L01.json expected_check.",
+  "version": 2,
+  "_설명": "1편 채점 기준값. 자동 생성 파일이라 손으로 고치지 않는다: python -m z2h_check.refgen --write (정본 inputs/pedagogy/content/L01.json). steps 는 정본의 코드 단계와 expected_check, rebuild 는 재구성 확인 셀과 통과 기준.",
+  "_출처": "정본 _meta.sources_and_licenses. 확인 식과 재구성 확인 셀의 강의 예제 숫자와 코드 동작 기준: karpathy/micrograd (MIT): Value 의 연산과 _backward, backward(위상 정렬), Neuron, Layer, MLP 구조(engine.py, nn.py) / karpathy/nn-zero-to-hero (MIT): lectures/micrograd 강의 노트북의 f(x) 예제, trace, draw_dot, lol, 뉴런 예제 숫자, 학습 반복문 / 우리가 새로 씀 (-): draw_text(그림 대신 글자로 보기), random.seed(1337) 줄, 확인 식(expected_check.expr), 재구성 확인 셀. LICENSE 전문은 third_party/licenses/, 표는 NOTICE.md.",
+  "canon": {
+    "file": "inputs/pedagogy/content/L01.json",
+    "version": "claude-1.0"
+  },
   "tolerance": {
-    "grad": 1e-6,
-    "_grad_설명": "값과 기울기 비교: |학생 값 - 기준 값| <= grad * max(1, |기준 값|). karpathy/micrograd test/test_engine.py 의 1e-6과 같다.",
-    "float32": 1e-4,
-    "_float32_설명": "S13b에서 학생이 float32 텐서(.double() 없이)를 쓴 경우에만 쓴다."
+    "number": 1e-06,
+    "_설명": "정본 _meta.code_conventions: output_match 는 contains, 소수는 이 허용오차까지 같으면 맞음"
   },
-  "S01": {
-    "f_at": [[3.0, 20.0], [0.0, 5.0], [-1.0, 12.0], [2.0, 9.0]],
-    "_설명": "f(x) = 3x² - 4x + 5 손계산: f(3) = 27 - 12 + 5 = 20, f(0) = 5, f(-1) = 3 + 4 + 5 = 12, f(2) = 12 - 8 + 5 = 9"
-  },
-  "S02": {
-    "min": 13.99,
-    "max": 14.01,
-    "_설명": "교사 정본 expected_check. 손 계산: f'(3) = 6*3 - 4 = 14, h를 쓰면 (f(3+h) - f(3))/h = 14 + 3h (h = 0.0001이면 14.0003). 이 범위는 h가 0.0033 이하일 때까지 받는다."
-  },
-  "S03": {
-    "a": {"min": -3.01, "max": -2.99},
-    "b": {"min": 1.99, "max": 2.01},
-    "c": {"min": 0.99, "max": 1.01},
-    "_설명": "d = a*b + c 는 a, b, c 각각에 대해 직선이라 숫자 기울기는 정확히 b(-3), a(2), 1 이다(반올림 오차만 있음)."
-  },
-  "S04": {"data": 2.0, "repr_prefix": "Value(data=2.0"},
-  "S05": {"a": 2.0, "b": -3.0, "c": 10.0, "ab": -6.0, "d": 4.0},
-  "S07": {
-    "_설명": "L = (a*b + c) * f, e = a*b, d = e + c. 기대 grad는 학생이 넘긴 값에서 연쇄 법칙으로 계산한다: L 1, f = d의 값, d = f의 값, e = c = d.grad, a = e.grad * b, b = e.grad * a",
-    "lecture_example": {
-      "a": 2.0, "b": -3.0, "c": 10.0, "f": -2.0,
-      "grads": {"L": 1.0, "f": 4.0, "d": -2.0, "e": -2.0, "c": -2.0, "a": 6.0, "b": -4.0}
+  "steps": [
+    {
+      "step_id": "L01-S02",
+      "title_ko": "도구 불러오기와 식 f",
+      "expected_check": {
+        "type": "value_range",
+        "min": 19.9999,
+        "max": 20.0001,
+        "expr": "f(3.0)"
+      },
+      "reads": [
+        "f"
+      ]
+    },
+    {
+      "step_id": "L01-S03",
+      "title_ko": "f를 그래프로",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "20.0"
+      }
+    },
+    {
+      "step_id": "L01-S04",
+      "title_ko": "조금 움직여 기울기 재기",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "14.003"
+      }
+    },
+    {
+      "step_id": "L01-S05",
+      "title_ko": "입력이 셋인 식",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "4.0"
+      }
+    },
+    {
+      "step_id": "L01-S06",
+      "title_ko": "a만 살짝 올리기",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "-3.0"
+      }
+    },
+    {
+      "step_id": "L01-S07",
+      "title_ko": "Value 상자 설계도",
+      "expected_check": {
+        "type": "value_range",
+        "min": 1.9999,
+        "max": 2.0001,
+        "expr": "Value(2.0).data"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S08",
+      "title_ko": "상자 세 개",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "Value(data=2.0)"
+      }
+    },
+    {
+      "step_id": "L01-S09",
+      "title_ko": "더하기 가르치기",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "Value(data=-1.0)"
+      }
+    },
+    {
+      "step_id": "L01-S10",
+      "title_ko": "곱하기 가르치기",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "Value(data=4.0)"
+      }
+    },
+    {
+      "step_id": "L01-S11",
+      "title_ko": "어디서 왔는지 기억하기",
+      "expected_check": {
+        "type": "value_range",
+        "min": 2,
+        "max": 2,
+        "expr": "len(d._prev)"
+      },
+      "reads": [
+        "d"
+      ]
+    },
+    {
+      "step_id": "L01-S12",
+      "title_ko": "이름표와 grad 칸",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "Value(data=2.0)"
+      }
+    },
+    {
+      "step_id": "L01-S13",
+      "title_ko": "식 L까지 늘리기 (긴 단계)",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "Value(data=-8.0)"
+      }
+    },
+    {
+      "step_id": "L01-S14",
+      "title_ko": "그림으로 보기",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S15",
+      "title_ko": "맨 끝에서 시작",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S16",
+      "title_ko": "곱셈 규칙",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S17",
+      "title_ko": "숫자로 확인하는 lol 함수",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "-2.0"
+      }
+    },
+    {
+      "step_id": "L01-S18",
+      "title_ko": "더하기는 그대로",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S19",
+      "title_ko": "연쇄법칙 한 번 더",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S20",
+      "title_ko": "기울기 쪽으로 한 걸음 (긴 단계)",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "-7.286496"
+      }
+    },
+    {
+      "step_id": "L01-S21",
+      "title_ko": "tanh 모양",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S22",
+      "title_ko": "tanh 가르치기",
+      "expected_check": {
+        "type": "value_range",
+        "min": 0.7071,
+        "max": 0.7072,
+        "expr": "Value(0.8813735870195432).tanh().data"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S23",
+      "title_ko": "뉴런의 입력과 가중치",
+      "expected_check": {
+        "type": "value_range",
+        "min": 0.8813,
+        "max": 0.8814,
+        "expr": "x1.data*w1.data + x2.data*w2.data + b.data"
+      },
+      "reads": [
+        "b",
+        "w1",
+        "w2",
+        "x1",
+        "x2"
+      ]
+    },
+    {
+      "step_id": "L01-S24",
+      "title_ko": "뉴런 하나 계산 (긴 단계)",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S25",
+      "title_ko": "tanh를 지나 거꾸로",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S26",
+      "title_ko": "입력과 가중치까지 (긴 단계)",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S27",
+      "title_ko": "더하기의 _backward",
+      "expected_check": {
+        "type": "value_range",
+        "min": 1.9999,
+        "max": 2.0001,
+        "expr": "(lambda u, v: (lambda w: (setattr(w, 'grad', 1.0), w._backward(), u.grad + v.grad)[-1])(u + v))(Value(1.0), Value(2.0))"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S28",
+      "title_ko": "곱하기와 tanh의 _backward (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 6.9999,
+        "max": 7.0001,
+        "expr": "(lambda u, v: (lambda w: (setattr(w, 'grad', 1.0), w._backward(), u.grad + v.grad)[-1])(u * v))(Value(3.0), Value(4.0))"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S29",
+      "title_ko": "_backward를 하나씩 부르기 (긴 단계)",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S30",
+      "title_ko": "줄 세우기: 위상 정렬 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 10,
+        "max": 10,
+        "expr": "len(topo)"
+      },
+      "reads": [
+        "topo"
+      ]
+    },
+    {
+      "step_id": "L01-S31",
+      "title_ko": "backward()를 상자에 넣기",
+      "expected_check": {
+        "type": "value_range",
+        "min": 0.9999,
+        "max": 1.0001,
+        "expr": "(lambda v: (v.backward(), v.grad)[1])(Value(5.0))"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S32",
+      "title_ko": "한 줄로 역전파",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S33",
+      "title_ko": "같은 상자를 두 번 쓰면?",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S34",
+      "title_ko": "`=`를 `+=`로",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S35",
+      "title_ko": "숫자와 바로 계산하기 (긴 단계)",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "Value(data=3.0)\nValue(data=4.0)"
+      }
+    },
+    {
+      "step_id": "L01-S36",
+      "title_ko": "exp 가르치기 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 2.7182,
+        "max": 2.7183,
+        "expr": "Value(1.0).exp().data"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S37",
+      "title_ko": "거듭제곱과 나누기 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 7.9999,
+        "max": 8.0001,
+        "expr": "(Value(2.0)**3).data"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S38",
+      "title_ko": "빼기, 음수, 오른쪽 더하기 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 2.9999,
+        "max": 3.0001,
+        "expr": "(Value(5.0) - 2).data"
+      },
+      "reads": [
+        "Value"
+      ]
+    },
+    {
+      "step_id": "L01-S39",
+      "title_ko": "tanh를 쪼개 다시 만들기",
+      "expected_check": {
+        "type": "manual"
+      }
+    },
+    {
+      "step_id": "L01-S40",
+      "title_ko": "PyTorch로 같은 뉴런 (긴 단계)",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "0.7071068"
+      }
+    },
+    {
+      "step_id": "L01-S41",
+      "title_ko": "PyTorch 기울기와 비교",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "x2 0.5\nw2 0.0\nx1 -1.5\nw1 1.0"
+      }
+    },
+    {
+      "step_id": "L01-S42",
+      "title_ko": "Neuron 클래스 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 2,
+        "max": 2,
+        "expr": "len(Neuron(2).w)"
+      },
+      "reads": [
+        "Neuron"
+      ]
+    },
+    {
+      "step_id": "L01-S43",
+      "title_ko": "뉴런 써 보기",
+      "expected_check": {
+        "type": "value_range",
+        "min": -1.0,
+        "max": 1.0,
+        "expr": "n(x).data"
+      },
+      "reads": [
+        "n",
+        "x"
+      ]
+    },
+    {
+      "step_id": "L01-S44",
+      "title_ko": "Layer 클래스 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 3,
+        "max": 3,
+        "expr": "len(Layer(2, 3)(x))"
+      },
+      "reads": [
+        "Layer",
+        "x"
+      ]
+    },
+    {
+      "step_id": "L01-S45",
+      "title_ko": "MLP 클래스 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 3,
+        "max": 3,
+        "expr": "len(MLP(3, [4, 4, 1]).layers)"
+      },
+      "reads": [
+        "MLP"
+      ]
+    },
+    {
+      "step_id": "L01-S46",
+      "title_ko": "작은 신경망 그림",
+      "expected_check": {
+        "type": "value_range",
+        "min": -1.0,
+        "max": 1.0,
+        "expr": "n(x).data"
+      },
+      "reads": [
+        "n",
+        "x"
+      ]
+    },
+    {
+      "step_id": "L01-S47",
+      "title_ko": "작은 데이터 4개 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 4,
+        "max": 4,
+        "expr": "len(ypred)"
+      },
+      "reads": [
+        "ypred"
+      ]
+    },
+    {
+      "step_id": "L01-S48",
+      "title_ko": "손실: 얼마나 틀렸나",
+      "expected_check": {
+        "type": "value_range",
+        "min": 0.0,
+        "max": 16.0,
+        "expr": "loss.data"
+      },
+      "reads": [
+        "loss"
+      ]
+    },
+    {
+      "step_id": "L01-S49",
+      "title_ko": "손실에서 거꾸로",
+      "expected_check": {
+        "type": "value_range",
+        "min": 1,
+        "max": 41,
+        "expr": "sum(1 for l in n.layers for ne in l.neurons for p in ne.w + [ne.b] if p.grad != 0)"
+      },
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "step_id": "L01-S50",
+      "title_ko": "파라미터 모으기 (긴 단계)",
+      "expected_check": {
+        "type": "output_match",
+        "expected": "41"
+      }
+    },
+    {
+      "step_id": "L01-S51",
+      "title_ko": "한 걸음 학습 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 6.0,
+        "max": 6.01
+      }
+    },
+    {
+      "step_id": "L01-S52",
+      "title_ko": "반복문으로 학습 (긴 단계)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 3.5,
+        "max": 4.5,
+        "expr": "loss.data"
+      },
+      "reads": [
+        "loss"
+      ]
+    },
+    {
+      "step_id": "L01-S53",
+      "title_ko": "기울기 비우기(zero_grad)",
+      "expected_check": {
+        "type": "value_range",
+        "min": 0.0,
+        "max": 0.1,
+        "expr": "loss.data"
+      },
+      "reads": [
+        "loss"
+      ]
+    },
+    {
+      "step_id": "L01-S54",
+      "title_ko": "예측 보기",
+      "expected_check": {
+        "type": "value_range",
+        "min": 0.0,
+        "max": 0.1,
+        "expr": "sum((yp.data - yt)**2 for yp, yt in zip(ypred, ys))"
+      },
+      "reads": [
+        "ypred",
+        "ys"
+      ]
     }
-  },
-  "S08": {
-    "before": -8.0,
-    "after_min": -7.4,
-    "after_max": -7.2,
-    "_설명": "강의 숫자로 S07을 하면 L = -8.0. a = 2.06, b = -3.04, c = 9.98, f = -1.96 으로 움직이면 e = -6.2624, d = 3.7176, L = -7.286496 (교사 정본 범위 -7.4~-7.2). 전·후 두 값을 넘기면 커졌는지만 본다."
-  },
-  "S09": {"x1": 2.0, "x2": 0.0, "w1": -3.0, "w2": 1.0, "b": 6.8813735870195432, "n": 0.8813735870195432},
-  "S09b": {
-    "x_values": [-2.0, -0.5, 0.0, 0.8813735870195432, 1.5],
-    "o_lecture": 0.7071067811865476,
-    "_설명": "n = 0.8813735870195432 = ln(1 + √2) 이라 tanh(n) = 1/√2"
-  },
-  "S10": {"a": 2.0, "b": -3.0, "out_grads": [1.0, 2.0, -0.5]},
-  "S10b": {"x_values": [-2.0, -0.5, 0.0, 0.8813735870195432, 1.5], "out_grads": [1.0, 3.0]},
-  "S11b": {
-    "lecture_grads": {"o": 1.0, "n": 0.5, "x1": -1.5, "w1": 1.0, "x2": 0.5, "w2": 0.0, "b": 0.5},
-    "_설명": "o = tanh(n) = 1/√2 이라 1 - o² = 0.5. x1.grad = w1 * 0.5, w1.grad = x1 * 0.5, x2.grad = w2 * 0.5, w2.grad = x2 * 0.5, b.grad = 0.5"
-  },
-  "S12": {"a": 3.0, "a_plus_a": 2.0, "a_times_a": 6.0},
-  "S13": {
-    "cases": [
-      {"expr": "a + 1", "a": 2.0, "value": 3.0, "grad_a": 1.0},
-      {"expr": "1 + a", "a": 2.0, "value": 3.0, "grad_a": 1.0},
-      {"expr": "a * 2", "a": 3.0, "value": 6.0, "grad_a": 2.0},
-      {"expr": "2 * a", "a": 3.0, "value": 6.0, "grad_a": 2.0}
-    ],
-    "sum": {"values": [1.0, 2.0, 3.0], "value": 6.0},
-    "_설명": "교사 정본 확인 줄 print(Value(2.0) + 1, 1 + Value(2.0), 2 * Value(3.0)) -> 3.0 3.0 6.0. 기울기: a + 숫자는 1, 숫자 * a 는 그 숫자. sum() 은 0부터 더하므로 __radd__ 가 필요하다."
-  },
-  "S13b": {
-    "cases": [
-      {"expr": "a.exp()", "a": 0.0, "value": 1.0, "grad_a": 1.0},
-      {"expr": "a.exp()", "a": 1.0, "value": 2.718281828459045, "grad_a": 2.718281828459045},
-      {"expr": "-a", "a": 5.0, "value": -5.0, "grad_a": -1.0},
-      {"expr": "a - b", "a": 5.0, "b": 2.0, "value": 3.0, "grad_a": 1.0, "grad_b": -1.0},
-      {"expr": "a - 1", "a": 3.0, "value": 2.0, "grad_a": 1.0}
-    ],
-    "_설명": "exp(x)의 기울기는 exp(x) 자신(e = 2.718281828459045), -a 는 -1, a - b 는 (1, -1). 교사 정본 확인 줄의 Value(3.0) - 1 = 2.0, Value(0.0).exp() = 1.0 포함."
-  },
-  "S13c": {
-    "cases": [
-      {"expr": "a ** 2", "a": 2.0, "value": 4.0, "grad_a": 4.0},
-      {"expr": "a ** -1", "a": 2.0, "value": 0.5, "grad_a": -0.25},
-      {"expr": "a ** 0.5", "a": 4.0, "value": 2.0, "grad_a": 0.25},
-      {"expr": "a / 2", "a": 6.0, "value": 3.0, "grad_a": 0.5},
-      {"expr": "a / b", "a": 5.0, "b": 2.0, "value": 2.5, "grad_a": 0.5, "grad_b": -1.25}
-    ],
-    "_설명": "a**k 의 기울기는 k * a**(k-1): 2*2 = 4, -1 * 2**-2 = -0.25, 0.5 * 4**-0.5 = 0.25. a / b 는 (1/b, -a/b²) = (0.5, -1.25). 교사 정본 확인 줄의 Value(2.0)**2 = 4.0, Value(6.0) / 2 = 3.0 포함."
-  },
-  "S14": {"cases": [{"nin": 2, "x": [2.0, 3.0]}, {"nin": 3, "x": [1.0, -2.0, 0.5]}], "repeat": 3},
-  "S14b": {"cases": [{"nin": 2, "nout": 3, "x": [2.0, 3.0]}, {"nin": 3, "nout": 2, "x": [1.0, -2.0, 0.5]}]},
-  "S14c": {
-    "cases": [{"nin": 3, "nouts": [4, 4, 1], "count": 41}, {"nin": 2, "nouts": [3, 1], "count": 13}],
-    "x": [2.0, 3.0, -1.0],
-    "_설명": "층마다 (입력 수 + 1) × 출력 수를 더한다: 3→4 16, 4→4 20, 4→1 5, 합 41 / 2→3 9, 3→1 4, 합 13"
-  },
-  "S15": {
-    "xs": [[2.0, 3.0, -1.0], [3.0, -1.0, 0.5], [0.5, 1.0, 1.0], [1.0, 1.0, -1.0]],
-    "ys": [1.0, -1.0, -1.0, 1.0],
-    "params": 41,
-    "loss_upper_bound": 16.0,
-    "_loss_upper_bound_설명": "정답이 ±1이고 tanh 출력은 -1~1이라 오차 제곱 하나는 4보다 작다. 데이터 4개면 합은 16보다 작다(교사 정본: 학습 전 손실은 보통 1에서 8 사이).",
-    "_params_설명": "교사 정본 S15 expected_check len(n.parameters()) = 41"
-  },
-  "S15b": {
-    "last_loss_max": null,
-    "last_loss_max_주석": "노트북 실행 후 확정: 교사 정본(origin/m0-setup L01.json)에 시드 고정이 없어 실행마다 마지막 손실이 다르다(정답 구현 100번: 중앙 0.054, 95% 0.26, 최대 2.12). null 이면 S15 시작 손실보다 줄었는지만 본다(PM 결정).",
-    "teacher_value_range": [0.0, 0.1],
-    "_teacher_value_range_설명": "교사 정본 S15b expected_check(마지막 줄 손실 0.0~0.1). 채점 기준이 아니라 통과 문구의 안내(0.1 위면 셀을 한 번 더 실행)에만 쓴다."
-  },
-  "S16": {"min_difference": 1e-9},
-  "R2": {
-    "diamond": {"a": 2.0, "b": -3.0, "c": 10.0, "d": -2.0, "grads": {"a": 3.0, "b": -2.0, "c": 1.0, "d": -6.0}},
-    "_설명": "x = a*b 를 두 길로 쓴다: w = (x + c) + (x * d). dw/da = b(1 + d) = 3, dw/db = a(1 + d) = -2, dw/dc = 1, dw/dd = a*b = -6"
-  },
-  "R3": {
-    "last_loss_max": 0.1,
-    "params": 41,
-    "max_reruns": 5,
-    "steps_per_run": 20,
-    "_설명": "교사 정본 rebuild_tasks L01-R3: MLP(3, [4, 4, 1])을 S15 데이터로 학습해 마지막 손실 0.0~0.1",
-    "_max_reruns_설명": "교사 정본 L01-R3 check.max_reruns, check.steps_per_run (2026-11-17 재구성): 학습 셀(steps_per_run 번 반복)을 최대 max_reruns 번 실행해 그 안에 0.1 아래면 통과. 다시 실행한 횟수는 힌트로 세지 않는다. tests/test_l01_reference.py 가 정본과 같은지 확인"
+  ],
+  "rebuild": [
+    {
+      "rebuild_id": "L01-R1",
+      "title_ko": "+, *, tanh와 각 _backward(+= 누적)가 있는 Value",
+      "check_code": "x1 = Value(2.0); x2 = Value(0.0); w1 = Value(-3.0); w2 = Value(1.0); b = Value(6.8813735870195432)\na1 = x1*w1; a2 = x2*w2; s = a1 + a2; n = s + b; o = n.tanh()\no.grad = 1.0\nfor v in (o, n, s, a2, a1):\n  v._backward()\nprint([round(v.grad, 4) for v in (x1, w1, x2, w2, b)])\nc = Value(3.0); d = c * c; d.grad = 1.0; d._backward()\nprint(d._prev == {c}, c.grad)",
+      "pass": {
+        "rule": "output_match",
+        "expected": "[-1.5, 1.0, 0.5, 0.0, 0.5]\nTrue 6.0"
+      },
+      "reads": [
+        "Value"
+      ],
+      "needs": [],
+      "max_hint_level_for_pass": 2
+    },
+    {
+      "rebuild_id": "L01-R2",
+      "title_ko": "위상 정렬을 쓰는 backward()",
+      "check_code": "a = Value(3.0)\nb = a + a\nb.backward()\nprint(a.grad)\nx1 = Value(2.0); x2 = Value(0.0); w1 = Value(-3.0); w2 = Value(1.0); bb = Value(6.8813735870195432)\no = (x1*w1 + x2*w2 + bb).tanh()\no.backward()\nprint([round(v.grad, 4) for v in (x1, w1, x2, w2, bb)])",
+      "pass": {
+        "rule": "output_match",
+        "expected": "2.0\n[-1.5, 1.0, 0.5, 0.0, 0.5]"
+      },
+      "reads": [
+        "Value"
+      ],
+      "needs": [],
+      "max_hint_level_for_pass": 2
+    },
+    {
+      "rebuild_id": "L01-R3",
+      "title_ko": "학습 반복문(앞으로, 비우기, 거꾸로, 고치기)",
+      "check_code": "print(round(loss.data, 4), loss.data < 3.0)",
+      "pass": {
+        "rule": "ends_with",
+        "text": "True"
+      },
+      "reads": [
+        "loss"
+      ],
+      "needs": [
+        "MLP",
+        "random",
+        "xs",
+        "ys"
+      ],
+      "max_hint_level_for_pass": 2
+    }
+  ],
+  "mastery_rule": {
+    "mastery_rule_id": "default",
+    "steps_complete_ratio": 1.0,
+    "question_score_ratio": 0.8,
+    "rebuild_max_hint_level": 2,
+    "extra_checks": []
   }
 }

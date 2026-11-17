@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { crc32, decodeResultCode, encodeResultCodeForTest, resultCodeToRows } from '../../src/lib/resultCode';
+import { crc32, decodeResultCode, encodeResultCodeForTest, keepPasses, resultCodeToRows } from '../../src/lib/resultCode';
 
 const REPO = path.resolve(__dirname, '../../..');
 // 서버 server/tests/test_result_code.py 의 GOLDEN_CODE (= server/API.md 4절 예시)
@@ -89,11 +89,39 @@ describe('결과코드 Z2H1.{base64url(JSON)}.{crc32 8자리} (DESIGN.md 12.7)',
   it('grade_result 행(at = 코드의 t)과 재구성 조각 rebuild_attempt 행(attempt_id = rc-{crc}-{id})', () => {
     const r = decodeResultCode(CHECK_GOLDEN);
     if (!r.ok) throw new Error('decode');
-    const rows = resultCodeToRows(r.data, '2026-11-16T22:00:00.000+09:00', (id) => (id === 'L01-R2' ? 2 : 0));
+    const rows = resultCodeToRows(r.data, '2026-11-16T22:00:00.000+09:00', (id) => (id === 'L01-R2' ? 2 : 0), ['L01-R1', 'L01-R2', 'L01-R3']);
     expect(rows.grade).toEqual([
       { check_id: 'L01-S11b', passed: true, message_ko: '', source: 'result_code', at: '2026-11-16T21:00:00+09:00' },
       { check_id: 'L01-R2', passed: false, message_ko: '', source: 'result_code', at: '2026-11-16T21:00:00+09:00' },
     ]);
     expect(rows.rebuild).toEqual([{ rebuild_id: 'L01-R2', attempt_id: 'rc-32dccd52-L01-R2', passed: false, max_hint_level: 2, at: '2026-11-16T21:00:00+09:00' }]);
+  });
+});
+
+describe('재구성 조각인지는 정본 rebuild_tasks 의 id 로 안다(모양으로 짐작하지 않음)', () => {
+  const L01 = JSON.parse(fs.readFileSync(path.join(REPO, 'inputs/pedagogy/content/L01.json'), 'utf8'));
+  const rebuildIds: string[] = L01.rebuild_tasks.map((t: { rebuild_id: string }) => t.rebuild_id);
+  it('정본 목록에 있는 id 만 rebuild_attempt 행이 된다', () => {
+    const code = encodeResultCodeForTest({ v: 1, l: 'L01', p: [rebuildIds[0], 'L01-R9'], f: [], t: '2026-11-17T10:00:00+09:00' });
+    const r = decodeResultCode(code);
+    if (!r.ok) throw new Error('decode');
+    const rows = resultCodeToRows(r.data, '2026-11-17T10:00:00+09:00', () => 0, rebuildIds);
+    expect(rows.grade.map((g) => g.check_id)).toEqual([rebuildIds[0], 'L01-R9']);
+    expect(rows.rebuild.map((x) => x.rebuild_id)).toEqual([rebuildIds[0]]);
+  });
+});
+
+describe('한 번 통과한 칸은 나중 결과코드의 다시(f)로 덮지 않는다(완성한 노트북을 처음부터 다시 돌리면 앞 단계 칸이 f 가 될 수 있음, p7-notebook 실측)', () => {
+  const at = '2026-11-17T12:00:00+09:00';
+  const row = (check_id: string, passed: boolean) => ({ check_id, passed, message_ko: '', source: 'result_code' as const, at });
+  it('통과 기록이 있는 칸의 f 는 저장하지 않고 따로 알린다. 통과·처음 보는 칸·전에 다시였던 칸은 그대로 저장', () => {
+    const existing = [{ check_id: 'L01-S12', passed: true }, { check_id: 'L01-S13', passed: false }];
+    const r = keepPasses([row('L01-S12', false), row('L01-S13', false), row('L01-S14', false), row('L01-S30', true)], existing);
+    expect(r.rows.map((x) => [x.check_id, x.passed])).toEqual([
+      ['L01-S13', false],
+      ['L01-S14', false],
+      ['L01-S30', true],
+    ]);
+    expect(r.keptPass).toEqual(['L01-S12']);
   });
 });

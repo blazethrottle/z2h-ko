@@ -13,13 +13,13 @@ def canonical_lecture(lecture_id):
 
 
 def lecture_checks(lecture_id):
-    """[(check_id, 제목)] 교사 자료 순서. 모르는 편이면 []."""
+    """[(check_id, 제목)] 정본 순서. 모르는 편이면 []."""
     lid = canonical_lecture(lecture_id)
     return list(_LECTURES[lid].CHECKS) if lid else []
 
 
 def canonical_id(check_id):
-    """대소문자를 봐주고 정식 check_id 를 돌려준다 ('l01-s11b' -> 'L01-S11b'). 모르면 None."""
+    """대소문자를 봐주고 정식 check_id 를 돌려준다 ('l01-s02' -> 'L01-S02'). 모르면 None."""
     if not isinstance(check_id, str):
         return None
     key = check_id.strip().lower()
@@ -44,3 +44,9 @@ def usage_of(check_id):
 
 def title_of(check_id):
     return dict(_module_of(check_id).CHECKS)[check_id]
+
+
+def mastery_note(lecture_id):
+    """finish() 채점표 끝 줄: 그 편의 익힘 기준(정본 mastery_rule). 모르는 편이면 빈 글."""
+    lid = canonical_lecture(lecture_id)
+    return _LECTURES[lid].mastery_note() if lid else ""

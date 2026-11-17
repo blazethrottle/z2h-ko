@@ -1,20 +1,19 @@
 ---
-// 사전 기초 단위 개요 /basics/F-P1/ (정본 status written 단위만 만든다. planned 단위는 주소가 없다)
+// 사전 기초 단위 개요 /basics/F-P1/ (내용 있는 단위만 만든다. 정본 status planned 단위는 주소가 없다)
 import Base from '../../../layouts/Base.astro';
 import UnitApp from '../../../components/UnitApp.tsx';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 
 export function getStaticPaths() {
-  const b: any = loadBasics();
-  return b.readyIds.map((id: string) => ({ params: { unit: id }, props: { unitId: id } }));
+  return loadBasics().readyIds.map((id) => ({ params: { unit: id }, props: { unitId: id } }));
 }
 const { unitId } = Astro.props as { unitId: string };
-const b: any = loadBasics();
-const u = b.units.find((x: any) => x.unit_id === unitId);
-const group = b.groups.find((g: any) => g.id === u.group);
+const b = loadBasics();
+const u = b.units.find((x) => x.unit_id === unitId);
+if (!u) throw new Error(`기초 단위 ${unitId}가 화면 데이터에 없습니다`);
+const group = b.groups.find((g) => g.id === u.group);
 const i = b.readyIds.indexOf(unitId);
-const nextId = i >= 0 && i < b.readyIds.length - 1 ? b.readyIds[i + 1] : null;
-const next = nextId ? { unit_id: nextId, title_ko: b.units.find((x: any) => x.unit_id === nextId).title_ko } : null;
+const nextUnit = i >= 0 && i < b.readyIds.length - 1 ? b.units.find((x) => x.unit_id === b.readyIds[i + 1]) : null;
 ---
 <Base title={`${u.unit_id} ${u.title_ko}`} nav="basics" back="/basics/">
   <UnitApp
@@ -26,14 +25,17 @@ const next = nextId ? { unit_id: nextId, title_ko: b.units.find((x: any) => x.un
       unit_id: u.unit_id,
       title_ko: u.title_ko,
       group_label: group?.label_ko ?? '',
-      used_in_ko: u.used_in_ko,
       goal_ko: u.goal_ko,
-      mastery_ko: u.mastery_ko,
+      analogy_ko: u.analogy_ko,
+      card_ko: u.card_ko,
+      extra_objectives: u.objectives.filter((o) => o !== u.goal_ko),
+      needed_by_lectures: u.needed_by_lectures,
+      estimated_minutes: u.estimated_minutes,
       mastery: u.mastery,
     }}
     rule={b.rule}
-    steps={b.steps[unitId].map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, meaning_ko: s.meaning_ko, kind: s.kind, question_ids: s.question_ids }))}
+    steps={(b.steps[unitId] ?? []).map((s) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, meaning_ko: s.meaning_ko, kind: s.kind, question_ids: s.question_ids }))}
     rebuild={b.rebuild[unitId] ?? []}
-    next={next}
+    next={nextUnit ? { unit_id: nextUnit.unit_id, title_ko: nextUnit.title_ko } : null}
   />
 </Base>

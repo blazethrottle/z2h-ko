@@ -76,7 +76,8 @@ test('Colab 바로 열기 주소가 비어 있으면 "Colab에서 열기" 버튼
   await page.goto(`/lectures/${L.lecture_id}/`);
   await expect(page.getByRole('link', { name: /Colab에서 노트북 열기/ })).toHaveCount(0);
   await expect(page.locator('#notebook')).toContainText('노트북 업로드');
-  await page.goto(`/lectures/${L.lecture_id}/${L.steps[0].slug}/#practice`);
+  const code = L.steps.find((x: any) => x.kind === 'code');
+  await page.goto(`/lectures/${L.lecture_id}/${code.slug}/#practice`);
   await expect(page.getByRole('link', { name: /Colab에서 노트북 열기/ })).toHaveCount(0);
   await expect(page.getByRole('link', { name: '노트북 받기와 Colab 안내' })).toBeVisible();
 });

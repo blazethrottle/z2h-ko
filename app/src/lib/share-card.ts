@@ -29,7 +29,7 @@ export interface TasterCardInput {
 
 export interface L01CardInput {
   kind: 'ART-L01';
-  /** S15b 출력에서 뽑은 손실 숫자(붙여 넣은 순서 그대로) */
+  /** 학습 셀 출력에서 뽑은 손실 숫자(붙여 넣은 순서 그대로) */
   losses: number[];
 }
 
@@ -76,7 +76,7 @@ export function displayName(n: string, max = config.taste.maxNameChars): string 
 /** 숫자는 붙여 넣은 값 그대로 보인다(반올림으로 값을 바꾸지 않는다) */
 export const numText = (n: number) => String(n);
 
-/** S15b 출력 "0 4.8361…" 줄들 → 손실 숫자. "번호 손실" 모양이 아닌 줄은 세기만 하고 뺀다 */
+/** 학습 셀 출력 "0 4.8361…" 줄들 → 손실 숫자. "번호 손실" 모양이 아닌 줄은 세기만 하고 뺀다 */
 export function parseLossLog(text: string | null | undefined, max = config.shareCard.maxLossPoints): { losses: number[]; skipped: number; dropped: number } {
   const re = /^\s*(\d+)\s+([+]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
   const lines = String(text ?? '')

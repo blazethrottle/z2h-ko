@@ -14,9 +14,13 @@ export interface GradableQuestion {
   max_points?: number;
   choices?: string[];
   answer_index?: number;
+  /** "모르겠어요" 보기 번호(정본 진단 문항). 고르면 감점 없이 오답으로 기록 */
+  dont_know_index?: number;
   auto_grade?: {
     type: string;
     value?: string | number | (string | number)[];
+    /** 같은 답의 다른 표기 */
+    accept?: string[];
     min?: number;
     max?: number;
     keywords?: (string | string[])[];
@@ -43,8 +47,6 @@ export interface GradeResult {
   autoChecked?: boolean[];
   reason_code?: 'no_number' | 'out_of_range' | 'mismatch' | 'not_chosen' | 'rubric';
 }
-
-const DONT_KNOW = /모르겠어요/;
 
 export function normalizeAnswer(s: string): string {
   return String(s ?? '')
@@ -97,13 +99,13 @@ export function gradeQuestion(q: GradableQuestion, r: Response): GradeResult {
   if (kind === 'choice') {
     const idx = r.choiceIndex;
     if (idx == null || idx < 0) return done(0, { reason_code: 'not_chosen' });
-    const dontKnow = DONT_KNOW.test(q.choices?.[idx] ?? '');
+    const dontKnow = q.dont_know_index != null && idx === q.dont_know_index;
     return done(idx === q.answer_index ? max : 0, { is_dont_know: dontKnow, reason_code: idx === q.answer_index ? undefined : 'mismatch' });
   }
 
   if (kind === 'exact') {
     const v = q.auto_grade?.value;
-    const values = Array.isArray(v) ? v : v == null ? [] : [v];
+    const values = [...(Array.isArray(v) ? v : v == null ? [] : [v]), ...(q.auto_grade?.accept ?? [])];
     const ok = values.some((x) => exactMatch(text, x));
     return done(ok ? max : 0, { reason_code: ok ? undefined : 'mismatch' });
   }

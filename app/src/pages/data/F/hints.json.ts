@@ -3,4 +3,4 @@ import type { APIRoute } from 'astro';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 
 export const GET: APIRoute = () =>
-  new Response(JSON.stringify((loadBasics() as any).hints), { headers: { 'content-type': 'application/json; charset=utf-8' } });
+  new Response(JSON.stringify(loadBasics().hints), { headers: { 'content-type': 'application/json; charset=utf-8' } });

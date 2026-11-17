@@ -1,0 +1,127 @@
+---
+// 단계 콘텐츠가 아직 없는 편의 안내(/lectures/L02/ 등, spec 2절 강의 개요의 머리·카드를 그대로 씀). 값은 모두 content/lectures.yaml(docs/CURRICULUM.md 에서 옮김).
+// 편 목표, 설계 규모(단계·문항·재구성 수, 예상 시간 추정), 선행 편·선행 기초(정본 F.json lecture_prereq_units), 다리(난이도가 뛰는 곳과 다리 카드 요지),
+// 이 편 다음 누적 점검. 설계서의 잠금(CP1 → L04 등)은 쓰지 않는다(잠금 없음, 추천만). 다리 카드의 질문·정답은 옮기지 않았다(편이 준비되면 화면에서 푼다).
+import Inline from './Inline.tsx';
+import { formatClock } from '../lib/video';
+import { checkpointRangeKo, estimateHoursKo } from '../lib/curriculumText';
+import type { LectureListItem, Site } from '../lib/content/types';
+
+interface Props {
+  item: LectureListItem;
+  site: Site;
+  prereq: { unit_id: string; title_ko: string | null; href: string }[];
+  prereqLabel: string;
+}
+const { item, site, prereq, prereqLabel } = Astro.props;
+const no = item.lecture_id.slice(1);
+const plan = item.plan ?? null;
+const cards = (item.bridge?.card_ids ?? []).map((id) => site.bridgeCards.find((c) => c.card_id === id)).filter((c) => !!c);
+const cp = site.checkpoints.find((c) => c.after_lecture === item.lecture_id) ?? null;
+const pre = (item.prereq_lectures ?? []).map((id) => ({ id, title: site.lectures.find((l) => l.lecture_id === id)?.title_ko ?? id }));
+---
+<div class="stack" data-testid="lecture-plan" data-lecture={item.lecture_id}>
+  <header class="stack-sm">
+    <p class="cap num">강의 {no}{item.video_seconds ? ` · 영상 ${formatClock(item.video_seconds)}` : ''} · 준비 중</p>
+    <h1 class="t1">{item.title_ko}</h1>
+    {plan && (
+      <div class="row" data-testid="lecture-plan-size">
+        <span class="badge num">{plan.steps}단계{plan.optional_steps ? `(선택 ${plan.optional_steps})` : ''}</span>
+        <span class="badge num">확인 문제 {plan.questions}개</span>
+        <span class="badge num">재구성 과제 {plan.rebuild}조각</span>
+        <span class="badge num">{estimateHoursKo(plan.total_minutes)}</span>
+      </div>
+    )}
+    <p class="waiting" data-testid="lecture-plan-pending">단계 콘텐츠 준비 중입니다. 아래는 이 편의 설계입니다.</p>
+    {item.video_url && (
+      <a class="btn" href={item.video_url} target="_blank" rel="noopener noreferrer" style="align-self:flex-start">
+        유튜브에서 영상 열기
+      </a>
+    )}
+  </header>
+
+  {item.objectives && item.objectives.length > 0 && (
+    <section class="card stack-sm" aria-label="편 목표">
+      <h2 class="t3">이 편에서 할 수 있게 되는 것</h2>
+      <ol class="small">
+        {item.objectives.map((o) => (
+          <li>
+            <Inline text={o.text_ko} />
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  <section class="card stack-sm" aria-label="먼저 하면 좋은 것" data-testid="lecture-plan-prereq">
+    <h2 class="t3">먼저 하면 좋은 것</h2>
+    {pre.length > 0 && (
+      <p class="small">
+        선행 편:{' '}
+        {pre.map((x, i) => (
+          <>
+            {i > 0 && ' · '}
+            <a href={`/lectures/${x.id}/`}>
+              {x.id.slice(1)} {x.title}
+            </a>
+          </>
+        ))}
+        {item.prereq_lectures_note_ko ? ` (${item.prereq_lectures_note_ko})` : ''}
+      </p>
+    )}
+    {prereq.length > 0 ? (
+      <p class="small">
+        {prereqLabel}(추천, 잠금 아님):{' '}
+        {prereq.map((u, i) => (
+          <>
+            {i > 0 && ' · '}
+            <a href={u.href}>
+              {u.unit_id}
+              {u.title_ko ? ` ${u.title_ko}` : ''}
+            </a>
+          </>
+        ))}
+      </p>
+    ) : (
+      <p class="small muted">이 편에 따로 필요한 기초 단위는 없습니다.</p>
+    )}
+    {item.env_ko && (
+      <p class="cap">
+        실행 환경: <Inline text={item.env_ko} />
+      </p>
+    )}
+  </section>
+
+  {item.bridge && (
+    <section class="card stack-sm" aria-label="앞 편에서 넘어오는 다리" data-testid="lecture-plan-bridge">
+      <h2 class="t3">{item.bridge.from_lecture.slice(1)}편에서 넘어오기</h2>
+      <p class="small">
+        뛰는 정도: <b>{item.bridge.jump_ko}</b> · 새로 나오는 것: <Inline text={item.bridge.new_ko} />
+      </p>
+      <p class="small" data-testid="lecture-plan-bridge-ko">
+        다리: <Inline text={item.bridge.bridge_ko} />
+      </p>
+      {cards.length > 0 && (
+        <ul class="small">
+          {cards.map((c) => (
+            <li>
+              <span class="cap num">{c.card_id}</span> <Inline text={c.summary_ko} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <p class="cap">다리 카드는 편 시작 화면에서 첫 단계 전에 보는 5분짜리 카드입니다(익힘 판정 밖).</p>
+    </section>
+  )}
+
+  {cp && (
+    <section class="card stack-sm" aria-label="누적 점검" data-testid="lecture-plan-checkpoint">
+      <h2 class="t3">이 편 다음: 누적 점검 {cp.checkpoint_id.slice(2)} ({checkpointRangeKo(cp.covers)})</h2>
+      <p class="small num">{cp.items_ko} = {cp.question_count}문항. 다음 편을 잠그지 않고 권장만 합니다.</p>
+    </section>
+  )}
+
+  <p class="next">
+    <b>다음:</b> <a href="/home/">강의 목록으로</a>
+  </p>
+</div>

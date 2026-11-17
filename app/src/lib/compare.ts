@@ -80,6 +80,16 @@ export function compareOutput(expected: string, actual: string, opts: CompareOpt
   return { ok: true };
 }
 
+/** 기대한 줄 묶음이 붙여 넣은 출력 안에 차례로(이어서) 있는지. 정본 match contains (예 셀을 두 번 실행해 15 다음 20이 나오는 단계) */
+export function compareOutputContains(expected: string, actual: string, opts: CompareOptions = {}): CompareResult {
+  const act = normalizeOutput(actual);
+  if (act.length === 0) return { ok: false, reason: 'empty' };
+  const exp = normalizeOutput(expected).map((l) => l.trim());
+  const lines = act.map((l) => l.trim());
+  for (let at = 0; at + exp.length <= lines.length; at++) if (exp.every((e, k) => compareLine(e, lines[at + k], opts) === null)) return { ok: true };
+  return { ok: false, reason: 'text', line: 1, expectedLine: exp[0] ?? '', actualLine: lines[0] ?? '' };
+}
+
 export function looksLikeError(text: string): boolean {
   return /Traceback|Error/.test(String(text ?? ''));
 }

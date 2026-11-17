@@ -1,18 +1,43 @@
-// 2 강의 개요 (spec 2절): 단계 목록·상태, 선행 기초 추천(잠금 아님), 노트북 받기 + Colab 안내, 결과코드, 익힘 판정.
-// 익힘(mastered)이 되면 편 도장(user_badge, src/badge-rules.ts)을 저장하고 이 화면 안 한 줄로 알린다(spec 13.4).
-// 공유 결과물(정본 rewards.artifact)이 열리는 단계를 마치면 "학습 기록 카드 만들기" 링크를 보인다.
+// 2 강의 개요 (spec 2절): 단계 목록·상태, 선행 기초 추천(정본 recommend_rules lecture_start: 아직 익히지 않은 단위만, 잠금 아님),
+// 노트북 받기 + Colab 안내, 결과코드, 재구성 과제(정본 task_ko·확인 셀 check_code·통과 기준 pass_ko, 힌트 사다리 H4 에서 정답 코드), 익힘 판정.
+// 익힘(mastered)이 되면 편 도장(user_badge, src/badge-rules.ts)을 저장하고 이 화면 안 한 줄로 알린다(spec 13.4). 도장 id 는 정본에 없으면 STAMP-{편}.
+// 공유 결과물(정본 rewards.artifact)이 있으면 열리는 단계를 마친 뒤 "학습 기록 카드 만들기" 링크를 보인다(클로드 버전 L01 에는 없다).
+// 익힘의 "단계 완료"는 선택(optional) 단계를 뺀다(docs/CURRICULUM.md 3-3, content-config MASTERY_EXCLUDED_KINDS).
 import { useEffect } from 'preact/hooks';
 import { config } from '../config';
+import { MASTERY_EXCLUDED_KINDS } from '../content-config.mjs';
+import { unitMastery, type BasicsRule, type UnitMasteryRef } from '../lib/basics';
+import { recordAttempt, type UnlockRule } from '../lib/hints';
 import { computeMastery, MASTERY_LABEL } from '../lib/mastery';
 import { STEP_DONE } from '../lib/progress';
 import { nowKst } from '../lib/time';
 import { formatClock } from '../lib/video';
+import CodeBlock from './CodeBlock';
+import HintLadder, { useHintState } from './HintLadder';
 import { useRuntime, useTables } from './hooks';
 import { IconExternal } from './Icons';
 import ResultCodePaste from './ResultCodePaste';
 import Inline from './Inline';
 import { gated } from './Gate';
 import { BadgeNotice, useBadgeAwards } from './BadgeNotice';
+import type { Runtime } from '../lib/runtime';
+import type { Row } from '../lib/sync/store';
+
+/** 1편 재구성 과제(화면). 정답 코드는 hints JSON 의 H4 에만 */
+export interface LectureRebuildPub {
+  rebuild_id: string;
+  title_ko: string;
+  task_ko: string | null;
+  check_code: string | null;
+  check_code_line_notes_ko: string[] | null;
+  pass_ko: string | null;
+  /** 확인 셀이 찍어야 하는 출력 */
+  expected: string | null;
+  reference: string | null;
+  max_hint_level_for_pass: number;
+  hint_levels: number[];
+  hint_unlock: Record<number, UnlockRule>;
+}
 
 interface StepItem {
   step_id: string;
@@ -30,28 +55,86 @@ interface Props {
   videoSeconds: number;
   studyHours: string | null;
   objectives: { objective_id: string; text_ko: string }[];
-  /** 선행 기초 단위. href: 준비된 단위는 그 단위 화면, 아니면 기초 목록 */
+  /** 선행 기초 단위(정본 F.json lecture_prereq_units). href: 준비된 단위는 그 단위 화면, 아니면 기초 목록 */
   prereq: { unit_id: string; title_ko: string | null; href?: string }[];
+  /** 정본 recommend_rules lecture_start 이름("이 편 전에 보면 좋아요") */
+  prereqLabel: string;
+  /** 선행 기초 단위의 익힘 판정 자료(아직 익히지 않은 단위만 다시 보여 준다) */
+  basics: { units: { unit_id: string; ready: boolean; mastery: UnitMasteryRef }[]; rule: BasicsRule };
+  /** 실행 환경(정본 lecture.env, 예 cpu) */
+  env: string[];
   notebook: { name: string | null; url: string | null };
   rule: { steps_complete_ratio: number; question_score_ratio: number; question_min_points?: number; rebuild_max_hint_level: number; extra_checks: string[] };
   speak: { prompt_ko: string; rubric: string[] } | null;
   steps: StepItem[];
   questions: { question_id: string; max_points: number; must_pass: boolean }[];
-  rebuild: { rebuild_id: string; title_ko: string; task_ko?: string | null }[];
+  rebuild: LectureRebuildPub[];
+  basicsReady: string[];
   contentVersion: string;
-  /** 편 도장 id (정본 rewards.stamp.stamp_id) */
-  stampId: string | null;
+  /** 편 도장 id (정본 rewards.stamp.stamp_id, 없으면 STAMP-{편}) */
+  stampId: string;
   /** 공유 결과물 (정본 rewards.artifact). 열리는 단계를 마치면 카드 만들기 링크 */
   artifact: { name_ko: string; unlock_step_id: string; unlock_label: string; href: string } | null;
+}
+
+/** 재구성 과제 한 조각: 과제 글, 확인 셀(붙여 넣어 실행), 통과 기준, 상태(결과코드로 들어온 기록), 힌트 사다리(연 단계가 결과코드 기록의 힌트 단계가 된다) */
+function LectureRebuildCard({ rt, lectureId, r, rows, limit, basicsReady }: { rt: Runtime | null; lectureId: string; r: LectureRebuildPub; rows: Row[]; limit: number; basicsReady: string[] }) {
+  const [hint, setHint] = useHintState(rt, r.rebuild_id);
+  const mine = rows.filter((x) => x.rebuild_id === r.rebuild_id);
+  const ok = mine.some((x) => x.passed && Number(x.max_hint_level ?? 0) <= limit);
+  const noteKo = `힌트 ${r.max_hint_level_for_pass}단계까지 열어도 통과로 칩니다. 결과는 노트북 결과코드로 들어옵니다.`;
+  return (
+    <section class={`card stack${ok ? '' : ' current'}`} aria-labelledby={`rb-${r.rebuild_id}`} data-testid={`rebuild-${r.rebuild_id}`}>
+      <div class="row">
+        <p class="kicker grow">재구성 과제 · {r.rebuild_id}</p>
+        <span class="side small" data-testid={`rebuild-state-${r.rebuild_id}`}>
+          {ok ? <span class="st-done">✓ 통과</span> : mine.length ? <span class="st-now">다시</span> : <span class="st-todo">○ 아직</span>}
+        </span>
+      </div>
+      <h3 class="t3" id={`rb-${r.rebuild_id}`}>
+        {r.title_ko}
+      </h3>
+      {r.task_ko && (
+        <p>
+          <Inline text={r.task_ko} />
+        </p>
+      )}
+      {r.check_code && <CodeBlock code={r.check_code} notes={r.check_code_line_notes_ko ?? []} heading="확인 셀 · 다 만든 뒤 붙여 넣어 실행 · 줄을 누르면 풀이" testId={`rebuild-check-${r.rebuild_id}`} />}
+      {r.expected && (
+        <div class="stack-sm">
+          <p class="cap">확인 셀이 찍어야 하는 것</p>
+          <pre class="out" data-testid={`rebuild-expected-${r.rebuild_id}`}>
+            {r.expected}
+          </pre>
+        </div>
+      )}
+      {r.pass_ko && (
+        <p class="small" data-testid={`rebuild-pass-${r.rebuild_id}`}>
+          <b>통과 기준:</b> <Inline text={r.pass_ko} />
+        </p>
+      )}
+      {r.reference && (
+        <p class="cap">
+          맞는지 대조할 곳: <Inline text={r.reference} />
+        </p>
+      )}
+      {r.hint_levels.length > 0 && !ok && (
+        <>
+          {/* 노트북에서 확인 셀이 아직 통과하지 않을 때 누르면 시도 1회로 세어 다음 힌트가 열린다(기초 익힘 과제와 같은 규칙, hints.ts lockText rebuild) */}
+          <button type="button" class="btn" onClick={() => setHint((s) => recordAttempt(s, false, Date.now()))} disabled={!hint} data-testid={`rebuild-notyet-${r.rebuild_id}`} style="align-self:flex-start">
+            아직 안 돼요
+          </button>
+          <HintLadder rt={rt} lectureId={lectureId} targetId={r.rebuild_id} targetTitle={r.title_ko} ctx="rebuild" noteKo={noteKo} levels={r.hint_levels} unlock={r.hint_unlock} state={hint} setState={setHint} onOpened={() => {}} basicsReady={basicsReady} />
+        </>
+      )}
+    </section>
+  );
 }
 
 function LectureAppView(p: Props) {
   const rt = useRuntime();
   const t = useTables(rt, ['step_progress', 'question_attempt', 'rebuild_attempt', 'grade_result', 'user_pref', 'mastery_state']);
-  const fresh = useBadgeAwards(
-    rt,
-    p.stampId ? { stamps: [{ lecture_id: p.lectureId, mark: p.lectureId.slice(1), available: true, stamp_id: p.stampId, content_version: p.contentVersion }] } : {},
-  );
+  const fresh = useBadgeAwards(rt, { stamps: [{ lecture_id: p.lectureId, mark: p.lectureId.slice(1), available: true, stamp_id: p.stampId, content_version: p.contentVersion }] });
   const rows = t?.step_progress ?? [];
   const statusOf = (id: string) => rows.find((r) => r.step_id === id)?.status as string | undefined;
   const ids = new Set(p.steps.map((s) => s.step_id));
@@ -62,10 +145,16 @@ function LectureAppView(p: Props) {
   const savedMastery = (t?.mastery_state ?? []).find((r) => r.target_id === p.lectureId);
   const speakOk = savedMastery?.extra_checks_ok === true;
   const qids = new Set(p.questions.map((q) => q.question_id));
+  const masteryStepIds = p.steps.filter((s) => !MASTERY_EXCLUDED_KINDS.includes(s.kind)).map((s) => s.step_id);
+  // 선행 기초 중 아직 익히지 않은 단위만(정본 recommend_rules lecture_start). 기록을 읽기 전에는 전부 보인다
+  const prereqTodo = p.prereq.filter((u) => {
+    const bu = p.basics.units.find((x) => x.unit_id === u.unit_id);
+    return !(t && bu?.ready && unitMastery(bu.mastery, p.basics.rule, t.step_progress ?? [], t.question_attempt ?? [], t.rebuild_attempt ?? []).status === 'done');
+  });
 
   const m = t
     ? computeMastery({
-        stepIds: p.steps.map((s) => s.step_id),
+        stepIds: masteryStepIds,
         questions: p.questions,
         rebuildIds: p.rebuild.map((r) => r.rebuild_id),
         rule: p.rule,
@@ -105,6 +194,7 @@ function LectureAppView(p: Props) {
         <p class="cap num">
           강의 {p.lectureId.slice(1)} · 영상 {formatClock(p.videoSeconds)}
           {p.studyHours ? ` · 학습 예상 ${p.studyHours}` : ''}
+          {p.env.length > 0 ? ` · 실행 환경 ${p.env.join(', ')}` : ''}
         </p>
         <h1 class="t1">{p.title}</h1>
         <div class="row">
@@ -121,10 +211,10 @@ function LectureAppView(p: Props) {
         <p class="cap num">
           {doneCount} / {p.steps.length} 단계
         </p>
-        {p.prereq.length > 0 && (
+        {prereqTodo.length > 0 && (
           <p class="small" data-testid="prereq">
-            먼저 보면 좋은 기초(추천, 잠금 아님):{' '}
-            {p.prereq.map((u, i) => (
+            {p.prereqLabel}(추천, 잠금 아님):{' '}
+            {prereqTodo.map((u, i) => (
               <>
                 {i > 0 && ' · '}
                 <a href={u.href ?? '/basics/'}>
@@ -229,7 +319,7 @@ function LectureAppView(p: Props) {
         )}
       </section>
 
-      <ResultCodePaste rt={rt} lectureId={p.lectureId} />
+      <ResultCodePaste rt={rt} lectureId={p.lectureId} rebuildIds={p.rebuild.map((r) => r.rebuild_id)} grades={grades} />
 
       {p.artifact && (
         <section class="card stack-sm" aria-labelledby="artifact-h" data-testid="artifact">
@@ -254,23 +344,13 @@ function LectureAppView(p: Props) {
       <section class="card stack-sm" aria-label="핵심 재구성 과제와 익힘 판정">
         <h2 class="t3">핵심 재구성 과제 · 익힘 판정</h2>
         <p class="small">빈 노트북에서 아래 조각을 다시 만듭니다. 조각마다 힌트 {p.rule.rebuild_max_hint_level}단계 이하로 통과하면 됩니다. 결과는 노트북 결과코드로 들어옵니다.</p>
-        <ul class="list">
-          {p.rebuild.map((r) => {
-            const rr = (t?.rebuild_attempt ?? []).filter((x) => x.rebuild_id === r.rebuild_id);
-            const ok = rr.some((x) => x.passed && Number(x.max_hint_level ?? 0) <= p.rule.rebuild_max_hint_level);
-            return (
-              <li class="lrow">
-                <span class="no num">{r.rebuild_id.split('-')[1]}</span>
-                <span class="main">{r.title_ko}</span>
-                <span class="side small">{ok ? <span class="st-done">✓ 통과</span> : rr.length ? <span class="st-now">다시</span> : <span class="st-todo">○ 아직</span>}</span>
-              </li>
-            );
-          })}
-        </ul>
+        {p.rebuild.map((r) => (
+          <LectureRebuildCard rt={rt} lectureId={p.lectureId} r={r} rows={t?.rebuild_attempt ?? []} limit={p.rule.rebuild_max_hint_level} basicsReady={p.basicsReady} />
+        ))}
         {m && (
           <ul class="small num" data-testid="mastery">
             <li>
-              단계 완료: {Math.round(m.steps_done_ratio * 100)}% (기준 {Math.round(p.rule.steps_complete_ratio * 100)}%)
+              단계 완료: {Math.round(m.steps_done_ratio * 100)}% (기준 {Math.round(p.rule.steps_complete_ratio * 100)}%{masteryStepIds.length < p.steps.length ? `, 선택 단계 ${p.steps.length - masteryStepIds.length}개 제외` : ''})
             </li>
             <li>
               확인 문제 점수: {Math.round(m.question_score_ratio * 100)}% (기준 {Math.round(p.rule.question_score_ratio * 100)}%{p.rule.question_min_points != null ? `, ${p.rule.question_min_points}점 이상` : ''}, 힌트 비율 반영)
@@ -299,7 +379,7 @@ function LectureAppView(p: Props) {
                   if (!rt || !t) return;
                   const on = (e.target as HTMLInputElement).checked;
                   const m2 = computeMastery({
-                    stepIds: p.steps.map((s) => s.step_id),
+                    stepIds: masteryStepIds,
                     questions: p.questions,
                     rebuildIds: p.rebuild.map((r) => r.rebuild_id),
                     rule: p.rule,

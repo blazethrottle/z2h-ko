@@ -1,7 +1,10 @@
-// 콘텐츠 빌드 검사 (DESIGN.md 12.4절 + PM 계약 보충: 교사 JSON, D49, data-spec v1.2). 어기면 빌드 실패.
+// 콘텐츠 빌드 검사 (DESIGN.md 12.4절 + PM 계약 보충: 정본 JSON, D49, data-spec 클로드 버전). 어기면 빌드 실패.
 // 순수 함수: 디스크를 읽지 않고 load.mjs 가 만든 묶음만 본다(테스트에서 묶음을 고쳐 실패 예를 만든다).
 import { isNoVideoStep } from '../../content-config.mjs';
+import { reconstructCell } from './cells.mjs';
 import {
+  bridgeCardSchema,
+  checkpointListItemSchema,
   ID,
   KNOWN,
   hintSchema,
@@ -18,13 +21,13 @@ import {
 export const RULES = {
   1: '스키마와 id 모양',
   2: '코드 줄 수 = 줄별 풀이 개수',
-  3: '줄 수 규칙 (long_step ↔ new_code_lines, code = new + moved + 바꾸는 줄)',
+  3: '줄 수 규칙 (long_step ↔ new_code_lines, code = new + moved + 바꾸는 줄, 셀 줄 수 합 = 새 셀 줄)',
   4: 'choice 보기와 answer_index',
   5: '영상 구간',
   6: '문제 answer_ko·rubric, id 중복, 참조 대상',
   7: '긴 줄표(U+2014) 금지',
   8: '원본 코드 출처와 라이선스',
-  9: '힌트 개수 (코드 단계·설명·버그·적용 H1~H4 모두, 예측 0개)',
+  9: '힌트 개수 (코드 단계·확인 문제·힌트가 있는 재구성 과제 H1~H4 모두)',
   10: 'new_code_lines 0 단계는 long_step false',
   11: '맛보기 출력 예 = 교사 실행 출력(taster_outputs.json)',
   12: '맛보기 문항·완료 조건·공유 결과물',
@@ -37,7 +40,7 @@ export function codeLines(code) {
   return s === '' ? 0 : s.split('\n').length;
 }
 
-/** 따옴표 밖의 # 이 있으면 주석 (decisions C2. 검사는 경고만: 교사 정본 S16 은 # 로 줄을 막는 단계) */
+/** 따옴표 밖의 # 이 있으면 주석 (decisions C2. 검사는 경고만: # 로 줄을 막아 두는 단계가 있을 수 있다) */
 export function hasPythonComment(code) {
   for (const line of String(code ?? '').split('\n')) {
     let q = null;
@@ -74,6 +77,62 @@ export function* strings(v, at = '') {
   else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) yield* strings(x, at ? `${at}.${k}` : k);
 }
 
+/** 줄 수가 같은지: 코드와 줄별 풀이 (빈 코드는 풀이도 없어야 함) */
+export function notesMismatch(code, notes) {
+  return codeLines(code) !== (notes?.length ?? 0);
+}
+
+/** 빈칸(___) 수: H3 빈칸 답(blank_answers)은 빈칸 순서대로 하나씩 */
+export const blankCount = (text) => (String(text ?? '').match(/___/g) ?? []).length;
+
+/**
+ * 단계 하나의 셀 모양 검사(1편·기초 공통). kind lines: 줄 수 규칙, ref: 참조 대상.
+ * - cell_line_counts 합 = code 줄 수 - edits 로 앞 셀에 넣는 줄 수
+ * - run_plan 의 new:N 은 이 단계 셀 수 이하, cell:단계id:N 은 그 단계(같은 묶음 안)의 셀 수 이하
+ * - place_before 는 같은 묶음 안 단계
+ */
+export function stepCellIssues(s, stepById) {
+  const out = [];
+  const sid = s.step_id;
+  const editLines = (s.edits ?? []).reduce((a, e) => a + (e?.line_count ?? 0), 0);
+  const cells = s.cell_line_counts;
+  if (Array.isArray(cells)) {
+    const sum = cells.reduce((a, n) => a + n, 0);
+    if (sum !== codeLines(s.code) - editLines) out.push({ kind: 'lines', message: `${sid}: cell_line_counts 합(${sum})이 새 셀 줄 수(code ${codeLines(s.code)} - edits ${editLines})와 다릅니다` });
+  }
+  // 셀 수: cell_line_counts 가 없으면 새 셀 줄이 있을 때 셀 하나
+  const cellCount = (x) => {
+    if (Array.isArray(x?.cell_line_counts)) return x.cell_line_counts.length;
+    const newLines = codeLines(x?.code) - (x?.edits ?? []).reduce((a, e) => a + (e?.line_count ?? 0), 0);
+    return newLines > 0 ? 1 : 0;
+  };
+  for (const item of s.run_plan ?? []) {
+    const nm = /^new:(\d+)$/.exec(item);
+    const cm = /^cell:(.+):(\d+)$/.exec(item);
+    if (nm && (Number(nm[1]) < 1 || Number(nm[1]) > cellCount(s))) out.push({ kind: 'ref', message: `${sid}: run_plan ${item} 은 이 단계의 셀 수(${cellCount(s)})를 넘습니다` });
+    if (cm) {
+      const t = stepById.get(cm[1]);
+      if (!t) out.push({ kind: 'ref', message: `${sid}: run_plan ${item} 의 단계 ${cm[1]}가 같은 묶음에 없습니다` });
+      else if (Number(cm[2]) < 1 || Number(cm[2]) > cellCount(t)) out.push({ kind: 'ref', message: `${sid}: run_plan ${item} 은 ${cm[1]}의 셀 수(${cellCount(t)})를 넘습니다` });
+    }
+  }
+  for (const e of s.edits ?? []) if (e?.action === 'replace' && !e.anchor_line) out.push({ kind: 'ref', message: `${sid}: 바꾸기(replace)는 바꿀 줄 anchor_line 이 있어야 합니다` });
+  if (s.place_before && !stepById.has(s.place_before)) out.push({ kind: 'ref', message: `${sid}: place_before ${s.place_before}가 같은 묶음에 없습니다` });
+  return out;
+}
+
+/** 힌트 하나의 모양 검사(1편·기초 공통): 빈칸 답은 3단계에서만, 빈칸 수와 같게 */
+export function hintShapeIssues(h) {
+  const out = [];
+  if (h.code_with_blanks != null && h.level !== 3) out.push(`${h.hint_id}: code_with_blanks 는 3단계에서만 씁니다`);
+  if (h.blank_answers != null) {
+    if (h.level !== 3) out.push(`${h.hint_id}: blank_answers 는 3단계에서만 씁니다`);
+    const n = blankCount(h.code_with_blanks ?? h.text_ko);
+    if (n !== h.blank_answers.length) out.push(`${h.hint_id}: 빈칸 ${n}개, blank_answers ${h.blank_answers.length}개`);
+  }
+  return out;
+}
+
 export function validateBundle(bundle) {
   const errors = [];
   const warnings = [];
@@ -89,6 +148,25 @@ export function validateBundle(bundle) {
     for (const m of zodIssues(lectureListItemSchema.safeParse(l))) err(1, bundle.lecturesFile.path, `[${i}] ${m}`);
     if (l?.lecture_id) lectureListById.set(l.lecture_id, l);
   });
+  // 다리 카드·누적 점검(설계서에서 옮긴 값): 모양, 편 id, 다리가 가리키는 카드가 있는지
+  const extras = bundle.lecturesFile?.data;
+  const cardIds = new Set();
+  (Array.isArray(extras?.bridge_cards) ? extras.bridge_cards : []).forEach((c, i) => {
+    for (const m of zodIssues(bridgeCardSchema.safeParse(c))) err(1, bundle.lecturesFile.path, `bridge_cards[${i}] ${m}`);
+    if (c?.card_id) cardIds.add(c.card_id);
+  });
+  for (const l of lectureList ?? []) for (const c of l?.bridge?.card_ids ?? []) if (!cardIds.has(c)) err(6, bundle.lecturesFile.path, `${l.lecture_id} bridge.card_ids 의 ${c}가 bridge_cards 에 없습니다`);
+  (Array.isArray(extras?.checkpoints) ? extras.checkpoints : []).forEach((c, i) => {
+    for (const m of zodIssues(checkpointListItemSchema.safeParse(c))) err(1, bundle.lecturesFile.path, `checkpoints[${i}] ${m}`);
+    for (const id of [...(c?.covers ?? []), c?.after_lecture]) if (id && lectureList && !lectureListById.has(id)) err(6, bundle.lecturesFile.path, `checkpoints[${i}] ${id}가 편 목록에 없습니다`);
+  });
+  // 설계서의 편별 단계 수(plan.steps)와 영상 구간 정본의 단계 수가 같아야 한다(둘 다 설계서에서 옮김)
+  for (const l of lectureList ?? []) {
+    const n = Object.values(bundle.segments?.steps ?? {}).filter((e) => e?.lecture_id === l?.lecture_id).length;
+    if (l?.plan && bundle.segments && n !== l.plan.steps) err(5, bundle.lecturesFile.path, `${l.lecture_id} plan.steps ${l.plan.steps}가 video-segments.json 의 단계 수 ${n}와 다릅니다`);
+    const sl = bundle.segments?.lectures?.[l?.lecture_id];
+    if (sl && l?.youtube_video_id && (sl.youtube_video_id !== l.youtube_video_id || sl.video_seconds !== l.video_seconds)) err(5, bundle.lecturesFile.path, `${l.lecture_id} 영상 id·길이가 video-segments.json 과 다릅니다`);
+  }
   // 선행 기초 단위(prereq_units)가 실제 기초 단위인지는 기초 정본(F.json)과 함께 본다(basics.mjs checkPrereqUnits, npm run check:content)
 
   const seen = new Map();
@@ -99,6 +177,9 @@ export function validateBundle(bundle) {
   const segs = bundle.segments;
   const licenseNames = (bundle.licenseFiles ?? []).map((f) => String(f).toLowerCase());
   let stepCount = 0;
+  let questionCount = 0;
+  let rebuildCount = 0;
+  let hintCount = 0;
 
   for (const lf of bundle.lectureFiles ?? []) {
     const file = lf.path;
@@ -120,10 +201,14 @@ export function validateBundle(bundle) {
     const rebuilds = Array.isArray(d.rebuild_tasks) ? d.rebuild_tasks : [];
     const hints = Array.isArray(d.hints) ? d.hints : [];
     const stepIds = new Set(steps.map((s) => s?.step_id).filter(Boolean));
+    const stepById = new Map(steps.filter((s) => s?.step_id).map((s) => [s.step_id, s]));
     const questionIds = new Set(questions.map((q) => q?.question_id).filter(Boolean));
     const rebuildIds = new Set(rebuilds.map((r) => r?.rebuild_id).filter(Boolean));
     const targets = new Set([...stepIds, ...questionIds, ...rebuildIds]);
     stepCount += stepIds.size;
+    questionCount += questions.length;
+    rebuildCount += rebuilds.length;
+    hintCount += hints.length;
 
     // 힌트 (최상위 목록)
     const hintIds = new Set();
@@ -145,7 +230,7 @@ export function validateBundle(bundle) {
         set.add(h.level);
         levelsByTarget.set(h.target_id, set);
       }
-      if (h.code_with_blanks != null && h.level !== 3) err(1, file, `${h.hint_id}: code_with_blanks 는 3단계에서만 씁니다`);
+      for (const m of hintShapeIssues(h)) err(1, file, m);
       if (h.code != null || h.code_line_notes_ko != null) {
         if (codeLines(h.code) !== (h.code_line_notes_ko?.length ?? 0)) err(2, file, `${h.hint_id}: 코드 ${codeLines(h.code)}줄, 줄별 풀이 ${h.code_line_notes_ko?.length ?? 0}개`);
       }
@@ -213,6 +298,7 @@ export function validateBundle(bundle) {
       // edits 가 code 앞쪽 줄을 차례로 가져간다
       const editLines = (s.edits ?? []).reduce((a, e) => a + (e?.line_count ?? 0), 0);
       if (editLines > codeLines(s.code)) err(1, file, `${sid}: edits 줄 수 합(${editLines})이 code 줄 수(${codeLines(s.code)})보다 큽니다`);
+      for (const x of stepCellIssues(s, stepById)) err(x.kind === 'lines' ? 3 : 6, file, x.message);
       // 7 주석(경고)
       if (s.code && hasPythonComment(s.code)) warn(file, `${sid}: code 안에 # 주석이 있습니다(decisions C2, 경고만)`);
       // 9 힌트 개수
@@ -222,6 +308,9 @@ export function validateBundle(bundle) {
       for (const o of s.objective_ids ?? []) if (!objectiveIds.has(o)) err(6, file, `${sid}: objective_ids ${o}가 lecture.objectives 에 없습니다`);
       for (const x of s.rerun_first ?? []) if (!stepIds.has(x)) err(6, file, `${sid}: rerun_first ${x}가 같은 편에 없습니다`);
       for (const e of s.edits ?? []) if (e?.target_step && !stepIds.has(e.target_step)) err(6, file, `${sid}: edits.target_step ${e.target_step}가 같은 편에 없습니다`);
+      // 고친 뒤 셀 전체(화면 "전체 보기")를 만들 수 있어야: 기준 줄이 앞 단계까지 고친 셀에 있어야 한다
+      for (const t of new Set((s.edits ?? []).map((e) => e?.target_step).filter((x) => stepIds.has(x))))
+        if (!reconstructCell(steps, s, t).ok) err(6, file, `${sid}: ${t} 셀에서 고칠 기준 줄을 찾지 못했습니다`);
       // 5 영상
       const own = Array.isArray(s.video_segments) ? s.video_segments : null;
       const fromSegs = s.step_id && segs ? segs.steps?.[s.step_id] : undefined;
@@ -274,8 +363,11 @@ export function validateBundle(bundle) {
         else if (Array.isArray(q.choices) && (q.answer_index < 0 || q.answer_index >= q.choices.length)) err(4, file, `${qid}: answer_index ${q.answer_index}가 보기 범위 밖입니다`);
         if (q.auto_grade?.type !== 'choice') err(4, file, `${qid}: choice 문항은 auto_grade.type 이 choice 여야 합니다`);
       }
-      if (q.type === 'predict' && (levelsByTarget.get(q.question_id)?.size ?? 0) > 0) err(9, file, `${qid}: 예측 문제에는 힌트를 두지 않습니다`);
-      if (['explain', 'fix_bug', 'apply'].includes(q.type) && q.question_id) needH1toH4(q.question_id);
+      if (q.dont_know_index != null && !(q.type === 'choice' && Array.isArray(q.choices) && q.dont_know_index < q.choices.length && q.dont_know_index !== q.answer_index))
+        err(4, file, `${qid}: dont_know_index 는 정답이 아닌 보기 번호여야 합니다`);
+      if (q.answer_code != null && notesMismatch(q.answer_code, q.answer_code_line_notes_ko)) err(2, file, `${qid}: answer_code ${codeLines(q.answer_code)}줄, 줄별 풀이 ${q.answer_code_line_notes_ko?.length ?? 0}개`);
+      // 확인 문제는 유형과 상관없이 힌트 H1~H4 (설계서 3-2)
+      if (q.question_id && q.scored !== false) needH1toH4(q.question_id);
       if (q.alternate_of) alternates.set(q.alternate_of, [...(alternates.get(q.alternate_of) ?? []), q]);
     });
     for (const [orig, alts] of alternates) {
@@ -288,8 +380,18 @@ export function validateBundle(bundle) {
     // 재구성
     rebuilds.forEach((t, i) => {
       for (const m of zodIssues(rebuildSchema.safeParse(t))) err(1, file, `rebuild_tasks[${i}] ${m}`);
-      if (t?.rebuild_id) claim(t.rebuild_id, file);
-      checkHintIds(t?.rebuild_id ?? `rebuild_tasks[${i}]`, t?.hint_ids, file);
+      if (!t || typeof t !== 'object') return;
+      const rid = t.rebuild_id ?? `rebuild_tasks[${i}]`;
+      for (const k of Object.keys(t)) if (!KNOWN.rebuild.has(k)) warn(file, `${rid}: 모르는 칸 "${k}"`);
+      if (t.rebuild_id) claim(t.rebuild_id, file);
+      checkHintIds(rid, t.hint_ids, file);
+      if (typeof t.task_ko !== 'string' || !t.task_ko.trim()) err(6, file, `${rid}: task_ko(과제 글)가 없습니다`);
+      if (t.check_code != null) {
+        if (notesMismatch(t.check_code, t.check_code_line_notes_ko)) err(2, file, `${rid}: check_code ${codeLines(t.check_code)}줄, 줄별 풀이 ${t.check_code_line_notes_ko?.length ?? 0}개`);
+        if (typeof t.pass_ko !== 'string' || !t.pass_ko.trim()) err(6, file, `${rid}: 확인 셀(check_code)이 있으면 통과 기준 pass_ko 가 있어야 합니다`);
+      }
+      if (t.solution_code != null && t.solution_code_line_notes_ko != null && notesMismatch(t.solution_code, t.solution_code_line_notes_ko)) err(2, file, `${rid}: solution_code 줄 수와 줄별 풀이 개수가 다릅니다`);
+      if (t.rebuild_id && levelsByTarget.has(t.rebuild_id)) needH1toH4(t.rebuild_id);
     });
 
     // 7 긴 줄표: 모든 글자 값
@@ -302,16 +404,16 @@ export function validateBundle(bundle) {
     });
   }
   if (!bundle.lectureFiles?.length) err(1, bundle.contentDir, '강의 콘텐츠가 없습니다');
-  return { errors, warnings, stats: { lectures: bundle.lectureFiles?.length ?? 0, steps: stepCount } };
+  return { errors, warnings, stats: { lectures: bundle.lectureFiles?.length ?? 0, steps: stepCount, questions: questionCount, rebuild: rebuildCount, hints: hintCount } };
 }
 
 const SOURCE_LABEL = {
-  snapshot: '교사 정본 사본 app/tests/fixtures/pedagogy (병합 전)',
-  content: '교사 정본 inputs/pedagogy/content',
+  snapshot: '정본 사본 app/tests/fixtures/pedagogy (병합 전)',
+  content: '정본 inputs/pedagogy/content',
 };
 
 export function formatReport({ errors, warnings, stats }, source, contentDir) {
-  const out = [`콘텐츠 검사 (${SOURCE_LABEL[source] ?? contentDir}): 강의 ${stats.lectures}편, 단계 ${stats.steps}개`];
+  const out = [`콘텐츠 검사 (${SOURCE_LABEL[source] ?? contentDir}): 강의 ${stats.lectures}편, 단계 ${stats.steps}개, 문항 ${stats.questions}개, 재구성 ${stats.rebuild}개, 힌트 ${stats.hints}개`];
   for (const e of errors) out.push(`  ✕ 규칙 ${e.rule} ${RULES[e.rule]} | ${e.file} | ${e.message}`);
   for (const w of warnings) out.push(`  △ 경고 | ${w.file} | ${w.message}`);
   out.push(errors.length ? `실패: 오류 ${errors.length}건, 경고 ${warnings.length}건` : `통과: 오류 0건, 경고 ${warnings.length}건`);

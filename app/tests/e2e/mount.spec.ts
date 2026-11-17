@@ -78,6 +78,8 @@ test('1편 단계 "따라 하기 시작"·"마치기": 마운트 전에는 눌�
   await page.goto(`/lectures/${L.lecture_id}/${s.slug}/`, { waitUntil: 'domcontentloaded' });
   const start = page.getByTestId('start-practice');
   await expect(start).toBeDisabled();
+  // 폰 폭에서 단추가 화면 맨 아래(고정된 아래 탭 밑)에 걸리면 누른 자리가 탭이 된다: 가운데로 옮긴 뒤 누른다
+  await start.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await start.click({ force: true });
   hold.release();
   await hydrated(page);

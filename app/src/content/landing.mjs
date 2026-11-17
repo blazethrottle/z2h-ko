@@ -2,8 +2,8 @@
 // 랜딩 문구는 공개 전 승인 항목(D46)이다. 화면 위 "예시 화면 · 문구는 공개 전 승인 대기" 표시를 유지하고, 승인 뒤 바꿀 때는 이 파일만 고친다.
 // 숫자 규칙(D28): 편별 시간·단계 수·문항 수만 쓴다. 사용자 수·후기·완주율·로고는 넣지 않는다.
 //   - 편별 단계 수와 전체 단계 수는 여기 적지 않고 빌드 때 inputs/pedagogy/video-segments.json 에서 센다.
-//   - 편별 예상 시간: inputs/pedagogy/README.md 3절 "전체 학습 길" 표.
-//   - 누적 점검 문항 수: inputs/design/decisions.md D36 (CP1 11, CP2 13, CP3 16), 시간은 README 3절 표.
+//   - 편별 예상 시간과 누적 점검(범위·문항 구성)도 여기 적지 않는다: 홈과 같은 출처 content/lectures.yaml(docs/CURRICULUM.md 에서 옮김)에서
+//     빌드 때 채운다(src/lib/landingPath.ts). 사전 기초 시간은 정본 F.json 단위 예상 분의 합. 시간은 설계서 추정이라 "추정"을 단다.
 // 피해야 할 말(VALUE 5절)은 옆 파일 landing-banned.mjs. 빌드 결과(dist)를 그 목록으로 검사한다(scripts/check-copy.mjs).
 
 export const LANDING = {
@@ -66,26 +66,27 @@ export const LANDING = {
     note: '시간은 편별 예상 시간을 더한 값입니다. 길에 없는 편도 언제든 열 수 있습니다.',
   },
 
-  // 4 수료까지의 길 (편별 한 줄 약속은 VALUE 1절을 줄인 것, 시간은 README 3절, n단계는 빌드 때 셈)
+  // 4 수료까지의 길 (편별 한 줄 약속은 VALUE 1절을 줄인 것. 시간·단계 수·점검 구성은 빌드 때 채움)
   path: {
     title: '수료까지의 길',
     /** {lectures}편, {steps}단계, {checks}번은 빌드 때 채운다 */
     lead: '사전 기초와 {lectures}편, {steps}단계, 누적 점검 {checks}번. 몇 달에 걸쳐 직접 만들며 이해합니다.',
     rows: [
-      { mark: '00', name: '사전 기초', hours: '약 8~12시간', promise: '셀을 실행하고 에러를 읽는 법, 최소한의 수학(기울기, 행렬, 확률)을 숫자와 그림으로 익힙니다' },
-      { mark: '01', lecture_id: 'L01', name: 'micrograd', hours: '약 8~12시간', promise: 'AI가 스스로 배우는 원리(역전파)를 작은 계산 엔진으로 직접 만들어 봅니다' },
-      { mark: '02', lecture_id: 'L02', name: 'makemore 1', hours: '약 6~10시간', promise: '글자 짝을 세는 가장 단순한 언어 모델로 내 컴퓨터가 새 이름을 지어내게 합니다' },
-      { mark: '03', lecture_id: 'L03', name: 'makemore 2', hours: '약 5~8시간', promise: '작은 신경망으로 더 그럴듯한 이름을 만들고, 모델 성적을 공정하게 재는 법을 익힙니다' },
-      { mark: 'CP1', checkpoint: true, name: '누적 점검 1', hours: '약 1시간', questions: 11, promise: '01~03편을 한 번에 꺼내 봅니다' },
-      { mark: '04', lecture_id: 'L04', name: 'BatchNorm', hours: '약 6~10시간', promise: '신경망이 잘 배우고 있는지 그래프로 건강 검진하는 법을 배웁니다' },
-      { mark: '05', lecture_id: 'L05', name: 'Backprop Ninja', hours: '약 8~12시간', promise: '역전파를 손으로 끝까지 계산해 학습이 어떻게 흐르는지 확인합니다' },
-      { mark: '06', lecture_id: 'L06', name: 'WaveNet', hours: '약 4~6시간', promise: '층을 나무처럼 쌓아 더 긴 문맥을 보는 모델을 만듭니다' },
-      { mark: 'CP2', checkpoint: true, name: '누적 점검 2', hours: '약 1.5시간', questions: 13, promise: '01~06편을 한 번에 꺼내 봅니다' },
-      { mark: '07', lecture_id: 'L07', name: 'GPT 만들기', hours: '약 8~12시간', promise: 'ChatGPT의 뼈대인 트랜스포머를 직접 만들어 셰익스피어 흉내 글을 쓰게 합니다' },
-      { mark: '08', lecture_id: 'L08', name: 'State of GPT', hours: '약 2~3시간', promise: 'AI 비서가 어떤 단계로 만들어지는지, 왜 어떤 질문 방식이 더 잘 통하는지 이해합니다' },
-      { mark: '09', lecture_id: 'L09', name: '토크나이저', hours: '약 8~12시간', promise: '글을 토큰으로 나누는 도구를 만들어, 한국어가 더 비싸고 AI가 철자에 약한 이유를 설명합니다' },
-      { mark: '10', lecture_id: 'L10', name: 'GPT-2 축소판', hours: '약 14~20시간', promise: 'GPT-2와 같은 구조를 만들고, 작게 줄인 판으로 학습 전 과정을 처음부터 끝까지 경험합니다' },
-      { mark: 'CP3', checkpoint: true, name: '누적 점검 3', hours: '약 2시간', questions: 16, promise: '01~10편을 한 번에 꺼내 봅니다. 통과하면 수료입니다' },
+      { mark: '00', basics: true, name: '사전 기초', promise: '셀을 실행하고 에러를 읽는 법, 최소한의 수학(기울기, 행렬, 확률)을 숫자와 그림으로 익힙니다' },
+      { mark: '01', lecture_id: 'L01', name: 'micrograd', promise: 'AI가 스스로 배우는 원리(역전파)를 작은 계산 엔진으로 직접 만들어 봅니다' },
+      { mark: '02', lecture_id: 'L02', name: 'makemore 1', promise: '글자 짝을 세는 가장 단순한 언어 모델로 내 컴퓨터가 새 이름을 지어내게 합니다' },
+      { mark: '03', lecture_id: 'L03', name: 'makemore 2', promise: '작은 신경망으로 더 그럴듯한 이름을 만들고, 모델 성적을 공정하게 재는 법을 익힙니다' },
+      // {range}: 그 점검이 덮는 편(lectures.yaml checkpoints.covers)을 빌드 때 채운다
+      { mark: 'CP1', checkpoint_id: 'CP1', checkpoint: true, name: '누적 점검 1', promise: '{range}을 한 번에 꺼내 봅니다' },
+      { mark: '04', lecture_id: 'L04', name: 'BatchNorm', promise: '신경망이 잘 배우고 있는지 그래프로 건강 검진하는 법을 배웁니다' },
+      { mark: '05', lecture_id: 'L05', name: 'Backprop Ninja', promise: '역전파를 손으로 끝까지 계산해 학습이 어떻게 흐르는지 확인합니다' },
+      { mark: '06', lecture_id: 'L06', name: 'WaveNet', promise: '층을 나무처럼 쌓아 더 긴 문맥을 보는 모델을 만듭니다' },
+      { mark: 'CP2', checkpoint_id: 'CP2', checkpoint: true, name: '누적 점검 2', promise: '{range}을 한 번에 꺼내 봅니다' },
+      { mark: '07', lecture_id: 'L07', name: 'GPT 만들기', promise: 'ChatGPT의 뼈대인 트랜스포머를 직접 만들어 셰익스피어 흉내 글을 쓰게 합니다' },
+      { mark: '08', lecture_id: 'L08', name: 'State of GPT', promise: 'AI 비서가 어떤 단계로 만들어지는지, 왜 어떤 질문 방식이 더 잘 통하는지 이해합니다' },
+      { mark: '09', lecture_id: 'L09', name: '토크나이저', promise: '글을 토큰으로 나누는 도구를 만들어, 한국어가 더 비싸고 AI가 철자에 약한 이유를 설명합니다' },
+      { mark: '10', lecture_id: 'L10', name: 'GPT-2 축소판', promise: 'GPT-2와 같은 구조를 만들고, 작게 줄인 판으로 학습 전 과정을 처음부터 끝까지 경험합니다' },
+      { mark: 'CP3', checkpoint_id: 'CP3', checkpoint: true, name: '누적 점검 3', promise: '{range}을 한 번에 꺼내 봅니다. 통과하면 수료입니다' },
     ],
   },
 

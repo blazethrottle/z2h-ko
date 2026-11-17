@@ -57,7 +57,7 @@ def _inline_code(text):
 
 
 def code_table(code, notes, step_id):
-    """줄별 풀이 표. 교사 build_content.py 의 code_table 과 같은 모양(앞 공백은 · 로 보이게)."""
+    """줄별 풀이 표(줄 번호, 코드, 풀이). 앞 공백은 · 로 보이게 한다."""
     lines = code.split("\n")
     if len(lines) != len(notes or []):
         raise BuildError(f"{step_id}: 코드 줄 수({len(lines)})와 줄별 풀이 개수({len(notes or [])})가 다릅니다")

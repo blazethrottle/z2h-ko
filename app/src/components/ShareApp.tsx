@@ -87,12 +87,13 @@ function ShareAppView(p: Props) {
   const [kind, setKind] = useState<CardKind>('ART-TASTER');
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('card');
-    if (q === 'ART-L01' || q === 'ART-TASTER') setKind(q);
+    if ((q === 'ART-L01' && p.l01) || q === 'ART-TASTER') setKind(q);
   }, []);
 
+  // 01편 학습 기록 카드는 정본에 공유 결과물(rewards.artifact)이 있을 때만(클로드 버전 L01 에는 없어 맛보기 카드 하나만 보인다)
   const kinds: { kind: CardKind; label: string }[] = [
     { kind: 'ART-TASTER', label: p.taster ? `${p.taster.name_ko} (맛보기)` : '이름 카드' },
-    { kind: 'ART-L01', label: p.l01 ? `${p.l01.name_ko} (${p.l01.mark}편)` : '학습 기록 카드' },
+    ...(p.l01 ? [{ kind: 'ART-L01' as const, label: `${p.l01.name_ko} (${p.l01.mark}편)` }] : []),
   ];
 
   return (

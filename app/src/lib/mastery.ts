@@ -56,7 +56,7 @@ export function computeMastery(i: MasteryInput): MasteryResult {
 
   const extra_checks_ok = i.rule.extra_checks.every((k) => i.extraChecks[k] === true);
   const stepsOk = steps_done_ratio >= i.rule.steps_complete_ratio;
-  // 교사 정본에 최소 점수(question_min_points, 01편은 11점 중 9점)가 있으면 비율과 함께 둘 다 넘어야 한다.
+  // 정본 mastery_rule 에 최소 점수(question_min_points)가 있으면 비율과 함께 둘 다 넘어야 한다.
   const minPointsOk = i.rule.question_min_points == null || got >= i.rule.question_min_points;
   const scoreOk = question_score_ratio >= i.rule.question_score_ratio && minPointsOk && must_pass_ok;
   const anyActivity = i.stepRows.length > 0 || i.attemptRows.length > 0 || i.rebuildRows.length > 0;

@@ -38,5 +38,6 @@ test('먼저 다시 실행할 칸이 있으면 안내와 그 단계 링크', asy
   await page.goto(`/lectures/${L.lecture_id}/${s.slug}/#practice`);
   const note = page.getByTestId('rerun-first');
   await expect(note).toContainText('먼저 다시 실행');
-  await expect(note.getByRole('link', { name: `${s.rerun_first[0]} 셀` })).toBeVisible();
+  await expect(note.getByRole('link', { name: new RegExp(`^${s.rerun_first[0]} `) })).toBeVisible();
+  await expect(note.getByRole('link')).toHaveCount(s.rerun_first.length);
 });

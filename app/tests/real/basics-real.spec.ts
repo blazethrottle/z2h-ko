@@ -9,7 +9,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { diagnosticSummary, fillTemplate } from '../../src/lib/basics';
+import { diagnosticSummary } from '../../src/lib/basics';
+import { answerQuestion } from '../e2e/helpers';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '../..');
@@ -105,7 +106,7 @@ test('실제 서버: 진단 결과와 기초 단위 기록이 저장되고, 다�
     const card = page.getByTestId(`diag-${q.question_id}`);
     const a = answers[q.question_id];
     if (q.type === 'choice') {
-      const wrong = q.choices.findIndex((c: string, i: number) => i !== a.answer_index && !/모르겠어요/.test(c));
+      const wrong = q.choices.findIndex((_: string, i: number) => i !== a.answer_index && i !== q.dont_know_index);
       await card.getByRole('radio').nth(q.question_id === wrongId ? wrong : a.answer_index).click();
     } else await card.getByTestId(`diag-input-${q.question_id}`).fill(String(a.auto_grade.value));
   }
@@ -115,7 +116,7 @@ test('실제 서버: 진단 결과와 기초 단위 기록이 저장되고, 다�
     B.diagnostic.map((q: any) => ({ question_id: q.question_id, is_correct: q.question_id !== wrongId })),
     B.unit_order,
   );
-  const scoreText = fillTemplate(B.result_ko.score_template_ko, { correct: s.correct, total: s.total });
+  const scoreText = `${s.correct} / ${s.total} 맞음`;
   await expect(page.getByTestId('diag-score')).toHaveText(scoreText);
   await expect(syncState(page, 'saved')).toBeVisible();
   await expect.poll(async () => (await serverTables(page)).diagnostic_result?.length ?? 0).toBe(1);
@@ -133,19 +134,8 @@ test('실제 서버: 진단 결과와 기초 단위 기록이 저장되고, 다�
   await page.getByTestId('finish-step').click();
   await expect(page.locator('[data-phase="quiz"]')).toBeVisible();
   const qid = step.question_ids[0];
-  const a = answers[qid];
-  const card = page.getByTestId(`question-${qid}`);
-  const g = a.auto_grade ?? {};
-  const text = g.type === 'exact' ? String(Array.isArray(g.value) ? g.value[0] : g.value) : (g.keywords ?? []).map((k: any) => (Array.isArray(k) ? k[0] : k)).join(' ') || '설명';
-  await card.locator('textarea, input.input').first().fill(text);
-  await card.getByTestId(`submit-${qid}`).click();
-  if (['keywords', 'manual'].includes(g.type)) {
-    const confirm = card.getByRole('button', { name: '채점 확정' });
-    await confirm.waitFor();
-    const boxes = card.locator('input[type="checkbox"]');
-    for (let i = 0; i < (await boxes.count()); i++) await boxes.nth(i).check();
-    await confirm.click();
-  }
+  // 맞는 답 내기는 자동 브라우저 테스트와 같은 도우미(고르기·직접 입력·채점 기준 모두)
+  const card = await answerQuestion(page, qid, answers[qid]);
   await expect(card.getByTestId(`result-${qid}`)).toContainText('맞음');
   await expect(syncState(page, 'saved')).toBeVisible();
   await expect
@@ -158,7 +148,7 @@ test('실제 서버: 진단 결과와 기초 단위 기록이 저장되고, 다�
     })
     .toEqual([true, true]);
 
-  // 2-1) 스스로 해 보기: "직접 확인했어요" → rebuild_attempt(1편 재구성 기록과 같은 표, attempt_no 는 서버가 매김)
+  // 2-1) 익힘 과제: "직접 확인했어요" → rebuild_attempt(1편 재구성 기록과 같은 표, attempt_no 는 서버가 매김)
   const r = B.rebuild[uid][0];
   await page.goto(`${BASE}/basics/${uid}/`);
   await hydrated(page);

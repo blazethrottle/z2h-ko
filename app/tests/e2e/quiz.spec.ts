@@ -25,16 +25,21 @@ test('모든 확인 문제를 맞게 풀면 맞음과 풀이가 보이고 시도
   }
 });
 
-test('고르기에서 모르겠어요는 감점 없이 오답 기록 + 풀이 공개', async ({ page, api }) => {
+test('확인 문제 고르기의 모르겠어요(정본 dont_know_index 보기)는 감점 없이 오답 기록 + 풀이 공개', async ({ page, api }) => {
   const m = await manifest(page);
+  // 1편과 기초 단위의 확인 문제 중 정본에 모르겠어요 보기 번호가 있는 고르기 문항(진단 5문제는 진단 화면이라 diagnostic-dontknow.spec 이 본다)
   const L = m.lectures[0];
-  const answers = await (await page.request.get(`/data/${L.lecture_id}/answers.json`)).json();
-  const q = L.questions.find((x: any) => x.type === 'choice' && (answers[x.question_id].choices ?? []).some((c: string) => /모르겠어요/.test(c)));
-  test.skip(!q, '모르겠어요 보기가 있는 고르기 문제 없음');
-  const step = L.steps.find((s: any) => s.question_ids.includes(q.question_id));
-  await page.goto(`/lectures/${L.lecture_id}/${step.slug}/#quiz`);
+  const B = m.basics;
+  const found = [
+    ...L.questions.map((q: any) => ({ q, path: `/lectures/${L.lecture_id}/${L.steps.find((s: any) => s.question_ids.includes(q.question_id))?.slug}/#quiz` })),
+    ...B.ready_ids.flatMap((u: string) => (B.questions[u] ?? []).map((q: any) => ({ q, path: `/basics/${u}/${B.steps[u].find((s: any) => s.question_ids.includes(q.question_id))?.slug}/#quiz` }))),
+  ].find((x: any) => x.q.type === 'choice' && x.q.dont_know_index != null);
+  // 클로드 버전 정본(L01 claude-1.0, F claude-1.1)은 확인 문제에 모르겠어요 보기를 두지 않기로 했다(L01 _meta.decisions). 채점 규칙은 grading.test 가 늘 본다
+  test.skip(!found, '정본 확인 문제(1편·기초)에 dont_know_index 가 있는 고르기 문항 없음');
+  const q = found.q;
+  await page.goto(found.path);
   const card = page.getByTestId(`question-${q.question_id}`);
-  await card.getByRole('radio', { name: /모르겠어요/ }).click();
+  await card.getByRole('radio').nth(q.dont_know_index).click();
   await card.getByTestId(`submit-${q.question_id}`).click();
   await expect(card.getByTestId(`result-${q.question_id}`)).toContainText('모르겠어요를 골랐습니다');
   await expect(card.getByTestId(`answer-${q.question_id}`)).toBeVisible();

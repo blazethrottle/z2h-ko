@@ -1,9 +1,11 @@
 // 1 홈·진도 (spec 1절): 이어서 하기, 완료 단계, 이번 주 실습 시간(자동 + 수정), 강의 10편.
+// 강의 목록의 제목·단계 수·누적 점검 줄은 content/lectures.yaml(docs/CURRICULUM.md 에서 옮긴 값). 단계 콘텐츠가 없는 편은 "준비 중"이고 설계 안내 화면으로 간다.
 import { useState } from 'preact/hooks';
 import { config } from '../config';
 import { parsePref, practicePrefKey, PREF_RESUME, setPref, STEP_DONE, weeklySeconds } from '../lib/progress';
 import { formatDateKo, formatHM, nowKst, weekStartMs } from '../lib/time';
 import { isBasicsId, unitMastery, type BasicsRule, type UnitMasteryRef } from '../lib/basics';
+import { checkpointHeadKo } from '../lib/curriculumText';
 import { useNow, useRuntime, useTables } from './hooks';
 import { gated } from './Gate';
 
@@ -14,8 +16,16 @@ interface LectureRow {
   available: boolean;
   step_count: number | null;
 }
+interface CheckpointRow {
+  checkpoint_id: string;
+  covers: string[];
+  after_lecture: string;
+  question_count: number;
+}
 interface Props {
   lectures: LectureRow[];
+  /** 누적 점검(설계서 5-3절): 그 편 줄 아래에 한 줄. 잠그지 않는다 */
+  checkpoints: CheckpointRow[];
   main: { lectureId: string; lectureLabel: string; steps: { step_id: string; slug: string; order: number; title_ko: string }[] } | null;
   /** 1편 선행 기초 단위. href: 준비된 단위는 그 단위 화면, 아니면 기초 목록 */
   prereq: { unit_id: string; title_ko: string | null; href?: string }[];
@@ -77,10 +87,14 @@ function HomeAppView(p: Props) {
     setEditing(false);
   };
 
-  const cpAfter: Record<string, string> = {
-    L03: config.checkpointLock === 'lock' ? '누적 점검 1 (01~03편) · 통과하면 04편이 열립니다' : '누적 점검 1 (01~03편) · 04편 전에 권장',
-    L06: config.checkpointLock === 'lock' ? '누적 점검 2 (01~06편) · 통과하면 07편이 열립니다' : '누적 점검 2 (01~06편) · 07편 전에 권장',
-    L10: '누적 점검 3 (01~10편) · 통과하면 수료',
+  const lectureIds = p.lectures.map((l) => l.lecture_id);
+  const cpLine = (lid: string): string | null => {
+    const cp = p.checkpoints.find((c) => c.after_lecture === lid);
+    if (!cp) return null;
+    const head = checkpointHeadKo(cp);
+    const next = lectureIds[lectureIds.indexOf(lid) + 1];
+    if (!next) return `${head} · 통과하면 수료`;
+    return config.checkpointLock === 'lock' ? `${head} · 통과하면 ${next.slice(1)}편이 열립니다` : `${head} · ${next.slice(1)}편 전에 권장`;
   };
 
   return (
@@ -144,34 +158,29 @@ function HomeAppView(p: Props) {
             {p.lectures.map((l) => {
               const n = Number(l.lecture_id.slice(1));
               const isMain = p.main?.lectureId === l.lecture_id;
-              const inner = (
-                <>
-                  <span class={`no num${isMain ? ' st-now' : ''}`}>{l.lecture_id.slice(1)}</span>
-                  <span class="main semibold">{l.title_ko}</span>
-                  <span class="side small muted">
-                    {isMain ? (
-                      <span class="num">
-                        {mainDone} / {steps.length} 단계
-                      </span>
-                    ) : (
-                      <span>준비 중</span>
-                    )}
-                    <span class="num" style="display:block">
-                      영상 {formatHM(l.video_seconds)}
-                    </span>
-                  </span>
-                </>
-              );
+              const cp = cpLine(l.lecture_id);
               return (
                 <li>
-                  {l.available ? (
-                    <a class="lrow" href={`/lectures/${l.lecture_id}/`}>
-                      {inner}
-                    </a>
-                  ) : (
-                    <div class="lrow">{inner}</div>
-                  )}
-                  {cpAfter[l.lecture_id] && <p class="cp-line">{cpAfter[l.lecture_id]}</p>}
+                  <a class="lrow" href={`/lectures/${l.lecture_id}/`} data-testid={`home-lecture-${l.lecture_id}`}>
+                    <span class={`no num${isMain ? ' st-now' : ''}`}>{l.lecture_id.slice(1)}</span>
+                    <span class="main semibold">{l.title_ko}</span>
+                    <span class="side small muted">
+                      {isMain ? (
+                        <span class="num">
+                          {mainDone} / {steps.length} 단계
+                        </span>
+                      ) : (
+                        <span class="num">
+                          {l.available ? '' : '준비 중'}
+                          {l.step_count ? `${l.available ? '' : ' · '}${l.step_count}단계` : ''}
+                        </span>
+                      )}
+                      <span class="num" style="display:block">
+                        영상 {formatHM(l.video_seconds)}
+                      </span>
+                    </span>
+                  </a>
+                  {cp && <p class="cp-line">{cp}</p>}
                   {n === 10 && <span class="sr-only">10편은 축소판 실습</span>}
                 </li>
               );

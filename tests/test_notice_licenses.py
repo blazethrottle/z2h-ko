@@ -42,15 +42,29 @@ def test_notice_table():
     assert "build-nanogpt" in notice and "링크만" in notice
     assert "Pretendard" in notice and "JetBrains Mono" in notice
     assert chr(0x2014) not in notice
-    # 1편에서 실제로 쓴 위치는 저장소에 있는 파일이어야 한다
-    assert "tests/reference_impl/micrograd_ref.py" in notice
-    assert os.path.exists(os.path.join(ROOT, "tests", "reference_impl", "micrograd_ref.py"))
+    # 1편에서 실제로 쓴 위치는 저장소에 있는 파일이어야 하고, 지운 교사 파일은 가리키지 않는다
+    for path in ("notebooks/ep01-micrograd/", "z2h_check/reference/l01.json", "z2h_check/_bundle.py",
+                 "inputs/pedagogy/content/L01.json"):
+        assert path in notice, path
+        assert os.path.exists(os.path.join(ROOT, *path.strip("/").split("/"))), path
+    for gone in ("tests/reference_impl", "l01_source.py", "l01_extra.py", "build_content.py", "test_content.py"):
+        assert gone not in notice, gone
 
 
-def test_reference_impl_has_source_header():
-    with open(os.path.join(ROOT, "tests", "reference_impl", "micrograd_ref.py"), encoding="utf-8") as fh:
-        first = fh.readline()
-    assert first.startswith("# 출처:") and "karpathy/micrograd" in first and "MIT" in first
-    with open(os.path.join(ROOT, "z2h_check", "graders", "l01.py"), encoding="utf-8") as fh:
-        first = fh.readline()
-    assert first.startswith("# 출처:") and "nn-zero-to-hero" in first and "MIT" in first
+def _first_line(*parts):
+    with open(os.path.join(ROOT, *parts), encoding="utf-8") as fh:
+        return fh.readline()
+
+
+def test_source_lines_where_lecture_code_or_numbers_are_used():
+    first = _first_line("z2h_check", "graders", "l01.py")
+    assert first.startswith("# 출처:") and "nn-zero-to-hero" in first and "micrograd" in first and "MIT" in first
+    head = "".join(open(os.path.join(ROOT, "z2h_check", "_bundle.py"), encoding="utf-8").readlines()[:6])
+    assert "출처" in head and "nn-zero-to-hero" in head and "micrograd" in head and "MIT" in head
+    import json
+    ref = json.load(open(os.path.join(ROOT, "z2h_check", "reference", "l01.json"), encoding="utf-8"))
+    assert "nn-zero-to-hero" in ref["_출처"] and "micrograd" in ref["_출처"] and "MIT" in ref["_출처"]
+    for name in ("ep01_solution.ipynb", "ep01_student.ipynb"):
+        nb = json.load(open(os.path.join(ROOT, "notebooks", "ep01-micrograd", name), encoding="utf-8"))
+        intro = "".join(nb["cells"][0]["source"])
+        assert "출처" in intro and "karpathy/micrograd" in intro and "karpathy/nn-zero-to-hero" in intro and "MIT" in intro

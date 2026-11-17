@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /** answers.json 으로 맞는 답을 만든다(콘텐츠가 바뀌어도 같은 테스트를 쓰려고) */
 export function correctResponse(a: any): { kind: 'choice'; index: number } | { kind: 'text'; text: string; checkAll: boolean } {
@@ -14,11 +14,11 @@ export function correctResponse(a: any): { kind: 'choice'; index: number } | { k
   return { kind: 'text', text: '내 설명입니다', checkAll: true };
 }
 
-/** 단계의 결과 확인을 일부러 틀리게 한 번 한다 (힌트 열림 조건용 시도 1회) */
-export async function wrongAttempt(page: Page, checkType: string) {
-  if (checkType === 'manual') await page.getByRole('button', { name: '달라요' }).click();
+/** 단계의 결과 확인을 일부러 틀리게 한 번 한다 (힌트 열림 조건용 시도 1회). check: manifest 단계의 check(self·number·text) */
+export async function wrongAttempt(page: Page, check: string) {
+  if (check === 'self') await page.getByRole('button', { name: '달라요' }).click();
   else {
-    await page.getByTestId('paste').fill(checkType === 'value_range' ? '987654321' : 'zz 전혀 다른 출력');
+    await page.getByTestId('paste').fill(check === 'number' ? '987654321' : 'zz 전혀 다른 출력');
     await page.getByTestId('compare').click();
   }
 }
@@ -40,4 +40,14 @@ export async function answerQuestion(page: Page, qid: string, a: any) {
   }
   await card.getByTestId(`result-${qid}`).waitFor();
   return card;
+}
+
+/**
+ * 힌트 n단계를 연다: 열림 조건(정본 unlock.after_attempts, 앞 단계를 연 뒤 시도 수)이 찰 때까지 attempt 를 되풀이한 뒤 누른다.
+ * 클로드 버전 기본값은 H2 1번, H3 2번, H4 3번(docs/CURRICULUM.md 3-2). 시간 조건(분)은 기다리지 않는다.
+ */
+export async function openHintAfterAttempts(ladder: Locator, level: number, attempt: () => Promise<void>, maxAttempts = 6) {
+  const btn = ladder.getByTestId(`open-hint-${level}`);
+  for (let i = 0; i < maxAttempts && !(await btn.isVisible()); i++) await attempt();
+  await btn.click();
 }

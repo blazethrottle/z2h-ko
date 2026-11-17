@@ -1,9 +1,13 @@
 // 단계 화면: 3 강의 구간 → 4 따라 하기 → 5 확인 문제, 6 힌트 사다리 (spec 3~6절).
-// 사전 기초 단계(/basics/F-P1/S02/)도 같은 화면을 쓴다: 영상이 없으면(videoId null) 구간 칸 없이 따라 하기부터,
+// 사전 기초 단계(/basics/F-P1/S2b/)도 같은 화면을 쓴다: 영상이 없으면(videoId null) 구간 칸 없이 따라 하기부터,
 // 주소 머리(basePath)·개요 이름(overviewLabel)을 바꾸고, 노트북 안내 대신 "새 셀에 붙여 넣고 실행" 한 줄(notebookGuide false).
+// 정본 칸: 준비 코드와 출처(prepared_code_source_ko), 먼저 다시 시작(restart_first)·다시 실행할 셀(rerun_first)·새 셀 위치(place_before),
+// 셀마다 나눈 코드(cell_line_counts), 실행 순서(run_plan), 보여야 하는 것·출력 예·에러 종류(expected_error)·스스로 확인할 것(self_check_ko).
+// 붙여넣기 비교 방식은 lib/checkPlan.ts 가 정본 출력 예로 확인해 고른다(통과할 수 없는 비교는 "같아요/달라요").
 import { useEffect, useState } from 'preact/hooks';
 import { config } from '../config';
-import { checkValueRange, compareMessageKo, compareOutput, looksLikeError } from '../lib/compare';
+import { checkPlan, runCheck, type CheckSource } from '../lib/checkPlan';
+import { compareMessageKo, looksLikeError } from '../lib/compare';
 import { recordAttempt } from '../lib/hints';
 import { ensureStepRow, markStepDone, parsePref, patchStep, PREF_RESUME, PREF_RUN_PLACE, setPref, startStepTimer, STEP_DONE } from '../lib/progress';
 import type { Segment } from '../lib/video';
@@ -19,6 +23,8 @@ import QuestionCard, { type PublicQuestion } from './QuestionCard';
 import VideoPlayer from './VideoPlayer';
 import { gated } from './Gate';
 
+export type RunPlanItem = { kind: 'new'; n: number } | { kind: 'cell'; n: number; step_id: string; slug: string; title_ko: string } | { kind: 'restart' } | { kind: 'run_all' };
+
 export interface PublicStep {
   step_id: string;
   slug: string;
@@ -28,30 +34,26 @@ export interface PublicStep {
   new_code_lines: number;
   prepared_code: string | null;
   prepared_code_line_notes_ko?: string[] | null;
+  /** 준비 코드의 출처 한 줄(원본 저장소와 바꾼 점) */
+  prepared_code_source_ko?: string | null;
   kind: string;
   input_ko: string;
   code: string | null;
   code_line_notes_ko: string[] | null;
   expected_ko: string;
-  expected_check: {
-    type: 'manual' | 'output_match' | 'value_range' | 'error_match';
-    min?: number;
-    max?: number;
-    value?: string;
-    values?: Record<string, number | string> | null;
-    target?: string | null;
-    /** error_match: 에러가 나는 것이 정상인 단계의 에러 종류(예 NameError). 확인은 manual 처럼 스스로 (사전 기초 F-P7) */
-    error_type?: string;
-    /** manual 의 그림 직접 확인(사전 기초). 안내 문구에만 쓰고 채점에 쓰지 않는다 */
-    figure?: string | null;
-  };
-  /** "실행 전 먼저 읽기" 상자(코드 위, 사전 기초) */
-  read_first_ko?: string | null;
-  /** 보여야 하는 것 아래 출력 예(코드 글꼴, 사전 기초) */
+  expected_check: CheckSource['expected_check'];
+  /** 일부러 에러를 내는 단계에서 나야 하는 에러 종류(예 NameError) */
+  expected_error?: string | null;
+  /** 보여야 하는 것 아래 출력 예(코드 글꼴) */
   expected_output_example?: string | null;
-  /** figure 의 한국어 이름(content-config BASICS.figureLabels). 없으면 이름 없이 안내 */
-  figure_label?: string | null;
-  video_chapter_ko?: string | null;
+  /** 그림이 나오는 단계의 스스로 확인할 것 */
+  self_check_ko?: string[] | null;
+  /** 이 단계 전에 다시 시작(Colab 런타임, Jupyter Kernel)으로 기억을 비운다 */
+  restart_first?: boolean;
+  /** 새 셀(edits 로 앞 셀에 넣는 줄을 뺀 나머지)을 셀마다 나눈 것 */
+  cells: { lines: string[]; notes: string[] }[];
+  run_plan: RunPlanItem[] | null;
+  place_before: { step_id: string; slug: string; title_ko: string } | null;
   edit_view?: EditView | null;
   rerun_first?: { step_id: string; slug: string; title_ko: string }[];
   output_varies?: boolean;
@@ -61,6 +63,8 @@ export interface PublicStep {
   summary_ko?: string[] | null;
   concept_ko?: { term: string; plain: string } | null;
   notebook_cell?: string | null;
+  /** 노트북 채점 칸 id(없으면 step_id) */
+  check_id?: string | null;
   video_segments: Segment[];
   hint_levels: number[];
   hint_unlock: Record<number, { after_attempts?: number | null; after_minutes?: number | null }>;
@@ -96,7 +100,7 @@ interface Props {
   notebookGuide?: boolean;
   /** false 면 홈 "이어서 하기" 위치(user_pref resume)를 바꾸지 않는다 (사전 기초) */
   trackResume?: boolean;
-  /** 확인 문제에서 풀이가 열린 뒤에도 맞힌 기록이 없으면 "다시 풀기" (사전 기초) */
+  /** 확인 문제에서 풀이가 열린 뒤에도 맞힌 기록이 없으면 "다시 풀기" (사전 기초·1편 모두 켬) */
   questionRetry?: boolean;
 }
 
@@ -119,7 +123,7 @@ function StepAppView(p: Props) {
   const base = p.basePath ?? `/lectures/${p.lectureId}/`;
   const overview = p.overviewLabel ?? '강의 개요';
   const isOptional = s.kind === 'optional';
-  // 읽기 단계(kind read, 코드 없음, 사전 기초): 교사 글 세 칸과 완료 버튼만. 실행 안내·예측 칸·결과 비교·코드 상자를 그리지 않는다(1편에는 읽기 단계가 없다)
+  // 읽기 단계(kind read, 코드 없음, 사전 기초): 정본 글 세 칸과 완료 버튼만. 실행 안내·예측 칸·결과 비교·코드 상자를 그리지 않는다(1편에는 읽기 단계가 없다)
   const isRead = s.kind === 'read';
 
   const [phase, setPhaseRaw] = useState<Phase>(firstPhase);
@@ -180,19 +184,18 @@ function StepAppView(p: Props) {
     await patchStep(rt.store, s.step_id, p.contentVersion, (cur) => ({ attempts: Number(cur.attempts ?? 0) + 1 }));
   };
 
+  const plan = checkPlan(s);
   const onCompare = () => {
     if (!pasted.trim()) return setCheck({ ok: false, kind: 'empty' });
     if (looksLikeError(pasted)) return void doCheck(false, { ok: false, kind: 'error' });
-    if (s.expected_check.type === 'output_match') {
-      const r = compareOutput(s.expected_check.value ?? '', pasted, { tolerance: s.tolerance ?? null, outputVaries: !!s.output_varies });
-      void doCheck(r.ok, { ok: r.ok, kind: 'compare', message: compareMessageKo(r) });
-    } else if (s.expected_check.type === 'value_range') {
-      const r = checkValueRange(pasted, { min: s.expected_check.min ?? -Infinity, max: s.expected_check.max ?? Infinity });
+    const r = runCheck(plan, pasted);
+    if (plan.kind === 'text' && r.compare) return void doCheck(r.ok, { ok: r.ok, kind: 'compare', message: compareMessageKo(r.compare) });
+    if (plan.kind === 'number') {
       const msg = r.ok
         ? '맞음: 보여야 하는 것과 같습니다.'
         : r.reason === 'no_number'
           ? '숫자를 찾지 못했습니다. 출력된 숫자를 그대로 붙여 넣어 주세요.'
-          : `내 값 ${r.value} 이(가) 맞는 범위(${s.expected_check.min}~${s.expected_check.max}) 밖입니다.`;
+          : `내 값 ${r.value} 이(가) 맞는 범위(${plan.min}~${plan.max}) 밖입니다.`;
       void doCheck(r.ok, { ok: r.ok, kind: 'compare', message: msg });
     }
   };
@@ -390,34 +393,76 @@ function StepAppView(p: Props) {
             <details class="card">
               <summary class="label" style="min-height:44px;display:flex;align-items:center;cursor:pointer">준비 코드 보기 (붙여 넣기만, 외울 필요 없음)</summary>
               <CodeBlock code={s.prepared_code} notes={s.prepared_code_line_notes_ko ?? []} heading="준비 코드 · 줄을 누르면 풀이" />
+              {s.prepared_code_source_ko && (
+                <p class="cap" data-testid="prepared-source">
+                  <Inline text={s.prepared_code_source_ko} />
+                </p>
+              )}
             </details>
+          )}
+          {s.restart_first && (
+            <p class="band" data-testid="restart-first">
+              <b>먼저 다시 시작:</b> 이 단계 전에 기억을 비웁니다(Colab: 런타임 &gt; 런타임 다시 시작 · Jupyter: Kernel &gt; Restart Kernel).
+            </p>
           )}
           {s.rerun_first && s.rerun_first.length > 0 && (
             <p class="band" data-testid="rerun-first">
               <b>먼저 다시 실행:</b>{' '}
               {s.rerun_first.map((r, i) => (
                 <>
-                  {i > 0 && ' · '}
-                  <a href={`${base}${r.slug}/#practice`}>{r.step_id} 셀</a>
+                  {i > 0 && ' → '}
+                  <a href={`${base}${r.slug}/#practice`}>
+                    {r.step_id} {r.title_ko}
+                  </a>
                 </>
               ))}{' '}
-              (고친 클래스로 상자를 새로 만들기 위해서입니다)
+              셀을 차례로 실행한 뒤 이 단계를 칩니다.
             </p>
           )}
-          {s.read_first_ko && (
-            <section class="card sunken stack-sm" aria-label="실행 전 먼저 읽기" data-testid="read-first">
-              <h2 class="label">실행 전 먼저 읽기</h2>
-              <p>
-                <Inline text={s.read_first_ko} />
-              </p>
-            </section>
+          {s.place_before && (
+            <p class="band" data-testid="place-before">
+              <b>새 셀 위치:</b> 맨 아래가 아니라{' '}
+              <a href={`${base}${s.place_before.slug}/#practice`}>
+                {s.place_before.step_id} {s.place_before.title_ko}
+              </a>{' '}
+              셀 바로 위에 새 셀을 넣습니다.
+            </p>
           )}
           {s.edit_view ? (
             <EditsView view={s.edit_view} />
+          ) : s.cells.length > 1 ? (
+            s.cells.map((c, i) => (
+              <CodeBlock code={c.lines.join('\n')} notes={c.notes} heading={`1 · 입력할 것: 새 셀 ${i + 1} · ${c.lines.length}줄 · 줄을 누르면 풀이`} testId={`step-code-cell-${i + 1}`} />
+            ))
           ) : (
             s.code && (
               <CodeBlock code={s.code} notes={s.code_line_notes_ko ?? []} heading={`1 · 입력할 것: 코드 ${s.code_line_notes_ko?.length ?? 0}줄 · 줄을 누르면 풀이`} testId="step-code" />
             )
+          )}
+          {s.run_plan && s.run_plan.length > 0 && (
+            <section class="card sunken stack-sm" aria-label="실행 순서" data-testid="run-plan">
+              <h2 class="label">실행 순서</h2>
+              <ol class="small">
+                {s.run_plan.map((x) => (
+                  <li>
+                    {x.kind === 'new' ? (
+                      s.cells.length > 1 ? `새 셀 ${x.n} 실행` : '새 셀 실행'
+                    ) : x.kind === 'cell' ? (
+                      <>
+                        <a href={`${base}${x.slug}/#practice`}>
+                          {x.step_id} {x.title_ko}
+                        </a>{' '}
+                        셀{x.n > 1 ? ` ${x.n}` : ''} 다시 실행
+                      </>
+                    ) : x.kind === 'restart' ? (
+                      '다시 시작(Colab: 런타임 > 런타임 다시 시작 · Jupyter: Kernel > Restart Kernel)'
+                    ) : (
+                      '모두 실행(Colab: 런타임 > 모두 실행 · Jupyter: Run > Run All Cells)'
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
           )}
 
           {!isRead && (
@@ -450,54 +495,49 @@ function StepAppView(p: Props) {
                       <span class="badge">내 예측</span> {savedPrediction} <span class="cap">실행 전에 적어 둔 것</span>
                     </p>
                   )}
-                  {s.expected_check.type === 'output_match' && s.expected_check.value && s.expected_output_example == null ? (
-                    <pre class="out" data-testid="expected">
-                      {s.expected_check.value}
-                    </pre>
-                  ) : (
-                    <p class="out text-out" data-testid="expected">
-                      <Inline text={s.expected_ko} />
-                    </p>
-                  )}
-                  {s.expected_output_example != null && s.expected_output_example !== '' && (
+                  <p class="out text-out" data-testid="expected">
+                    <Inline text={s.expected_ko} />
+                  </p>
+                  {s.expected_output_example != null && s.expected_output_example !== '' ? (
                     <div class="stack-sm">
                       <p class="cap">출력 예</p>
                       <pre class="out" data-testid="expected-output-example">
                         {s.expected_output_example}
                       </pre>
                     </div>
+                  ) : (
+                    plan.kind === 'text' && (
+                      <pre class="out" data-testid="expected-output">
+                        {plan.expected}
+                      </pre>
+                    )
                   )}
-                  {s.expected_check.type === 'error_match' && (
+                  {s.expected_error && (
                     <p class="band" data-testid="error-expected">
-                      에러가 나는 것이 정상인 단계입니다. 출력 맨 아래 줄에 <code class="inline">{s.expected_check.error_type}</code>가 보이면 맞습니다.
+                      에러가 나는 것이 정상인 단계입니다. 출력 맨 아래 줄에 <code class="inline">{s.expected_error}</code>가 보이면 맞습니다.
                     </p>
                   )}
-                  {s.expected_check.type === 'manual' && s.expected_check.figure && (
-                    <p class="small" data-testid="figure-note">
-                      그림{s.figure_label ? `(${s.figure_label})` : ''}은 앱이 판정하지 않습니다. 노트북에 나온 그림을 보고 직접 확인해 주세요.
-                    </p>
+                  {s.self_check_ko && s.self_check_ko.length > 0 && (
+                    <div class="stack-sm" data-testid="self-check-list">
+                      <p class="label">스스로 확인할 것</p>
+                      <ul class="small">
+                        {s.self_check_ko.map((x) => (
+                          <li>
+                            <Inline text={x} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                  {s.expected_check.type === 'manual' && s.expected_check.values && (
-                    <ul class="out" data-testid="expected-values" style="list-style:none">
-                      {Object.entries(s.expected_check.values).map(([k, v]) => (
-                        <li>
-                          {k} = {String(v)}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {s.expected_check.type === 'value_range' && (
-                    <p class="cap num">
-                      맞는 범위{s.expected_check.target ? `(${s.expected_check.target})` : ''}: {s.expected_check.min} ~ {s.expected_check.max}
-                    </p>
-                  )}
+                  {plan.kind === 'number' && <p class="cap num">{plan.min === plan.max ? `맞는 값: ${plan.min}` : `맞는 범위: ${plan.min} ~ ${plan.max}`}</p>}
+                  {plan.kind === 'text' && plan.match === 'contains' && <p class="cap">출력 안에 위 줄이 차례로 있으면 맞습니다. 다른 줄이 더 있어도 됩니다.</p>}
                   {s.output_varies && <p class="cap">실행할 때마다 숫자가 조금 다를 수 있어 글자 모양만 비교합니다.</p>}
-                  {s.expected_check.type === 'manual' || s.expected_check.type === 'error_match' ? (
+                  {plan.kind === 'self' ? (
                     <div class="stack-sm">
                       <p class="label">내 화면도 이렇게 나왔나요?</p>
                       <div class="row">
                         <button type="button" class="btn" onClick={() => void doCheck(true, { ok: true, kind: 'compare', message: '맞음: 보여야 하는 것과 같습니다.' })} data-testid="self-ok">
-                          {s.expected_check.type === 'manual' && s.expected_check.figure ? '직접 확인했어요' : '같아요'}
+                          {plan.reason === 'figure' ? '직접 확인했어요' : '같아요'}
                         </button>
                         <button
                           type="button"
@@ -511,15 +551,15 @@ function StepAppView(p: Props) {
                   ) : (
                     <div class="stack-sm">
                       <label class="field">
-                        {s.expected_check.type === 'value_range' ? '내 결과 숫자' : '내 결과 붙여넣기'}
-                        {s.expected_check.type === 'value_range' ? (
+                        {plan.kind === 'number' ? '내 결과 숫자' : '내 결과 붙여넣기'}
+                        {plan.kind === 'number' ? (
                           <input class="input code-input" value={pasted} onInput={(e) => setPasted((e.target as HTMLInputElement).value)} data-testid="paste" />
                         ) : (
                           <textarea class="input code-input" value={pasted} onInput={(e) => setPasted((e.target as HTMLTextAreaElement).value)} data-testid="paste" />
                         )}
                       </label>
                       <button type="button" class="btn block" onClick={onCompare} data-testid="compare">
-                        {s.expected_check.type === 'value_range' ? '확인' : '비교하기'}
+                        {plan.kind === 'number' ? '확인' : '비교하기'}
                       </button>
                     </div>
                   )}

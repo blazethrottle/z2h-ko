@@ -1,35 +1,38 @@
 ---
-// 1 홈·진도 /home/
+// 1 홈·진도 /home/. 강의 목록·누적 점검은 content/lectures.yaml(docs/CURRICULUM.md 에서 옮긴 값), 1편 선행 기초는 정본 F.json lecture_prereq_units.
 import Base from '../../layouts/Base.astro';
 import HomeApp from '../../components/HomeApp.tsx';
 import { lectureLabel, loadSite, unitTitles } from '../../lib/pageData';
 import { loadBasics } from '../../lib/content/basics.mjs';
 import { unitHref } from '../../lib/basics';
 
-const site: any = loadSite();
-const mainId = site.lectures.find((l: any) => l.available)?.lecture_id ?? null;
+const site = loadSite();
+const b = loadBasics();
+const mainId = site.lectures.find((l) => l.available)?.lecture_id ?? null;
 const d = mainId ? site.details[mainId] : null;
 const titles = unitTitles();
-const main = d
-  ? {
-      lectureId: mainId,
-      lectureLabel: lectureLabel(mainId, d.lecture.title_ko),
-      steps: d.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko })),
-    }
-  : null;
-const lectures = site.lectures.map((l: any) => ({
+const main =
+  mainId && d
+    ? {
+        lectureId: mainId,
+        lectureLabel: lectureLabel(mainId, d.lecture.title_ko),
+        steps: d.steps.map((s) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko })),
+      }
+    : null;
+const lectures = site.lectures.map((l) => ({
   lecture_id: l.lecture_id,
   title_ko: l.title_ko,
-  video_seconds: l.video_seconds,
+  video_seconds: l.video_seconds ?? 0,
   available: l.available,
-  step_count: l.step_count ?? null,
+  step_count: site.details[l.lecture_id]?.steps.length ?? l.plan?.steps ?? null,
 }));
-const b: any = loadBasics();
-const prereq = (d?.lecture.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null, href: unitHref(u, b.readyIds) }));
-const basics = { units: b.units.map((u: any) => ({ unit_id: u.unit_id, ready: u.ready, mastery: u.mastery })), rule: b.rule };
+const checkpoints = site.checkpoints.map((c) => ({ checkpoint_id: c.checkpoint_id, covers: c.covers, after_lecture: c.after_lecture, question_count: c.question_count }));
+const prereqIds = mainId ? (b.lecturePrereq[mainId] ?? d?.lecture.prereq_units ?? []) : [];
+const prereq = prereqIds.map((u) => ({ unit_id: u, title_ko: titles.get(u) ?? null, href: unitHref(u, b.readyIds) }));
+const basics = { units: b.units.map((u) => ({ unit_id: u.unit_id, ready: u.ready, mastery: u.mastery })), rule: b.rule };
 ---
 <Base title="홈" nav="home" wide>
-  <HomeApp client:load lectures={lectures} main={main} prereq={prereq} basics={basics} />
+  <HomeApp client:load lectures={lectures} checkpoints={checkpoints} main={main} prereq={prereq} basics={basics} />
   <p class="row home-links">
     <a class="btn" href="/badges/" data-testid="home-badges">배지와 편 도장</a>
     <a class="btn" href="/share/" data-testid="home-share">공유 카드</a>

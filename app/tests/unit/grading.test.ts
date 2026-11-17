@@ -4,8 +4,8 @@ import { gradeQuestion, hintScoreRatio, scoreAttempt, bestQuestionScore } from '
 const base = { max_points: 1, rubric: [{ point: 1, criterion_ko: '기준' }] };
 
 describe('채점 4방식 + choice', () => {
-  it('choice: answer_index와 같으면 정답, 모르겠어요는 감점 없이 오답 기록', () => {
-    const q = { ...base, type: 'choice', choices: ['3', '5', '32', '모르겠어요'], answer_index: 1, auto_grade: { type: 'choice' } };
+  it('choice: answer_index와 같으면 정답, 모르겠어요(정본 dont_know_index 보기)는 감점 없이 오답 기록', () => {
+    const q = { ...base, type: 'choice', choices: ['3', '5', '32', '모르겠어요'], answer_index: 1, dont_know_index: 3, auto_grade: { type: 'choice' } };
     expect(gradeQuestion(q, { choiceIndex: 1 }).verdict).toBe('correct');
     const w = gradeQuestion(q, { choiceIndex: 0 });
     expect(w.verdict).toBe('wrong');
@@ -23,6 +23,18 @@ describe('채점 4방식 + choice', () => {
     expect(gradeQuestion(q, { text: '3' }).verdict).toBe('wrong');
     const s = { ...base, type: 'fix_bug', auto_grade: { type: 'exact', value: ['+=', 'self.grad +='] } };
     expect(gradeQuestion(s, { text: 'SELF.GRAD  +=' }).verdict).toBe('correct');
+  });
+
+  it('choice: 모르겠어요는 글이 아니라 정본 dont_know_index 로 안다(보기 글이 모르겠어요여도 번호가 없으면 일반 오답)', () => {
+    const q = { ...base, type: 'choice', choices: ['모르겠어요', '5'], answer_index: 1, auto_grade: { type: 'choice' } };
+    expect(gradeQuestion(q, { choiceIndex: 0 }).is_dont_know).toBe(false);
+    expect(gradeQuestion({ ...q, dont_know_index: 0 }, { choiceIndex: 0 }).is_dont_know).toBe(true);
+  });
+
+  it('exact: 같은 답의 다른 표기(정본 auto_grade.accept)도 정답', () => {
+    const q = { ...base, type: 'predict', auto_grade: { type: 'exact', value: '6', accept: ['6.0', '6배'] } };
+    for (const t of ['6', '6.0', '6배', ' 6배 ']) expect(gradeQuestion(q, { text: t }).verdict, t).toBe('correct');
+    expect(gradeQuestion(q, { text: '7배' }).verdict).toBe('wrong');
   });
 
   it('numeric_range: 첫 숫자가 범위 안이면 정답', () => {

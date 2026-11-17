@@ -11,7 +11,9 @@ test('글꼴 5개 파일이 각각 200으로 오고 document.fonts가 모두 loa
   });
   const m = await manifest(page);
   const L = m.lectures[0];
-  await page.goto(`/lectures/${L.lecture_id}/${L.steps[1].slug}/#practice`);
+  // 붙여넣기 글 칸(textarea)이 있는 단계: 글 비교 단계
+  const s = L.steps.find((x: any) => x.check === 'text');
+  await page.goto(`/lectures/${L.lecture_id}/${s.slug}/#practice`);
   await page.waitForFunction(() => document.fonts.status === 'loaded' && [...document.fonts].every((f) => f.status === 'loaded'));
   const faces = await page.evaluate(() => [...document.fonts].map((f) => `${f.family.replace(/"/g, '')} ${f.weight} ${f.status}`));
   expect(faces.sort()).toEqual(['JetBrains Mono 100 800 loaded', 'Pretendard 400 loaded', 'Pretendard 500 loaded', 'Pretendard 600 loaded', 'Pretendard 700 loaded']);
@@ -23,7 +25,9 @@ test('글꼴 5개 파일이 각각 200으로 오고 document.fonts가 모두 loa
 test('굵기 400·500·600·700 요소의 computed font-weight와 글꼴, button·input·textarea·code 글꼴 지정', async ({ page, api }) => {
   const m = await manifest(page);
   const L = m.lectures[0];
-  await page.goto(`/lectures/${L.lecture_id}/${L.steps[1].slug}/#practice`);
+  // 붙여넣기 글 칸(textarea)이 있는 단계: 글 비교 단계
+  const s = L.steps.find((x: any) => x.check === 'text');
+  await page.goto(`/lectures/${L.lecture_id}/${s.slug}/#practice`);
   const inputFamily = await page.getByLabel('내 예측').evaluate((el) => getComputedStyle(el).fontFamily);
   await page.getByTestId('dont-know').click();
   await page.waitForFunction(() => document.fonts.status === 'loaded');

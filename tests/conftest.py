@@ -18,17 +18,13 @@ CLOSED_URL = "http://127.0.0.1:9/api/grade"
 def _z2h_isolation(monkeypatch):
     monkeypatch.setenv("Z2H_SERVER_URL", CLOSED_URL)
     monkeypatch.delenv("Z2H_NO_SEND", raising=False)
-    monkeypatch.delenv("Z2H_NO_TORCH", raising=False)
     import z2h_check
+    from z2h_check import runs
     z2h_check.reset()
+    runs.forget()
     yield
     z2h_check.reset()
-
-
-@pytest.fixture
-def ref():
-    from reference_impl import micrograd_ref
-    return micrograd_ref
+    runs.forget()
 
 
 @pytest.fixture(scope="session")

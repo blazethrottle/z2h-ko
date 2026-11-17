@@ -1,12 +1,12 @@
-// 사전 기초 계산 (spec 8절, 교사 정본 F.json lecture.diagnostic·mastery_rule). 화면이 없는 순수 함수.
-// - 진단은 추천만 한다(정본 recommend_only true, locks·auto_skip·uses_hints false). 결과는 diagnostic_result 표에만 쓰고 익힘·배지 점수에 넣지 않는다.
-// - "모르겠어요"는 감점 없이 오답으로 기록하고 추천에만 쓴다.
-// - 추천 단위(정본 recommend_rule): 틀리거나 모르겠어요인 문항의 recommend_units_if_wrong 을 합쳐 단위 지도 순서로. 하나도 없으면 추천 줄 없음.
-// - 단위 익힘(✓ 완료, 정본 mastery_rule): 제외 종류(optional)를 뺀 단계 전부 완료 + 확인 문제 점수 비율 이상(힌트 비율 반영)
-//   + must_pass 문항 전부 정답(must_pass_all 이면 모든 문항) + 그 단위 "스스로 해 보기"(rebuild) 통과(연 힌트가 max_hint_level_for_pass 이하).
-import { bestQuestionScore, gradeQuestion } from './grading';
+// 사전 기초 계산 (spec 8절, 정본 F.json lecture.diagnostic·recommend_rules·mastery_rule). 화면이 없는 순수 함수.
+// - 진단은 추천만 한다(정본 hints·locks_anything false). 결과는 diagnostic_result 표에만 쓰고 익힘·배지 점수에 넣지 않는다.
+// - "모르겠어요"(고르기는 정본 dont_know_index 보기, 직접 입력은 단추)는 감점 없이 오답으로 기록하고 추천에만 쓴다.
+// - 추천(정본 recommend_rules): diagnostic = 틀리거나 모르겠어요인 문항의 recommend_units_if_wrong 을 합쳐 단위 순서로, always_first = 진단과 상관없이 늘.
+// - 단위 익힘(✓ 완료, 정본 mastery_rule): 선택(optional)을 뺀 단계 전부 완료 + 확인 문제 점수 비율 이상(힌트 비율 반영)
+//   + must_pass 문항 전부 정답 + 판정에 넣는 익힘 과제 통과(연 힌트가 max_hint_level_for_pass 이하. 정본 claude-1.1 은 판정에 넣는 과제가 없다).
+import { bestQuestionScore, gradeQuestion, type GradableQuestion } from './grading';
 
-type Row = Record<string, any>;
+import type { Row } from './sync/store';
 
 export interface DiagQuestionRef {
   question_id: string;
@@ -44,26 +44,15 @@ export function diagnosticSummary(questions: DiagQuestionRef[], answers: DiagAns
   return { correct, total: questions.length, units };
 }
 
-/** 정본 문구 틀의 {이름} 을 값으로 바꾼다 (예 "맞힌 문제 {correct}/5") */
-export function fillTemplate(t: string, vars: Record<string, string | number>): string {
-  return String(t).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
-}
-
-/** 정본 recommend_template_ko 를 {units} 앞뒤로 나눈다(단위는 화면에서 링크·"준비 중"과 함께 그린다) */
-export function splitUnitsTemplate(t: string): [string, string] {
-  const i = String(t).indexOf('{units}');
-  return i < 0 ? [String(t), ''] : [t.slice(0, i), t.slice(i + '{units}'.length)];
-}
-
 /** 진단 한 문항 채점. 채점 규칙은 1편 확인 문제와 같은 grading.ts (choice, exact: 앞뒤 공백 무시) */
 export function gradeDiagnostic(
-  q: { type: string; choices?: string[] | null },
-  key: { answer_index?: number | null; auto_grade: any },
+  q: { type: string; choices?: string[] | null; dont_know_index?: number | null },
+  key: { answer_index?: number | null; auto_grade: GradableQuestion['auto_grade'] | null },
   r: { choiceIndex?: number | null; text?: string; dontKnow?: boolean },
 ): { is_correct: boolean; is_dont_know: boolean } {
   if (r.dontKnow) return { is_correct: false, is_dont_know: true };
   const g = gradeQuestion(
-    { type: q.type, max_points: 1, choices: q.choices ?? undefined, answer_index: key.answer_index ?? undefined, auto_grade: key.auto_grade },
+    { type: q.type, max_points: 1, choices: q.choices ?? undefined, answer_index: key.answer_index ?? undefined, dont_know_index: q.dont_know_index ?? undefined, auto_grade: key.auto_grade ?? undefined },
     { text: r.text ?? '', choiceIndex: r.choiceIndex ?? undefined },
   );
   return { is_correct: g.is_correct, is_dont_know: g.is_dont_know };
@@ -80,13 +69,14 @@ export function latestDiagnostic(rows: Row[]): Row | null {
 export interface BasicsRule {
   steps_complete_ratio: number;
   question_score_ratio: number;
-  must_pass_all: boolean;
 }
 
 /** 익힘 판정에 쓰는 단위 모양(화면 데이터). step_ids 는 제외 종류(optional)를 뺀 단계, activity_step_ids 는 모든 단계 */
 export interface UnitMasteryRef {
   step_ids: string[];
   activity_step_ids?: string[];
+  /** 그 단위의 모든 익힘 과제(판정에 넣지 않는 것 포함). 하나라도 하면 "● 지금" */
+  activity_rebuild_ids?: string[];
   questions: { question_id: string; max_points: number; must_pass: boolean }[];
   rebuilds: { rebuild_id: string; max_hint_level_for_pass: number | null }[];
 }
@@ -126,7 +116,7 @@ export function unitMastery(u: UnitMasteryRef, rule: BasicsRule, stepRows: Row[]
       got += best.points;
       total += q.max_points;
     }
-    if ((rule.must_pass_all || q.must_pass) && !atts.some((a) => a.is_correct === true)) must_pass_ok = false;
+    if (q.must_pass && !atts.some((a) => a.is_correct === true)) must_pass_ok = false;
   }
   const question_score_ratio = total ? round4(got / total) : 1;
   const score_ok = question_score_ratio >= rule.question_score_ratio;
@@ -137,7 +127,7 @@ export function unitMastery(u: UnitMasteryRef, rule: BasicsRule, stepRows: Row[]
 
   const ids = new Set([...(u.activity_step_ids ?? u.step_ids)]);
   const qids = new Set(u.questions.map((q) => q.question_id));
-  const rids = new Set(u.rebuilds.map((r) => r.rebuild_id));
+  const rids = new Set(u.activity_rebuild_ids ?? u.rebuilds.map((r) => r.rebuild_id));
   const active = stepRows.some((r) => ids.has(r.step_id)) || attemptRows.some((a) => qids.has(a.question_id)) || rebuildRows.some((r) => rids.has(r.rebuild_id));
   const mastered = (ids.size > 0 || qids.size > 0) && steps_ok && score_ok && must_pass_ok && rebuild_ok;
   return {
@@ -153,13 +143,26 @@ export function unitMastery(u: UnitMasteryRef, rule: BasicsRule, stepRows: Row[]
 
 export type RowKey = 'done' | 'now' | 'rec' | 'todo' | 'coming';
 
-/** 목록 행 표시: ✓ 완료 / ● 지금 / 추천 / ○ 아직 / 준비 중 (준비 중이어도 추천이면 "추천 · 준비 중") */
-export function unitRowState(ready: boolean, status: UnitStatus, recommended: boolean): { key: RowKey; label: string } {
-  if (!ready) return { key: 'coming', label: recommended ? '추천 · 준비 중' : '준비 중' };
+/** 목록 행 표시: ✓ 완료 / ● 지금 / 추천 이름(정본 recommend_rules label_ko) / ○ 아직 / 준비 중 (준비 중이어도 추천이면 "추천 이름 · 준비 중") */
+export function unitRowState(ready: boolean, status: UnitStatus, recLabel: string | null): { key: RowKey; label: string } {
+  if (!ready) return { key: 'coming', label: recLabel ? `${recLabel} · 준비 중` : '준비 중' };
   if (status === 'done') return { key: 'done', label: '✓ 완료' };
   if (status === 'now') return { key: 'now', label: '● 지금' };
-  if (recommended) return { key: 'rec', label: '추천' };
+  if (recLabel) return { key: 'rec', label: recLabel };
   return { key: 'todo', label: '○ 아직' };
+}
+
+/** 정본 추천 규칙 중 화면 목록에 쓰는 둘: 진단(diagnostic)과 처음이면 먼저(always_first) */
+export interface RecommendLabels {
+  diagnostic: { label_ko: string };
+  always_first: { label_ko: string; units: string[] };
+}
+
+/** 단위 행의 추천 이름: 진단이 추천한 단위가 먼저(내 결과), 그다음 처음이면 먼저. 둘 다 아니면 null */
+export function recommendLabelOf(unitId: string, diagUnits: string[], rec: RecommendLabels): string | null {
+  if (diagUnits.includes(unitId)) return rec.diagnostic.label_ko;
+  if (rec.always_first.units.includes(unitId)) return rec.always_first.label_ko;
+  return null;
 }
 
 /** 단위 주소: 준비된(written) 단위는 그 단위 화면, 준비 중이면 기초 목록 */
@@ -177,12 +180,6 @@ export function nextUnit(units: { unit_id: string; ready: boolean }[], statusOf:
     open[0]?.unit_id ??
     null
   );
-}
-
-/** 준비 중 단위를 추천했을 때 안내 옆 링크: 준비된 추천 단위 중 안 끝난 것 → 준비된 단위 중 첫 안 끝난 것 */
-export function notReadyTarget(units: { unit_id: string; ready: boolean }[], statusOf: (id: string) => UnitStatus, recommended: string[]): string | null {
-  const open = units.filter((u) => u.ready && statusOf(u.unit_id) !== 'done');
-  return open.find((u) => recommended.includes(u.unit_id))?.unit_id ?? open[0]?.unit_id ?? null;
 }
 
 /** 단위 id 인지 (홈의 "완료 단계"·이어서 하기는 강의 단계만 센다) */

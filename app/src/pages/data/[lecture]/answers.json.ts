@@ -7,6 +7,6 @@ export function getStaticPaths() {
 }
 
 export const GET: APIRoute = ({ params }) =>
-  new Response(JSON.stringify((loadSite().details as any)[params.lecture as string].answers), {
+  new Response(JSON.stringify(loadSite().details[String(params.lecture)]?.answers ?? {}), {
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });

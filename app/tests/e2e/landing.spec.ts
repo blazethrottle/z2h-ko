@@ -1,7 +1,15 @@
 // 랜딩 (spec 13.1, P2): 구역 7개, "예시 화면" 표시(D46), 주 CTA, 쓰지 않는 말 0(VALUE 5절), 긴 줄표 0, 44px, 채운 accent 버튼 한 뷰포트 1개.
 import { test, expect, hydrated, manifest } from './fixtures';
 import { findBanned } from '../../src/content/landing-banned.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import YAML from 'yaml';
 import { LANDING } from '../../src/content/landing.mjs';
+import { REPO_ROOT } from '../../src/lib/content/load.mjs';
+import { checkpointRangeKo, estimateHoursKo } from '../../src/lib/curriculumText';
+import type { LectureList } from './manifest-types';
+
+const LIST: LectureList = YAML.parse(fs.readFileSync(path.join(REPO_ROOT, 'content/lectures.yaml'), 'utf8'));
 
 const EM_DASH = String.fromCharCode(0x2014);
 type PathRow = (typeof LANDING.path.rows)[number];
@@ -30,6 +38,13 @@ test('랜딩: 구역 7개, 예시 화면 표시, 문구·숫자의 출처, 쓰�
   expect(total).toBeGreaterThan(0);
   await expect(page.getByTestId('landing-path-lead')).toContainText(`${rows.length}편, ${total}단계`);
   for (const r of rows) await expect(page.locator(`[data-lecture="${r.lecture_id}"]`)).toContainText(`${counts[r.lecture_id]}단계`);
+  // 편별 시간과 누적 점검 줄은 홈과 같은 출처(content/lectures.yaml = 설계서)에서 같은 함수로
+  for (const l of LIST.lectures) await expect(page.locator(`[data-lecture="${l.lecture_id}"]`)).toContainText(estimateHoursKo(l.plan.total_minutes));
+  for (const c of LIST.checkpoints) {
+    const row = page.locator(`[data-checkpoint="${c.checkpoint_id}"]`);
+    await expect(row).toContainText(`${c.items_ko} = ${c.question_count}문항`);
+    await expect(row).toContainText(checkpointRangeKo(c.covers));
+  }
   // 첫 화면 코드 줄은 맛보기 정본에서
   await expect(page.getByTestId('landing-code').locator('.r')).toHaveCount(LANDING.hero.code.lines.length);
 

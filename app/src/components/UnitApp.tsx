@@ -1,9 +1,9 @@
-// 사전 기초 단위 개요 /basics/F-P1/ (강의 개요 spec 2절과 같은 카드·목록 줄): 목표, 단계 목록·상태, 익힘 판정, 스스로 해 보기, 다음 단위.
-// 단계 화면은 1편과 같은 StepApp(영상 없음)이다. 단위 익힘(✓ 완료)은 정본 mastery_rule 그대로(lib/basics.ts unitMastery):
-// 선택(optional) 단계를 뺀 단계 전부 완료 + 확인 문제 점수 비율 이상 + must_pass 문항 전부 정답 + 그 단위 스스로 해 보기 통과.
-// 스스로 해 보기(정본 rebuild_tasks): 과제 글·확인 기준 그대로, 힌트 사다리(1편과 같은 부품), "직접 확인했어요" 자기 확인.
-// 연 힌트 최고 단계가 max_hint_level_for_pass 이하일 때만 통과(null 은 제한 없음). 기록은 rebuild_attempt(기존 재구성 기록 표).
-// figure(그림 직접 확인)는 안내 문구에만 쓴다.
+// 사전 기초 단위 개요 /basics/F-P1/ (강의 개요 spec 2절과 같은 카드·목록 줄): 목표, 설명 카드(정본 card_ko·analogy_ko), 단계 목록·상태,
+// 익힘 기준(정본 mastery_rule.note_ko)과 판정, 익힘 과제, 다음 단위.
+// 단계 화면은 1편과 같은 StepApp(영상 없음)이다. 단위 익힘(✓ 완료)은 lib/basics.ts unitMastery: 선택(optional) 단계를 뺀 단계 전부 완료
+// + 확인 문제 점수 비율 이상 + must_pass 문항 전부 정답 + 판정에 넣는 익힘 과제 통과(정본 claude-1.1 은 익힘 과제를 판정에 넣지 않는다).
+// 익힘 과제(정본 rebuild_tasks): 과제 글·셀 줄 수·출력 예·스스로 확인할 것, 힌트 사다리(1편과 같은 부품, H4 에서 정답 코드), "직접 확인했어요" 자기 확인.
+// 설명 카드 문장에는 #card-1 같은 주소가 있어 힌트 H2 가 "설명 카드 N번째 문장"으로 바로 잇는다.
 import { rebuildPasses, unitMastery, type BasicsRule, type UnitMasteryRef } from '../lib/basics';
 import { emptyHintState, recordAttempt, type UnlockRule } from '../lib/hints';
 import { STEP_DONE } from '../lib/progress';
@@ -16,13 +16,16 @@ import { useRuntime, useTables } from './hooks';
 import { IconCheck, IconCross } from './Icons';
 import Inline from './Inline';
 
-export interface RebuildPub {
+export interface BasicsRebuildPub {
   rebuild_id: string;
   title_ko: string;
   task_ko: string;
-  test_ko: string | null;
-  figure: string | null;
-  figure_label: string | null;
+  reference_ko: string | null;
+  cell_line_counts: number[] | null;
+  expected_output_example: string | null;
+  self_check_ko: string[];
+  /** 단위 익힘 판정에 들어가는지(정본 rebuild_required 또는 required_for_mastery) */
+  required_for_mastery: boolean;
   max_hint_level_for_pass: number | null;
   hint_levels: number[];
   hint_unlock: Record<number, UnlockRule>;
@@ -32,10 +35,22 @@ interface Props {
   lectureId: string;
   contentVersion: string;
   basicsReady: string[];
-  unit: { unit_id: string; title_ko: string; group_label: string; used_in_ko: string | null; goal_ko: string; mastery_ko: string; mastery: UnitMasteryRef };
-  rule: BasicsRule;
+  unit: {
+    unit_id: string;
+    title_ko: string;
+    group_label: string;
+    goal_ko: string;
+    analogy_ko: string;
+    card_ko: string[];
+    /** 목표 중 goal_ko 와 다른 글(정본 claude-1.1 은 목표 = goal_ko 라 보통 비어 있다) */
+    extra_objectives: string[];
+    needed_by_lectures: string[];
+    estimated_minutes: number;
+    mastery: UnitMasteryRef;
+  };
+  rule: BasicsRule & { note_ko: string };
   steps: { step_id: string; slug: string; order: number; title_ko: string; meaning_ko: string; kind: string; question_ids: string[] }[];
-  rebuild: RebuildPub[];
+  rebuild: BasicsRebuildPub[];
   next: { unit_id: string; title_ko: string } | null;
 }
 
@@ -47,7 +62,7 @@ function limitNoteKo(limit: number | null): string {
   return `힌트 ${limit}단계까지 열어도 통과로 칩니다.`;
 }
 
-function RebuildCard({ rt, lectureId, r, rows, contentVersion, basicsReady }: { rt: Runtime | null; lectureId: string; r: RebuildPub; rows: Row[]; contentVersion: string; basicsReady: string[] }) {
+function RebuildCard({ rt, lectureId, r, rows, contentVersion, basicsReady }: { rt: Runtime | null; lectureId: string; r: BasicsRebuildPub; rows: Row[]; contentVersion: string; basicsReady: string[] }) {
   const [hint, setHint] = useHintState(rt, r.rebuild_id);
   const mine = rows.filter((x) => x.rebuild_id === r.rebuild_id).sort((a, b) => String(a.at).localeCompare(String(b.at)));
   const passed = mine.some((x) => x.passed === true && rebuildPasses(Number(x.max_hint_level ?? 0), r.max_hint_level_for_pass));
@@ -55,9 +70,11 @@ function RebuildCard({ rt, lectureId, r, rows, contentVersion, basicsReady }: { 
   const opened = hint?.opened ?? 0;
   const overLimit = !rebuildPasses(opened, r.max_hint_level_for_pass);
 
-  const record = (passedNow: boolean, level: number) =>
+  const record = (passedNow: boolean, level: number) => {
+    if (!rt) return Promise.resolve();
     // 열쇠는 이 기기가 만든 attempt_id, 번호(attempt_no)는 서버가 매긴다(12.5절). 1편 재구성 기록과 같은 표. 지난 시도 행은 지우지 않고 쌓인다
-    rt!.store.put('rebuild_attempt', { rebuild_id: r.rebuild_id, attempt_id: uuid4(), passed: passedNow, max_hint_level: level, at: nowKst(), content_version: contentVersion });
+    return rt.store.put('rebuild_attempt', { rebuild_id: r.rebuild_id, attempt_id: uuid4(), passed: passedNow, max_hint_level: level, at: nowKst(), content_version: contentVersion });
+  };
 
   const confirm = async () => {
     if (!rt || !hint) return;
@@ -73,21 +90,46 @@ function RebuildCard({ rt, lectureId, r, rows, contentVersion, basicsReady }: { 
     setHint(() => emptyHintState(Date.now()));
   };
 
+  const cells = r.cell_line_counts ?? [];
   return (
     <section class={`card stack${passed ? '' : ' current'}`} aria-labelledby={`rb-${r.rebuild_id}`} data-testid={`rebuild-${r.rebuild_id}`}>
-      <p class="kicker">스스로 해 보기</p>
+      <p class="kicker">익힘 과제{r.required_for_mastery ? '' : ' · 익힘 판정에 넣지 않는 연습'}</p>
       <h3 class="t3" id={`rb-${r.rebuild_id}`}>
         {r.title_ko}
       </h3>
       <p>
         <Inline text={r.task_ko} />
       </p>
-      {r.test_ko && (
-        <p class="small">
-          <b>확인:</b> <Inline text={r.test_ko} />
+      {cells.length > 0 && (
+        <p class="cap num" data-testid={`rebuild-cells-${r.rebuild_id}`}>
+          빈 셀 {cells.length}개 · {cells.map((n) => `${n}줄`).join(', ')}
         </p>
       )}
-      {r.figure && <p class="small muted">그림{r.figure_label ? `(${r.figure_label})` : ''}은 앱이 판정하지 않습니다. 노트북에 나온 그림을 보고 직접 확인해 주세요.</p>}
+      {r.expected_output_example != null && r.expected_output_example !== '' && (
+        <div class="stack-sm">
+          <p class="cap">보여야 하는 출력</p>
+          <pre class="out" data-testid={`rebuild-output-${r.rebuild_id}`}>
+            {r.expected_output_example}
+          </pre>
+        </div>
+      )}
+      {r.self_check_ko.length > 0 && (
+        <div class="stack-sm">
+          <p class="label">스스로 확인할 것</p>
+          <ul class="small" data-testid={`rebuild-self-check-${r.rebuild_id}`}>
+            {r.self_check_ko.map((x) => (
+              <li>
+                <Inline text={x} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {r.reference_ko && (
+        <p class="cap">
+          맞는지 대조할 곳: <Inline text={r.reference_ko} />
+        </p>
+      )}
       <p class="cap" data-testid={`rebuild-limit-${r.rebuild_id}`}>
         {limitNoteKo(r.max_hint_level_for_pass)}
       </p>
@@ -170,11 +212,18 @@ function UnitAppView(p: Props) {
           사전 기초 · {p.unit.group_label} · {p.unit.unit_id}
         </p>
         <h1 class="t1">{p.unit.title_ko}</h1>
-        {p.unit.used_in_ko && <p class="small muted">주로 필요한 편: {p.unit.used_in_ko}</p>}
+        {p.unit.needed_by_lectures.length > 0 && (
+          <p class="small muted num" data-testid="unit-needed-by">
+            주로 필요한 편: {p.unit.needed_by_lectures.map((l) => l.slice(1)).join(', ')}
+          </p>
+        )}
         <div class="row">
+          <span class="badge num" data-testid="unit-minutes">
+            약 {p.unit.estimated_minutes}분
+          </span>
           <span class="badge num">{p.steps.length}단계</span>
           <span class="badge num">확인 문제 {p.unit.mastery.questions.length}개</span>
-          <span class="badge num">스스로 해 보기 {p.rebuild.length}개</span>
+          <span class="badge num">익힘 과제 {p.rebuild.length}개</span>
           <span class={`badge${st === 'done' ? ' ok' : st === 'now' ? ' cur' : ''}`} data-testid="unit-status">
             {st === 'done' ? '✓ 완료' : st === 'now' ? '● 지금' : '○ 아직'}
           </span>
@@ -192,6 +241,31 @@ function UnitAppView(p: Props) {
         <p data-testid="unit-goal">
           <Inline text={p.unit.goal_ko} />
         </p>
+        {p.unit.extra_objectives.length > 0 && (
+          <ul class="small">
+            {p.unit.extra_objectives.map((o) => (
+              <li>
+                <Inline text={o} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section class="card stack-sm" aria-labelledby="unit-card-h" data-testid="unit-card">
+        <h2 class="t3" id="unit-card-h">
+          설명 카드
+        </h2>
+        <p class="band" data-testid="unit-analogy">
+          <b>비유:</b> <Inline text={p.unit.analogy_ko} />
+        </p>
+        <ol class="stack-sm" data-testid="unit-card-lines">
+          {p.unit.card_ko.map((line, i) => (
+            <li id={`card-${i + 1}`} tabIndex={-1}>
+              <Inline text={line} />
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section class="card stack" aria-labelledby="unit-steps-h">
@@ -245,7 +319,7 @@ function UnitAppView(p: Props) {
       <section class="card stack-sm" aria-label="익힘 기준">
         <h2 class="t3">익힘 기준</h2>
         <p data-testid="unit-mastery">
-          <Inline text={p.unit.mastery_ko} />
+          <Inline text={p.rule.note_ko} />
         </p>
         {m && (
           <ul class="small num" data-testid="unit-mastery-check">
@@ -255,8 +329,8 @@ function UnitAppView(p: Props) {
             <li>
               확인 문제 점수: {pct(m.question_score_ratio)}% (기준 {pct(p.rule.question_score_ratio)}%, 힌트 비율 반영)
             </li>
-            <li>{p.rule.must_pass_all ? '확인 문제 모두 한 번 이상 맞히기' : '꼭 맞혀야 하는 문제 맞히기'}: {m.must_pass_ok ? '통과' : '아직'}</li>
-            <li>스스로 해 보기: {m.rebuild_ok ? '통과' : '아직'}</li>
+            {p.unit.mastery.questions.some((q) => q.must_pass) && <li>꼭 맞혀야 하는 문제 맞히기: {m.must_pass_ok ? '통과' : '아직'}</li>}
+            {p.unit.mastery.rebuilds.length > 0 && <li>익힘 과제: {m.rebuild_ok ? '통과' : '아직'}</li>}
           </ul>
         )}
       </section>

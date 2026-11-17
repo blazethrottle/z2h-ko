@@ -2,7 +2,8 @@
 
 - check() 는 어떤 경우에도 예외를 밖으로 내보내지 않는다(Ctrl+C로 멈추는 것만 그대로 둔다).
 - 학생 코드가 틀리거나 비어 있으면 "✕ 다시", 채점 프로그램 자체가 고장 나면 "⚠ 채점기 오류"로 따로 보인다.
-- 아직 진행 중인 칸(예: L01-R3 학습 셀을 다시 실행하는 중)은 "○ 아직"만 보이고 기록하지 않는다(이전 기록 그대로).
+- 아직 하지 않은 칸(필요한 셀을 아직 실행하지 않음, 빈 셀 그대로)은 "○ 아직"만 보이고 기록하지 않는다(이전 기록 그대로).
+- check()와 finish()를 부른 셀은 셀 실행 기록(runs)에 '도구 셀'로 표시한다. 채점 셀은 늘 바로 위 '내 셀'을 본다.
 - finish() 는 채점표와 결과코드를 늘 출력하고, 로컬 진도 서버(127.0.0.1)로 보내기를 시도한다.
 """
 import contextlib
@@ -16,7 +17,7 @@ import urllib.parse
 import urllib.request
 import warnings
 
-from . import graders
+from . import graders, runs
 from .graders import _util
 from .result_code import encode_result_code, now_kst_iso
 
@@ -62,8 +63,9 @@ def _short(x):
 # ---- check ------------------------------------------------------------------
 
 def check(check_id, *args, **kwargs):
-    """check("L01-S11b", Value) -> True/False. 맞으면 "✓ 맞음: …", 다르면 "✕ 다시: …"를 출력한다."""
+    """check("L01-S02", globals()) -> True/False. 맞으면 "✓ 맞음: …", 다르면 "✕ 다시: …"를 출력한다."""
     try:
+        runs.mark_tool_cell()
         return _check(check_id, args, kwargs)
     except KeyboardInterrupt:
         raise
@@ -78,21 +80,21 @@ def _check(check_id, args, kwargs):
         _say(f"{MARK['error']}: 채점 번호 {_short(check_id)}를 모릅니다. 노트북의 채점 셀을 확인해 주세요. "
              "(이 칸은 기록하지 않았습니다)")
         return False
-    status, message = _run_grader(cid, args, kwargs)
+    status, message, mark = _run_grader(cid, args, kwargs)
     if status == "notyet":
-        mark, text = message
-        _say(f"{mark}: {text} [{cid}]")  # 기록하지 않는다: 결과코드·서버 보내기·시도 횟수에 들어가지 않음
+        _say(f"{mark}: {message} [{cid}]")  # 기록하지 않는다: 결과코드·서버 보내기·시도 횟수에 들어가지 않음
         return False
     prev = _RESULTS.get(cid)
     _RESULTS[cid] = {
         "check_id": cid,
         "status": status,
         "passed": status == "pass",
+        "mark": mark,
         "message_ko": message,
         "at": now_kst_iso(),
         "attempts": (prev["attempts"] + 1) if prev else 1,
     }
-    _say(f"{MARK[status]}: {message} [{cid}]")
+    _say(f"{mark}: {message} [{cid}]")
     return status == "pass"
 
 
@@ -121,30 +123,33 @@ def _raised_in_package(exc):
 
 
 def _run_grader(cid, args, kwargs):
+    """(status, 메시지, 화면 앞머리). status: pass | fail | skip | error | notyet"""
     fn = graders.get_grader(cid)
     try:
         bound = inspect.signature(fn).bind(*args, **kwargs)
     except TypeError:
-        return "fail", f"채점 칸에 넘긴 값의 개수나 이름이 다릅니다. 이렇게 부르세요: {graders.usage_of(cid)}"
+        return "fail", f"채점 칸에 넘긴 값의 개수나 이름이 다릅니다. 이렇게 부르세요: {graders.usage_of(cid)}", MARK["fail"]
     state = random.getstate()
     try:
         random.seed(_GRADER_SEED)
         with _quiet():
-            message = fn(*bound.args, **bound.kwargs)
-        return "pass", str(message)
+            result = fn(*bound.args, **bound.kwargs)
+        if isinstance(result, _util.Pass):
+            return "pass", result.message_ko, result.mark
+        return "pass", str(result), MARK["pass"]
     except _util.Fail as exc:
-        return "fail", exc.message_ko
+        return "fail", exc.message_ko, MARK["fail"]
     except _util.Skip as exc:
-        return "skip", exc.message_ko
+        return "skip", exc.message_ko, MARK["skip"]
     except _util.NotYet as exc:
-        return "notyet", (exc.mark, exc.message_ko)
+        return "notyet", exc.message_ko, exc.mark
     except KeyboardInterrupt:
         raise
     except BaseException as exc:
         if _raised_in_package(exc):
             return "error", (f"채점 프로그램 안에서 문제가 생겼습니다({_util.describe_exc(exc)}). "
-                             "내 코드 탓이 아닐 수 있으니 이 칸은 넘어가고 알려 주세요.")
-        return "fail", _util.student_error_message("내 코드를 실행", exc)
+                             "내 코드 탓이 아닐 수 있으니 이 칸은 넘어가고 알려 주세요."), MARK["error"]
+        return "fail", _util.student_error_message("내 코드를 실행", exc), MARK["fail"]
     finally:
         random.setstate(state)
 
@@ -154,6 +159,7 @@ def _run_grader(cid, args, kwargs):
 def finish(lecture_id="L01", send=True, server_url=None, timeout=SEND_TIMEOUT_S, at=None):
     """이 편의 채점표를 출력하고 결과코드를 돌려준다. send=True면 로컬 진도 서버로도 보내 본다."""
     try:
+        runs.mark_tool_cell()
         return _finish(lecture_id, send, server_url, timeout, at)
     except KeyboardInterrupt:
         raise
@@ -190,7 +196,7 @@ def _finish(lecture_id, send, server_url, timeout, at):
             f"건너뜀 {counts['skip']} · 아직 안 함 {counts['todo']}")
     if counts["error"]:
         head += f" · 채점기 오류 {counts['error']}"
-    _say("\n".join([head] + rows))
+    _say("\n".join([head] + rows + [graders.mastery_note(lid)]))
     code = encode_result_code(lid, passed, failed, at)
     if send and os.environ.get("Z2H_NO_SEND", "") in ("", "0"):
         _say(_send(lid, items, server_url, timeout, at))
@@ -214,7 +220,7 @@ def _send(lid, items, server_url, timeout, at):
         rec = _RESULTS.get(cid)
         if rec and rec["status"] in ("pass", "fail"):
             results_body.append({"check_id": cid, "passed": rec["status"] == "pass",
-                                 "message_ko": f"{MARK[rec['status']]}: {rec['message_ko']}"})
+                                 "message_ko": f"{rec['mark']}: {rec['message_ko']}"})
     body = {"lecture_id": lid, "results": results_body, "at": at}
     try:
         status = _post_json(url, body, timeout)

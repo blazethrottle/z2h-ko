@@ -22,94 +22,104 @@ def closed_port_url():
     return f"http://127.0.0.1:{port}/api/grade"
 
 
-def test_pass_and_fail_lines(ref, capsys):
-    assert check("L01-S12", ref.Value) is True
-    out = capsys.readouterr().out
-    assert out.startswith("✓ 맞음: ") and "[L01-S12]" in out
-    assert check("L01-S12", 1.0) is False
-    out = capsys.readouterr().out
-    assert out.startswith("✕ 다시: ") and "+=" in out
+def good_f(x):
+    return 3 * x ** 2 - 4 * x + 5
 
 
-def test_latest_result_wins_and_attempts_counted(ref):
-    check("L01-S02", 3.0)
-    check("L01-S02", 14.0003)
-    rec = z2h_check.results()["L01-S02"]
+GOOD = {"f": good_f}           # L01-S02 확인 식 f(3.0) 이 정본 범위 안
+BAD = {"f": lambda x: 0.0}     # 범위 밖
+PASS_ID, OTHER_ID = "L01-S02", "L01-S07"  # 둘 다 정본 value_range + expr 칸
+
+
+def test_pass_and_fail_lines(capsys):
+    assert check(PASS_ID, GOOD) is True
+    out = capsys.readouterr().out
+    assert out.startswith("✓ 맞음: ") and f"[{PASS_ID}]" in out
+    assert check(PASS_ID, BAD) is False
+    out = capsys.readouterr().out
+    assert out.startswith("✕ 다시: ") and "f(3.0)" in out
+
+
+def test_latest_result_wins_and_attempts_counted():
+    check(PASS_ID, BAD)
+    check(PASS_ID, GOOD)
+    rec = z2h_check.results()[PASS_ID]
     assert rec["status"] == "pass" and rec["attempts"] == 2
     assert rec["message_ko"]
 
 
 def test_unknown_check_id_is_not_recorded(capsys):
-    assert check("L01-S99", 1) is False
+    assert check("L01-S99", GOOD) is False
     out = capsys.readouterr().out
     assert "채점기 오류" in out and "L01-S99" in out
     assert z2h_check.results() == {}
     assert check(None) is False
     assert check(123, 4) is False
+    assert check("L01-S01", GOOD) is False  # 읽기 단계는 채점 칸이 없다
+    assert z2h_check.results() == {}
 
 
-def test_check_id_case_is_forgiven(ref):
-    assert check("l01-s12", ref.Value) is True
-    assert "L01-S12" in z2h_check.results()
+def test_check_id_case_is_forgiven():
+    assert check(PASS_ID.lower(), GOOD) is True
+    assert PASS_ID in z2h_check.results()
 
 
-def test_wrong_call_shape_is_a_fail_not_an_exception(ref, capsys):
-    assert check("L01-S12", ref.Value, 1, 2, 3) is False
-    assert check("L01-S04", Valu=ref.Value) is False
+def test_wrong_call_shape_is_a_fail_not_an_exception(capsys):
+    assert check(PASS_ID, GOOD, 1, 2, 3) is False
+    assert check(PASS_ID, nss=GOOD) is False
     out = capsys.readouterr().out
-    assert out.count("✕ 다시") == 2 and "check(" in out
+    assert out.count("✕ 다시") == 2 and "globals()" in out
 
 
 def test_grader_bug_is_reported_separately(monkeypatch, capsys):
     # 패키지 안 파일에서 난 오류처럼 보이는 함수로 채점 함수를 바꿔 끼운다.
     pkg = os.path.dirname(z2h_check.__file__)
     ns = {}
-    exec(compile("def broken(*a, **k):\n    return 1 / 0\n", os.path.join(pkg, "graders", "l01.py"), "exec"), ns)
+    exec(compile("def broken(ns=None):\n    return 1 / 0\n", os.path.join(pkg, "graders", "l01.py"), "exec"), ns)
     from z2h_check import graders
-    monkeypatch.setitem(graders.l01.GRADERS, "L01-S02", ns["broken"])
-    assert check("L01-S02", 14.0) is False
+    monkeypatch.setitem(graders.l01.GRADERS, PASS_ID, ns["broken"])
+    assert check(PASS_ID, GOOD) is False
     out = capsys.readouterr().out
     assert out.startswith("⚠ 채점기 오류")
     assert "ZeroDivisionError" in out
-    assert z2h_check.results()["L01-S02"]["status"] == "error"
+    assert z2h_check.results()[PASS_ID]["status"] == "error"
 
 
 def test_student_exception_is_a_fail(capsys):
-    class Value:
-        def __init__(self, *a, **k):
-            raise NameError("name '___' is not defined")
-    assert check("L01-S04", Value) is False
+    def f(x):
+        raise NameError("name '___' is not defined")
+    assert check(PASS_ID, {"f": f}) is False
     out = capsys.readouterr().out
     assert out.startswith("✕ 다시") and "빈칸" in out
-    assert z2h_check.results()["L01-S04"]["status"] == "fail"
+    assert z2h_check.results()[PASS_ID]["status"] == "fail"
 
 
-def test_random_state_and_student_prints_are_untouched(ref, capsys):
+def test_random_state_and_student_prints_are_untouched(capsys):
     random.seed(5)
     before = random.getstate()
 
-    class LoudNeuron(ref.Neuron):
-        def __init__(self, nin):
-            print("시끄러운 출력")
-            super().__init__(nin)
+    def loud_f(x):
+        print("시끄러운 출력")
+        random.random()
+        return good_f(x)
 
-    assert check("L01-S14", LoudNeuron) is True
+    assert check(PASS_ID, {"f": loud_f}) is True
     assert random.getstate() == before
     out = capsys.readouterr().out
     assert "시끄러운 출력" not in out
 
 
-def test_check_never_raises_even_if_printing_breaks(ref, monkeypatch):
+def test_check_never_raises_even_if_printing_breaks(monkeypatch):
     def boom(*a, **k):
         raise OSError("출력 장치 없음")
     monkeypatch.setattr(core, "_emit", boom)
-    assert check("L01-S12", ref.Value) is True
+    assert check(PASS_ID, GOOD) is True
     assert finish("L01", send=False).startswith("Z2H1.")
 
 
-def test_finish_table_counts_and_code(ref, capsys):
-    check("L01-S12", ref.Value)
-    check("L01-S02", 99.0)
+def test_finish_table_counts_and_code(capsys):
+    check(PASS_ID, GOOD)
+    check(OTHER_ID, {"Value": lambda x: None})
     capsys.readouterr()
     code = finish("L01", send=False, at="2026-11-16T22:00:00+09:00")
     out = capsys.readouterr().out
@@ -119,11 +129,11 @@ def test_finish_table_counts_and_code(ref, capsys):
     assert "L01-R3" in out  # 아직 안 한 칸도 표에 나온다
     assert out.rstrip().endswith(code)
     got = decode_result_code(code)
-    assert got == {"v": 1, "l": "L01", "p": ["L01-S12"], "f": ["L01-S02"], "t": "2026-11-16T22:00:00+09:00"}
+    assert got == {"v": 1, "l": "L01", "p": [PASS_ID], "f": [OTHER_ID], "t": "2026-11-16T22:00:00+09:00"}
 
 
-def test_finish_without_server_is_quiet_and_quick(ref, capsys):
-    check("L01-S12", ref.Value)
+def test_finish_without_server_is_quiet_and_quick(capsys):
+    check(PASS_ID, GOOD)
     capsys.readouterr()
     t0 = time.monotonic()
     code = finish("L01", server_url=closed_port_url())
@@ -174,15 +184,15 @@ class _Capture(http.server.BaseHTTPRequestHandler):
         pass
 
 
-def test_finish_posts_grade_body_to_local_server(ref, capsys):
+def test_finish_posts_grade_body_to_local_server(capsys):
     _Capture.seen.clear()
     srv = http.server.HTTPServer(("127.0.0.1", 0), _Capture)
     th = threading.Thread(target=srv.serve_forever, daemon=True)
     th.start()
     try:
-        check("L01-S12", ref.Value)
-        check("L01-S02", 99.0)
-        check("L01-S04", None)  # 빈칸이면 다시
+        check(PASS_ID, GOOD)
+        check(OTHER_ID, {"Value": lambda x: None})
+        check("L01-S11", {"d": None})  # 값을 잘못 만들었으면 다시
         url = f"http://127.0.0.1:{srv.server_address[1]}/api/grade"
         code = finish("L01", server_url=url, at="2026-11-16T22:30:00+09:00")
     finally:
@@ -199,21 +209,21 @@ def test_finish_posts_grade_body_to_local_server(ref, capsys):
     assert list(body) == ["lecture_id", "results", "at"]
     assert body["lecture_id"] == "L01" and body["at"] == "2026-11-16T22:30:00+09:00"
     by_id = {r["check_id"]: r for r in body["results"]}
-    assert set(by_id) == {"L01-S12", "L01-S02", "L01-S04"}
-    assert by_id["L01-S12"]["passed"] is True and by_id["L01-S02"]["passed"] is False
-    assert by_id["L01-S12"]["message_ko"].startswith("✓ 맞음: ")
-    assert by_id["L01-S02"]["message_ko"].startswith("✕ 다시: ")
+    assert set(by_id) == {PASS_ID, OTHER_ID, "L01-S11"}
+    assert by_id[PASS_ID]["passed"] is True and by_id[OTHER_ID]["passed"] is False
+    assert by_id[PASS_ID]["message_ko"].startswith("✓ 맞음: ")
+    assert by_id[OTHER_ID]["message_ko"].startswith("✕ 다시: ")
     for r in body["results"]:
         assert list(r) == ["check_id", "passed", "message_ko"] and "[L01-" not in r["message_ko"]
 
 
-def test_no_em_dash_in_package_sources_and_messages(ref, capsys):
+def test_no_em_dash_in_package_sources_and_messages(capsys):
     pkg = os.path.dirname(z2h_check.__file__)
     for dirpath, _, files in os.walk(pkg):
         for name in files:
             if name.endswith((".py", ".json", ".md")):
                 with open(os.path.join(dirpath, name), encoding="utf-8") as fh:
                     assert chr(0x2014) not in fh.read(), name
-    check("L01-S12", 1.0)
+    check(PASS_ID, BAD)
     finish("L01", send=False)
     assert chr(0x2014) not in capsys.readouterr().out

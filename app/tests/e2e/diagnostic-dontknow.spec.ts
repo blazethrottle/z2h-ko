@@ -12,7 +12,6 @@ import { resolveBasicsPath } from '../../src/lib/content/load.mjs';
 const F = JSON.parse(fs.readFileSync(resolveBasicsPath().path, 'utf8'));
 const recommendOf = (qid: string): string[] => F.questions.find((q: any) => q.question_id === qid).recommend_units_if_wrong;
 
-const DK = /모르겠어요/;
 const NOTE = '모르겠어요로 기록';
 
 async function basicsData(page: Page) {
@@ -55,7 +54,7 @@ function watchAnswers(page: Page, lectureId: string) {
 
 test('직접 입력 문항 모르겠어요: 누르면 눌림 모양·안내 문구, 답한 문제로 셈, 다시 누르면 취소되고 입력칸을 쓸 수 있음', async ({ page, api }, info) => {
   const { B } = await basicsData(page);
-  const q = B.diagnostic.find((x: any) => x.type !== 'choice' && x.dont_know_allowed);
+  const q = B.diagnostic.find((x: any) => x.type !== 'choice' && x.allow_dont_know);
   expect(q, '직접 입력 + 모르겠어요 문항(F-D3)이 정본에 있어야 합니다').toBeTruthy();
   const qid = q.question_id;
   const total = B.diagnostic.length;
@@ -130,8 +129,8 @@ test('직접 입력 문항 모르겠어요: 누르면 눌림 모양·안내 문�
 
 test('고르기 문항의 모르겠어요 보기: 직접 입력 모르겠어요와 같은 눌림 모양·같은 안내, 다른 보기를 고르면 안내가 사라짐', async ({ page, api }, info) => {
   const { B } = await basicsData(page);
-  const direct = B.diagnostic.find((x: any) => x.type !== 'choice' && x.dont_know_allowed);
-  const choiceQs = B.diagnostic.filter((x: any) => x.type === 'choice' && x.choices.some((c: string) => DK.test(c)));
+  const direct = B.diagnostic.find((x: any) => x.type !== 'choice' && x.allow_dont_know);
+  const choiceQs = B.diagnostic.filter((x: any) => x.type === 'choice' && x.dont_know_index != null);
   expect(choiceQs.length, '모르겠어요 보기가 있는 고르기 문항').toBeGreaterThan(0);
   await page.goto('/basics/diagnostic/');
   await hydrated(page);
@@ -147,8 +146,8 @@ test('고르기 문항의 모르겠어요 보기: 직접 입력 모르겠어요�
   for (const q of choiceQs) {
     const qid = q.question_id;
     const card = page.getByTestId(`diag-${qid}`);
-    const dk = q.choices.findIndex((c: string) => DK.test(c));
-    const other = q.choices.findIndex((c: string) => !DK.test(c));
+    const dk = q.dont_know_index;
+    const other = q.choices.findIndex((_: string, i: number) => i !== dk);
     const opt = card.getByRole('radio').nth(dk);
     await opt.scrollIntoViewIfNeeded();
     await press(opt, info);
@@ -169,8 +168,8 @@ test('고르기 문항의 모르겠어요 보기: 직접 입력 모르겠어요�
 
 test('모르겠어요로 낸 결과: 문항별 결과에 "모르겠어요", 감점 없이 오답(맞음 아님), 추천에 들어감, 서버 기록 is_dont_know', async ({ page, api }, info) => {
   const { B, answers } = await basicsData(page);
-  const direct = B.diagnostic.find((x: any) => x.type !== 'choice' && x.dont_know_allowed);
-  const choiceQ = B.diagnostic.find((x: any) => x.type === 'choice' && x.choices.some((c: string) => DK.test(c)));
+  const direct = B.diagnostic.find((x: any) => x.type !== 'choice' && x.allow_dont_know);
+  const choiceQ = B.diagnostic.find((x: any) => x.type === 'choice' && x.dont_know_index != null);
   const dkIds = [direct.question_id, choiceQ.question_id];
   const answerReqs = watchAnswers(page, B.lecture_id);
   await page.goto('/basics/diagnostic/');
@@ -183,7 +182,7 @@ test('모르겠어요로 낸 결과: 문항별 결과에 "모르겠어요", 감�
       await b.scrollIntoViewIfNeeded();
       await press(b, info);
     } else if (q.type === 'choice') {
-      const i = q.question_id === choiceQ.question_id ? q.choices.findIndex((c: string) => DK.test(c)) : a.answer_index;
+      const i = q.question_id === choiceQ.question_id ? q.dont_know_index : a.answer_index;
       const o = card.getByRole('radio').nth(i);
       await o.scrollIntoViewIfNeeded();
       await press(o, info);
@@ -203,7 +202,7 @@ test('모르겠어요로 낸 결과: 문항별 결과에 "모르겠어요", 감�
   const recommended = new Set(dkIds.flatMap(recommendOf));
   const notRecommended = B.diagnostic.filter((q: any) => !dkIds.includes(q.question_id)).flatMap((q: any) => recommendOf(q.question_id)).filter((u: string) => !recommended.has(u));
   expect(recommended.size).toBeGreaterThan(0);
-  await expect(page.getByTestId('diag-score')).toHaveText(B.result_ko.score_template_ko.replace('{correct}', String(correct)).replace('{total}', String(total)));
+  await expect(page.getByTestId('diag-score')).toHaveText(`${correct} / ${total} 맞음`);
   for (const id of dkIds) {
     const row = page.getByTestId(`diag-review-${id}`);
     await expect(row).toContainText('내 답: 모르겠어요');

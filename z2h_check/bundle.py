@@ -16,7 +16,7 @@ from . import __version__
 
 PKG_DIR = os.path.dirname(os.path.abspath(__file__))
 OUT_FILE = os.path.join(PKG_DIR, "_bundle.py")
-_SKIP_TOP = {"bundle.py", "_bundle.py", "__main__.py"}
+_SKIP_TOP = {"bundle.py", "_bundle.py", "__main__.py", "refgen.py"}  # 묶는 도구와 정본에서 기준값을 만드는 도구는 저장소에서만 쓴다
 
 
 def _module_files():
@@ -80,9 +80,10 @@ def build_bundle():
 
 _TEMPLATE = '''# z2h_check 묶음 {version}: Z2H 노트북 채점 도구를 셀 하나에 담은 것입니다.
 # 이 셀을 그대로 실행하면 check(...)와 finish("L01")를 쓸 수 있습니다. 내용은 고치지 마세요.
+# 실행하면 셀 실행 기록이 켜져, 채점 셀이 바로 위 셀의 출력을 읽습니다.
 # 자동 생성 파일: 저장소에서 python -m z2h_check.bundle --write 로 다시 만듭니다 (원본: z2h_check/ 폴더).
 # 원본 해시 sha256:{digest}
-# 출처 표기: 채점 기준의 강의 예제 숫자·데이터는 karpathy/nn-zero-to-hero, 비교 방식은 karpathy/micrograd (MIT).
+# 출처 표기: 채점 기준의 강의 예제 숫자는 karpathy/nn-zero-to-hero, Value 동작 기준은 karpathy/micrograd (MIT).
 
 
 def _z2h_install():

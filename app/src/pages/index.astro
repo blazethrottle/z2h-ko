@@ -1,29 +1,36 @@
 ---
 // A 랜딩 (spec 13.1, 목업 v2_landing). 구역 7개: 첫 화면, 끝내면 얻는 것, 이런 분께, 수료까지의 길, 코드를 처음 봐도 따라갈 수 있게, 끝 CTA, 바닥.
-// 문구는 src/content/landing.mjs 한 곳(공개 전 승인 항목 D46, "예시 화면" 표시 유지). 단계 수는 video-segments.json 에서 센다.
+// 문구는 src/content/landing.mjs 한 곳(공개 전 승인 항목 D46, "예시 화면" 표시 유지). 단계 수는 video-segments.json 에서 세고,
+// 수료까지의 길의 편별 시간·누적 점검 구성은 홈과 같은 출처(content/lectures.yaml)에서 src/lib/landingPath.ts 가 채운다.
 // 채운 accent 버튼은 첫 화면과 끝 CTA 에 하나씩(한 뷰포트에 1개). 로그인 화면은 없어 보조 버튼은 "학습 홈".
 import Base from '../layouts/Base.astro';
 import MiniCode from '../components/MiniCode.tsx';
 import { LANDING as L } from '../content/landing.mjs';
 import { loadSite } from '../lib/pageData';
 import { loadTaster } from '../lib/content/taster.mjs';
+import { loadBasics } from '../lib/content/basics.mjs';
+import { landingPathRows } from '../lib/landingPath';
 
-const site: any = loadSite();
+const site = loadSite();
 const taster: any = loadTaster();
 const counts: Record<string, number> = site.stepCounts ?? {};
-const lectureRows = L.path.rows.filter((r: any) => r.lecture_id);
-const totalSteps = lectureRows.reduce((a: number, r: any) => a + (counts[r.lecture_id] ?? 0), 0);
+const pathRows = landingPathRows(L.path.rows, {
+  lectures: site.lectures,
+  checkpoints: site.checkpoints,
+  basicsMinutes: loadBasics().units.reduce((a, u) => a + u.estimated_minutes, 0),
+  stepCounts: counts,
+});
+const lectureRows = pathRows.filter((r) => r.lecture_id);
+const totalSteps = lectureRows.reduce((a, r) => a + (counts[r.lecture_id ?? ''] ?? 0), 0);
 const lead = L.path.lead
   .replace('{lectures}', String(lectureRows.length))
   .replace('{steps}', String(totalSteps))
-  .replace('{checks}', String(L.path.rows.filter((r: any) => r.checkpoint).length));
+  .replace('{checks}', String(pathRows.filter((r) => r.checkpoint).length));
 const codeStep = taster.steps.find((s: any) => s.step_id === L.hero.code.step_id);
 const codeLines = String(codeStep?.code ?? '').split('\n');
 const codeRows = L.hero.code.lines
   .map((n: number) => ({ code: (codeLines[n - 1] ?? '').trim(), note: codeStep?.code_line_notes_ko?.[n - 1] ?? '' }))
   .filter((r: any) => r.code);
-const meta = (r: any) =>
-  [r.hours, r.lecture_id && counts[r.lecture_id] ? `${counts[r.lecture_id]}단계` : null, r.questions ? `${r.questions}문항` : null].filter(Boolean).join(' · ');
 ---
 <Base title="소개" tabs={false} bar="landing" wide description={L.hero.promise}>
   <p class="sample-band" data-testid="sample-badge">
@@ -89,11 +96,11 @@ const meta = (r: any) =>
     <h2 id="lp-path-h" class="t2">{L.path.title}</h2>
     <p class="small muted lp-lead num" data-testid="landing-path-lead">{lead}</p>
     <ol class="lp-path">
-      {L.path.rows.map((r: any) => (
-        <li class={r.checkpoint ? 'cp' : ''} data-lecture={r.lecture_id ?? undefined}>
+      {pathRows.map((r) => (
+        <li class={r.checkpoint ? 'cp' : ''} data-lecture={r.lecture_id ?? undefined} data-checkpoint={r.checkpoint_id ?? undefined}>
           <span class="dot">{r.mark}</span>
           <div>
-            <span class="t">{r.name}</span> <span class="m">· {meta(r)}</span>
+            <span class="t">{r.name}</span> {r.meta && <span class="m">· {r.meta}</span>}
             <br />
             <span class="small">{r.promise}</span>
           </div>

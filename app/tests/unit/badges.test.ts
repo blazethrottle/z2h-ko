@@ -6,12 +6,15 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { STAGE_BADGES, STAMP_RULE, TASTE_MARK } from '../../src/badge-rules';
 import { awardBadges, dueAwards, earnedDateKo, lectureRefs, stageBadgeViews, stageStatusKo } from '../../src/lib/badges';
+import YAML from 'yaml';
 import { REPO_ROOT } from '../../src/lib/content/load.mjs';
 import { LocalStore } from '../../src/lib/sync/store';
 import { TABLE_KEYS } from '../../src/lib/sync/tables';
 
 const L01 = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/L01.json'), 'utf8'));
 const TASTER = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster.json'), 'utf8'));
+// 누적 점검이 덮는 편: content/lectures.yaml checkpoints(docs/CURRICULUM.md 5-3절에서 옮김)
+const CHECKPOINTS: { checkpoint_id: string; covers: string[] }[] = YAML.parse(fs.readFileSync(path.join(REPO_ROOT, 'content/lectures.yaml'), 'utf8')).checkpoints;
 const REQ: string[] = TASTER.lecture.completion_rule.requires_steps;
 const NOW = '2026-11-17T10:00:00.000+09:00';
 
@@ -20,7 +23,7 @@ const LECTURES = lectureRefs(
   Array.from({ length: 10 }, (_, i) => `L${String(i + 1).padStart(2, '0')}`).map((id) => ({
     lecture_id: id,
     available: id === 'L01',
-    stamp_id: id === 'L01' ? L01.lecture.rewards.stamp.stamp_id : null,
+    stamp_id: id === 'L01' ? (L01.lecture.rewards?.stamp?.stamp_id ?? null) : null,
     content_version: id === 'L01' ? 'v-l01' : null,
   })),
 );
@@ -47,10 +50,12 @@ describe('배지 규칙 한 곳 (badge-rules.ts)', () => {
     // 단계 배지는 앱이 쓰지 않는다
     expect(STAGE_BADGES.some((b) => b.awarder === 'app')).toBe(false);
   });
-  it('정본 id 를 그대로 쓴다: STAMP-L01, BADGE-S1, TASTER-DONE', () => {
-    expect(STAMP_RULE.idOf('L01', L01.lecture.rewards.stamp.stamp_id)).toBe('STAMP-L01');
-    expect(STAGE_BADGES[1].badge_id).toBe(L01.lecture.rewards.badge_progress.badge_id);
-    expect(STAGE_BADGES[1].covers).toEqual(L01.lecture.rewards.badge_progress.requires.filter((r: string) => r.startsWith('mastered:')).map((r: string) => r.slice(9)));
+  it('도장 id: 정본에 rewards.stamp 가 없으면(클로드 버전 L01) 같은 모양 STAMP-L01. 단계 배지 1~3 이 덮는 편 = 설계서 누적 점검 CP1~CP3', () => {
+    expect(STAMP_RULE.idOf('L01', L01.lecture.rewards?.stamp?.stamp_id ?? null)).toBe('STAMP-L01');
+    for (const b of STAGE_BADGES.slice(1)) {
+      const cp = b.condition.type === 'checkpoint_passed' ? b.condition.checkpoint_id : null;
+      expect(b.covers, b.badge_id).toEqual(CHECKPOINTS.find((c) => c.checkpoint_id === cp)?.covers);
+    }
     expect(TASTE_MARK.badge_id).toBe(TASTER.lecture.completion_rule.rule_id);
     expect(TASTE_MARK.note_ko).toBe('배지가 아닌 완료 표시');
   });

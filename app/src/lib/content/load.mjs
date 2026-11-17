@@ -1,9 +1,9 @@
 // 콘텐츠를 읽는 곳은 이 파일 하나다.
-// 강의 콘텐츠: 교사 정본 JSON (inputs/pedagogy/content/L??.json). 병합 전에는 app/tests/fixtures/pedagogy/ 의 사본
+// 강의 콘텐츠: 정본 JSON (inputs/pedagogy/content/L??.json). 병합 전에는 app/tests/fixtures/pedagogy/ 의 사본
 //   (git show origin/m0-setup:inputs/pedagogy/content/L01.json 으로 꺼낸 것)을 쓴다.
 // 영상 구간 정본: 같은 곳의 video-segments.json.
 // 보조 목록(선택): lectures.yaml(10편 이름). 저장소 content/ 에 있으면 그것, 없으면 fixtures/extras.
-// 사전 기초: 교사 정본 inputs/pedagogy/content/F.json 하나(경로는 content-config.mjs BASICS.file). 기초 단위 이름·필수 여부도 여기서 읽는다.
+// 사전 기초: 정본 inputs/pedagogy/content/F.json 하나(경로는 content-config.mjs BASICS.file). 기초 단위 이름도 여기서 읽는다.
 // 바꾸기: Z2H_CONTENT_DIR, Z2H_SEGMENTS, Z2H_EXTRAS_DIR, Z2H_BASICS_FILE 환경 변수.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -136,7 +136,7 @@ export function readTasterBundle(paths = resolvePaths()) {
 }
 
 /**
- * 사전 기초 파일: 교사 정본 F.json 하나(content-config BASICS.file). 테스트만 환경 변수 Z2H_BASICS_FILE 로 바꾼다.
+ * 사전 기초 파일: 정본 F.json 하나(content-config BASICS.file). 테스트만 환경 변수 Z2H_BASICS_FILE 로 바꾼다.
  * 파일이 없어도 경로는 돌려주고, 읽을 때 오류가 되어 검사가 실패한다(빌드 멈춤).
  */
 export function resolveBasicsPath(env = process.env, root = REPO_ROOT) {
@@ -149,7 +149,7 @@ export function readBasicsBundle(where = resolveBasicsPath(), root = REPO_ROOT) 
   const relTo = (p) => path.relative(root, p) || p;
   const bundle = { source: where.source, file: null, rawTexts: [], parseErrors: [] };
   if (!fs.existsSync(where.path)) {
-    bundle.parseErrors.push({ path: relTo(where.path), message: '기초 콘텐츠(교사 정본 F.json)가 없습니다' });
+    bundle.parseErrors.push({ path: relTo(where.path), message: '기초 콘텐츠(정본 F.json)가 없습니다' });
   } else {
     const text = fs.readFileSync(where.path, 'utf8');
     bundle.rawTexts.push({ path: relTo(where.path), text });

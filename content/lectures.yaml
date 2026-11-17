@@ -1,55 +1,184 @@
-# 10편 목록(홈 지도용).
-# 출처: inputs/pedagogy/video-segments.json의 lectures(영상 아이디, 길이), 각 pedagogy 편 파일 제목,
-# video_url은 inputs/research/README.md의 영상 링크와 같은 주소.
-# 프로토타입은 1편만 내용이 있고 2~10편은 이름만 씁니다.
+# 10편 목록: 홈 강의 목록, 준비 중인 편의 안내 화면, 강의 개요의 다리·누적 점검 안내.
+# 출처: docs/CURRICULUM.md(클로드 버전 커리큘럼 설계서)에서 옮긴 값. 손으로 고치지 말고 설계서를 고친 뒤 다시 옮긴다.
+#   lectures: 4절 편별 머리 표(제목, 영상, 환경, 선행 편)와 편 목표, 6절 합계 표(plan).
+#   bridge, bridge_cards: 5-1절 표(카드 질문과 정답은 옮기지 않음: 편이 준비되면 화면에서 풉니다).
+#   checkpoints: 5-3절 머리 줄(문항 구성). 설계서의 잠금(CP1 → L04 등)은 옮기지 않음(얼큰이 결정: 잠금 없음, 추천만).
+# 선행 기초 단위는 여기 두지 않는다: 정본 inputs/pedagogy/content/F.json lecture.lecture_prereq_units 를 읽는다.
 lectures:
   - lecture_id: "L01"
-    title_ko: "micrograd: 신경망과 역전파를 손으로 만들기"
+    title_ko: "micrograd: 숫자 상자로 신경망과 역전파를 직접 만들기"
     youtube_video_id: "VMj-3S1tku0"
     video_seconds: 8752
     video_url: "https://www.youtube.com/watch?v=VMj-3S1tku0"
+    env_ko: "`cpu`. 맥미니 Jupyter, Colab 어느 쪽이든 된다. graphviz(그림 그리기 도구)가 필요: Colab은 기본 탑재 여부 미확인, 맥미니는 시스템 graphviz와 파이썬 패키지가 둘 다 필요(research, 설치는 승인 뒤). 막힘 힌트 참고"
+    prereq_lectures: []
+    objectives:
+      - { objective_id: "L01-O1", text_ko: "입력을 조금 움직여 기울기를 숫자로 재고, 부호와 크기의 뜻을 말할 수 있다." }
+      - { objective_id: "L01-O2", text_ko: "`Value` 상자로 계산 그래프(어떤 값이 어떤 계산으로 만들어졌는지의 지도)를 만들고 그림으로 볼 수 있다." }
+      - { objective_id: "L01-O3", text_ko: "연쇄법칙으로 기울기를 손으로 끝에서 앞으로 전달할 수 있다." }
+      - { objective_id: "L01-O4", text_ko: "연산마다 `_backward`를 쓰고, 위상 정렬(앞 계산이 먼저 오게 줄 세우기)로 `backward()`를 자동으로 돌리고, `+=` 누적이 필요한 이유를 설명할 수 있다." }
+      - { objective_id: "L01-O5", text_ko: "`Neuron`, `Layer`, `MLP`를 만들고, 손실을 줄이는 학습 반복(앞으로 계산, 기울기 비우기, 뒤로 계산, 조금 고치기)을 돌릴 수 있다." }
+      - { objective_id: "L01-O6", text_ko: "같은 계산을 PyTorch로 해서 기울기가 같은지 대조할 수 있다." }
+    plan: { chapters: 22, steps: 58, required_steps: 56, optional_steps: 2, new_code_lines: 271, questions: 15, rebuild: 3, video_minutes: 175, practice_minutes: 636, total_minutes: 811 }
   - lecture_id: "L02"
-    title_ko: "makemore 1: 바이그램 언어 모델"
+    title_ko: "makemore 1: 글자 쌍으로 이름 만들기(바이그램)"
     youtube_video_id: "PaCmpygFfXo"
     video_seconds: 7065
     video_url: "https://www.youtube.com/watch?v=PaCmpygFfXo"
+    env_ko: "`cpu`. 두 길 모두. `names.txt`는 내려받기 셀로(research: 27x27 표라 GPU 불필요)"
+    prereq_lectures: ["L01"]
+    objectives:
+      - { objective_id: "L02-O1", text_ko: "`names.txt`를 읽고 글자 쌍(바이그램: 앞 글자 하나로 다음 글자 맞히기)을 딕셔너리와 27x27 텐서로 셀 수 있다." }
+      - { objective_id: "L02-O2", text_ko: "개수 표를 확률 표로 바꾸고 확률대로 글자를 뽑아 새 이름을 만들 수 있다." }
+      - { objective_id: "L02-O3", text_ko: "브로드캐스팅과 `keepdim`으로 행마다 나누는 이유를 설명할 수 있다." }
+      - { objective_id: "L02-O4", text_ko: "음의 로그 가능도(정답 글자 확률의 -log 평균, 작을수록 좋음)로 모델 점수를 매기고, 스무딩(가짜 개수 더하기)의 효과를 말할 수 있다." }
+      - { objective_id: "L02-O5", text_ko: "같은 모델을 원핫(번호를 0과 1 줄로 바꾸기) + 선형층 + 소프트맥스 신경망으로 만들고 경사하강법으로 학습시킬 수 있다." }
+    plan: { chapters: 24, steps: 35, required_steps: 35, optional_steps: 0, new_code_lines: 130, questions: 12, rebuild: 2, video_minutes: 141, practice_minutes: 378, total_minutes: 519 }
+    bridge: { from_lecture: "L01", jump_ko: "중", new_ko: "숫자 하나 → 숫자 표(텐서), 브로드캐스팅", bridge_ko: "F-P9, 다리 카드 B02-1, B02-2", card_ids: ["B02-1", "B02-2"] }
   - lecture_id: "L03"
-    title_ko: "makemore 2: MLP 언어 모델"
+    title_ko: "makemore 2: 앞 글자 셋을 보는 MLP"
     youtube_video_id: "TCH_1BHY58I"
     video_seconds: 4540
     video_url: "https://www.youtube.com/watch?v=TCH_1BHY58I"
+    env_ko: "`cpu`. 두 길 모두(20만 번 학습은 맥미니 CPU로 수 분 걸릴 수 있음, research, 미측정)"
+    prereq_lectures: ["L02"]
+    objectives:
+      - { objective_id: "L03-O1", text_ko: "앞 글자 3개로 다음 글자를 맞히는 데이터셋(문맥 `block_size`)을 만든다." }
+      - { objective_id: "L03-O2", text_ko: "임베딩 표 `C`(글자마다 숫자 몇 개짜리 좌표), 은닉층, 출력층을 만들고 단계마다 모양을 말할 수 있다." }
+      - { objective_id: "L03-O3", text_ko: "`F.cross_entropy`와 미니배치(무작위 일부만 뽑아 학습)로 학습한다." }
+      - { objective_id: "L03-O4", text_ko: "학습률 후보 그래프를 읽고 학습률을 고른다." }
+      - { objective_id: "L03-O5", text_ko: "train/dev/test로 나눠 과적합(외우기만 함)과 과소적합(덜 배움)을 판단한다." }
+      - { objective_id: "L03-O6", text_ko: "학습한 모델로 이름을 뽑는다." }
+    plan: { chapters: 19, steps: 30, required_steps: 29, optional_steps: 1, new_code_lines: 114, questions: 10, rebuild: 2, video_minutes: 91, practice_minutes: 326, total_minutes: 417 }
+    bridge: { from_lecture: "L02", jump_ko: "중", new_ko: "3차원 모양, 임베딩, 미니배치", bridge_ko: "F-M6, B03-1, B03-2", card_ids: ["B03-1", "B03-2"] }
   - lecture_id: "L04"
-    title_ko: "makemore 3: 활성값, 기울기, BatchNorm"
+    title_ko: "makemore 3: 신경망 건강검진(활성값, 기울기, BatchNorm)"
     youtube_video_id: "P6sfmUTpUmc"
     video_seconds: 6957
     video_url: "https://www.youtube.com/watch?v=P6sfmUTpUmc"
+    env_ko: "`cpu`. 두 길 모두. 노트북 원본은 ipywidgets를 쓰지만(맥미니 Jupyter에서 따로 설정이 필요할 수 있음, research) 우리 단계는 쓰지 않음"
+    prereq_lectures: ["L03"]
+    objectives:
+      - { objective_id: "L04-O1", text_ko: "처음 손실이 \"모든 글자를 똑같이 찍을 때\"의 값(약 3.30)보다 크면 출력층 초기값을 줄여 고친다." }
+      - { objective_id: "L04-O2", text_ko: "tanh 포화(값이 -1, 1에 몰려 기울기가 사라짐)를 히스토그램과 흑백 그림으로 진단하고 고친다." }
+      - { objective_id: "L04-O3", text_ko: "Kaiming 초기화(gain / √입력 수)를 계산해 적용한다." }
+      - { objective_id: "L04-O4", text_ko: "BatchNorm(배치마다 평균 0, 표준편차 1로 맞추기)을 만들고, 학습 때와 쓸 때 통계가 다른 이유를 설명한다." }
+      - { objective_id: "L04-O5", text_ko: "Linear, BatchNorm1d, Tanh 층 클래스로 코드를 정리한다." }
+      - { objective_id: "L04-O6", text_ko: "진단 그래프 4종을 읽고 정상과 비정상을 가린다." }
+    plan: { chapters: 17, steps: 36, required_steps: 36, optional_steps: 0, new_code_lines: 115, questions: 12, rebuild: 2, video_minutes: 139, practice_minutes: 371, total_minutes: 510 }
+    bridge: { from_lecture: "L03", jump_ko: "중상", new_ko: "통계와 그래프 읽기", bridge_ko: "F-M5, B04-1, B04-2", card_ids: ["B04-1", "B04-2"] }
   - lecture_id: "L05"
-    title_ko: "makemore 4: Backprop Ninja (손으로 하는 역전파)"
+    title_ko: "makemore 4: 역전파 손으로 쓰기(역전파 닌자)"
     youtube_video_id: "q8SA3rM6ckI"
     video_seconds: 6924
     video_url: "https://www.youtube.com/watch?v=q8SA3rM6ckI"
+    env_ko: "`cpu` 권장. 맥미니에서도 MPS를 켜지 않는다(research: exact 비교가 기기마다 달라 mps보다 cpu). Colab은 설명란 연습 Colab과 같은 꼴"
+    prereq_lectures: ["L04"]
+    objectives:
+      - { objective_id: "L05-O1", text_ko: "잘게 쪼갠 순전파의 변수마다 기울기를 손으로 쓰고 `cmp()`로 PyTorch와 대조한다." }
+      - { objective_id: "L05-O2", text_ko: "\"기울기의 모양은 원래 값의 모양과 같다\"는 요령으로 행렬곱, 합, 브로드캐스팅의 역전파를 쓴다." }
+      - { objective_id: "L05-O3", text_ko: "`exact: False / approximate: True`가 대부분 정상인 이유를 말한다." }
+      - { objective_id: "L05-O4", text_ko: "cross entropy와 BatchNorm 역전파를 한 식으로 줄여 쓴다." }
+      - { objective_id: "L05-O5", text_ko: "`loss.backward()` 없이 내 기울기로 학습 전체를 돌린다." }
+    plan: { chapters: 8, steps: 28, required_steps: 27, optional_steps: 1, new_code_lines: 88, questions: 10, rebuild: 3, video_minutes: 138, practice_minutes: 416, total_minutes: 554 }
+    bridge: { from_lecture: "L04", jump_ko: "최상(research: 시리즈에서 가장 어려운 구간)", new_ko: "텐서 단위 역전파, 모양 맞추기", bridge_ko: "B05-1~B05-3, 01편 S25~S29 다시 하기 권함", card_ids: ["B05-1", "B05-2", "B05-3"] }
   - lecture_id: "L06"
-    title_ko: "makemore 5: WaveNet 구조 만들기"
+    title_ko: "makemore 5: 글자를 둘씩 묶어 올라가는 WaveNet"
     youtube_video_id: "t3YJ5hKiMQ0"
     video_seconds: 3381
     video_url: "https://www.youtube.com/watch?v=t3YJ5hKiMQ0"
+    env_ko: "`cpu`. 두 길 모두. 규모를 키운 마지막 학습(S19)은 길어 맥미니 `mps`나 Colab GPU 선택 가능(research, 미측정)"
+    prereq_lectures: ["L04"]
+    prereq_lectures_note_ko: "L05는 권장"
+    objectives:
+      - { objective_id: "L06-O1", text_ko: "Embedding, Flatten, Sequential 같은 층과 컨테이너(층을 담는 상자)를 만들고 `torch.nn`과 비교한다." }
+      - { objective_id: "L06-O2", text_ko: "(B, T, C) 3차원 모양(배치 수, 글자 위치 수, 숫자 칸 수)을 층마다 추적한다." }
+      - { objective_id: "L06-O3", text_ko: "글자를 2개씩 묶어 단계적으로 합치는 계층 구조를 만든다." }
+      - { objective_id: "L06-O4", text_ko: "BatchNorm1d가 3차원 입력에서 엉뚱한 방향으로 통계를 내던 버그를 찾아 고친다." }
+      - { objective_id: "L06-O5", text_ko: "실험 기록표를 남기며 손실을 낮춘다." }
+    plan: { chapters: 18, steps: 23, required_steps: 22, optional_steps: 1, new_code_lines: 62, questions: 9, rebuild: 2, video_minutes: 68, practice_minutes: 247, total_minutes: 315 }
+    bridge: { from_lecture: "L05", jump_ko: "하(코드가 쉬워짐)", new_ko: "다차원 모양 추적", bridge_ko: "B06-1, L06-S12 모양 추적기", card_ids: ["B06-1"] }
   - lecture_id: "L07"
-    title_ko: "GPT 만들기: 처음부터, 코드로, 한 줄씩"
+    title_ko: "GPT를 처음부터 만들기"
     youtube_video_id: "kCc8FmEb1nY"
     video_seconds: 6980
     video_url: "https://www.youtube.com/watch?v=kCc8FmEb1nY"
+    env_ko: "`cpu`(앞부분), 축소 학습(S38)은 맥미니 `mps` 또는 `colab_gpu`. 원본 `gpt.py`는 mps를 스스로 고르지 않으므로 S13에서 mps를 넣는다(research). 원본 최종 설정은 선택(research: A100 약 15분, M1 mps 약 3시간 사용자 보고, M4 미측정)"
+    prereq_lectures: ["L06"]
+    prereq_lectures_note_ko: "설명란이 makemore 선행을 권함"
+    objectives:
+      - { objective_id: "L07-O1", text_ko: "글자 단위 토큰화(글자 ↔ 번호), train/val 분할, 배치 로더를 만든다." }
+      - { objective_id: "L07-O2", text_ko: "바이그램 기준선을 `nn.Module`로 만들고 학습해 글을 생성한다." }
+      - { objective_id: "L07-O3", text_ko: "아래 삼각 행렬곱 요령으로 \"과거만 보는 평균\"을 만들고, softmax와 마스크로 바꾼다." }
+      - { objective_id: "L07-O4", text_ko: "query, key, value로 self-attention 한 머리(Head)를 만들고 √head_size로 나누는 이유를 말한다." }
+      - { objective_id: "L07-O5", text_ko: "MultiHead, FeedForward, 잔차 연결, LayerNorm, Dropout으로 트랜스포머 블록을 조립하고, 축소 설정으로 학습해 셰익스피어 같은 글을 만든다." }
+      - { objective_id: "L07-O6", text_ko: "사전학습, 미세조정, RLHF의 차이를 설명한다." }
+    plan: { chapters: 30, steps: 43, required_steps: 41, optional_steps: 2, new_code_lines: 204, questions: 14, rebuild: 3, video_minutes: 140, practice_minutes: 512, total_minutes: 652 }
+    bridge: { from_lecture: "L06", jump_ko: "상(research: 0:47:11~0:58:26 어려움)", new_ko: "새 데이터, attention 행렬 요령", bridge_ko: "B07-1, B07-2", card_ids: ["B07-1", "B07-2"] }
   - lecture_id: "L08"
-    title_ko: "State of GPT (강연)"
+    title_ko: "State of GPT: GPT 비서는 어떻게 만들고 어떻게 잘 쓰나"
     youtube_video_id: "bZQun8Y4L2A"
     video_seconds: 2560
     video_url: "https://www.youtube.com/watch?v=bZQun8Y4L2A"
+    env_ko: "`cpu`(07편 모델로 생성만). 07편과 같은 길(맥미니 또는 Colab)에서 이어서 하면 모델을 다시 학습하지 않아도 된다"
+    prereq_lectures: ["L07"]
+    objectives:
+      - { objective_id: "L08-O1", text_ko: "GPT 비서를 만드는 4단계(사전학습, 지도 미세조정 SFT, 보상 모델 RM, 강화학습 RL)를 순서와 데이터로 설명한다." }
+      - { objective_id: "L08-O2", text_ko: "베이스 모델(사전학습만 한 모델)이 \"문서 이어 쓰기 기계\"라는 것을 내 GPT로 확인한다." }
+      - { objective_id: "L08-O3", text_ko: "보상 모델 데이터(같은 질문의 답들에 사람이 매긴 순위)를 직접 만들어 설명한다." }
+      - { objective_id: "L08-O4", text_ko: "프롬프트 기법(단계별로 생각하게 하기, 여러 번 시도 후 고르기, 스스로 점검하게 하기, 형식 지정, 도구와 검색)을 내 일에 맞게 골라 쓴다." }
+      - { objective_id: "L08-O5", text_ko: "한계(편향, 환각, 지식 마감일, 프롬프트 인젝션)를 말하고, 2023년 5월 강연이라 그 뒤 바뀐 점이 있을 수 있음을 안다." }
+    plan: { chapters: 12, steps: 11, required_steps: 11, optional_steps: 0, new_code_lines: 6, questions: 10, rebuild: 1, video_minutes: 51, practice_minutes: 145, total_minutes: 196 }
+    bridge: { from_lecture: "L07", jump_ko: "하(코드 없음)", new_ko: "학습 파이프라인 전체 그림", bridge_ko: "B08-1", card_ids: ["B08-1"] }
   - lecture_id: "L09"
     title_ko: "GPT 토크나이저 만들기"
     youtube_video_id: "zduSFxRajkE"
     video_seconds: 8014
     video_url: "https://www.youtube.com/watch?v=zduSFxRajkE"
+    env_ko: "`cpu`. 두 길 모두. `tiktoken`, `regex`, `sentencepiece` 필요(Colab 기본 탑재 여부 미확인, 맥미니는 가상환경 준비 전제). 토크나이저는 PyTorch가 필요 없음(research)"
+    prereq_lectures: ["L07"]
+    objectives:
+      - { objective_id: "L09-O1", text_ko: "문자열 → 코드포인트(유니코드 글자 번호) → UTF-8 바이트를 직접 보고, 한글 한 글자가 3바이트임을 확인한다." }
+      - { objective_id: "L09-O2", text_ko: "BPE(가장 흔한 이웃 쌍을 새 토큰으로 합치기를 되풀이)를 쌍 세기, 합치기, 반복으로 구현한다." }
+      - { objective_id: "L09-O3", text_ko: "encode와 decode를 만들고 왕복 결과가 원문과 같은지 검증한다." }
+      - { objective_id: "L09-O4", text_ko: "정규식으로 먼저 자르기, 특수 토큰, tiktoken(OpenAI 토크나이저 라이브러리)과 내 결과를 비교한다." }
+      - { objective_id: "L09-O5", text_ko: "LLM의 이상한 행동(철자, 숫자, 비영어, 끝 공백) 일부가 토큰화에서 온다는 것을 예로 설명한다." }
+    plan: { chapters: 25, steps: 33, required_steps: 32, optional_steps: 1, new_code_lines: 104, questions: 12, rebuild: 2, video_minutes: 160, practice_minutes: 350, total_minutes: 510 }
+    bridge: { from_lecture: "L08", jump_ko: "중", new_ko: "유니코드와 바이트", bridge_ko: "F-P7, B09-1", card_ids: ["B09-1"] }
   - lecture_id: "L10"
-    title_ko: "GPT-2 (124M) 재현: 축소판으로 전 과정 실습"
+    title_ko: "GPT-2(124M) 다시 만들기"
     youtube_video_id: "l8pRSuU81PU"
     video_seconds: 14486
     video_url: "https://www.youtube.com/watch?v=l8pRSuU81PU"
+    env_ko: "맥미니 `mps` 또는 `colab_gpu`, 일부 `cpu`. **기본은 축소판(작은 데이터, 짧은 학습)으로 전 과정**: 모델 만들기 → 공개 가중치로 생성 → 셰익스피어로 학습 경로 점검 → 속도 스위치 → 학습 설정 → 검증 손실 → HellaSwag 일부 채점 → 결과표. 원본 규모(8xA100, 약 1~2시간, Karpathy 말 약 10달러, research)는 클라우드 GPU 결제라 얼큰이님 별도 승인 대상이며 앱은 실행하지 않고 안내만(S47)"
+    prereq_lectures: ["L07", "L09"]
+    objectives:
+      - { objective_id: "L10-O1", text_ko: "GPT-2(124M) 구조를 `nn.Module`로 만들고 Hugging Face 공개 가중치를 불러 글을 생성한다." }
+      - { objective_id: "L10-O2", text_ko: "(B, T) 배치, 손실, 한 배치 과적합, 데이터 로더로 학습 경로를 점검하고, 가중치 공유와 GPT-2식 초기화를 넣는다." }
+      - { objective_id: "L10-O3", text_ko: "속도 기법(TF32, bf16, torch.compile, flash attention, 예쁜 숫자)이 무엇을 줄이는지 영상 수치로 설명하고, 내 기기에서 켤 수 있는 것만 켠다." }
+      - { objective_id: "L10-O4", text_ko: "AdamW 설정, 기울기 클리핑, 워밍업 + 코사인 학습률, weight decay, 기울기 누적을 작은 규모로 직접 돌린다." }
+      - { objective_id: "L10-O5", text_ko: "FineWeb-Edu, 검증 손실, HellaSwag 평가의 뜻을 말하고 결과 그래프를 읽는다." }
+    plan: { chapters: 31, steps: 47, required_steps: 45, optional_steps: 2, new_code_lines: 212, questions: 14, rebuild: 2, video_minutes: 290, practice_minutes: 514, total_minutes: 804 }
+    bridge: { from_lecture: "L09", jump_ko: "상(4시간 분량, GPU, 숫자 형식)", new_ko: "혼합 정밀도, 여러 GPU, 학습 설정", bridge_ko: "B10-1~B10-3", card_ids: ["B10-1", "B10-2", "B10-3"] }
+bridge_cards:
+  - { card_id: "B02-1", lecture_id: "L02", summary_ko: "01편은 Value 하나씩, 02편은 27x27 표를 한 번에 다룬다" }
+  - { card_id: "B02-2", lecture_id: "L02", summary_ko: "행마다 나누기 그림(F-P9-S3 다시 보기)" }
+  - { card_id: "B03-1", lecture_id: "L03", summary_ko: "원핫 곱 = W의 행 고르기 = 임베딩 조회(L02-S32 다시 보기)" }
+  - { card_id: "B03-2", lecture_id: "L03", summary_ko: "(32, 3, 2) 읽기: 조각 32개 x 글자 3개 x 숫자 2개" }
+  - { card_id: "B04-1", lecture_id: "L04", summary_ko: "히스토그램 네 장: 종 모양, 끝 몰림, 0 몰림, 넓게 퍼짐" }
+  - { card_id: "B04-2", lecture_id: "L04", summary_ko: "처음 손실 기대값 = -ln(1/글자 종류 수)" }
+  - { card_id: "B05-1", lecture_id: "L05", summary_ko: "기울기의 모양 = 값의 모양" }
+  - { card_id: "B05-2", lecture_id: "L05", summary_ko: "합의 역전파는 펼치기, 브로드캐스팅의 역전파는 합" }
+  - { card_id: "B05-3", lecture_id: "L05", summary_ko: "작은 손 역전파: `y = (a * b).sum()`이면 da = b x dy" }
+  - { card_id: "B06-1", lecture_id: "L06", summary_ko: "(B, T, C) 이름 붙이기: 배치, 위치, 칸" }
+  - { card_id: "B07-1", lecture_id: "L07", summary_ko: "행렬곱은 섞는 비율(F-M6-S3 다시 보기)" }
+  - { card_id: "B07-2", lecture_id: "L07", summary_ko: "07편 기준선은 02편 바이그램과 같은 틀" }
+  - { card_id: "B08-1", lecture_id: "L08", summary_ko: "내 GPT는 베이스 모델(이어 쓰기만 배움)" }
+  - { card_id: "B09-1", lecture_id: "L09", summary_ko: "07편 어휘 65(글자)와 GPT-2 어휘 50257(BPE 토큰)" }
+  - { card_id: "B10-1", lecture_id: "L10", summary_ko: "숫자 형식 그림: FP32, TF32, BF16, FP16의 범위와 정밀도" }
+  - { card_id: "B10-2", lecture_id: "L10", summary_ko: "GPU 1장과 8장, 시간과 돈 감(research: 8xA100 약 1~2시간, GPU 1장 사례 약 28시간)" }
+  - { card_id: "B10-3", lecture_id: "L10", summary_ko: "07편 이름 ↔ GPT-2 이름: sa ↔ attn, ffwd ↔ mlp, ln1 ↔ ln_1, 토큰 임베딩 ↔ wte, 위치 임베딩 ↔ wpe" }
+checkpoints:
+  - { checkpoint_id: "CP1", covers: ["L01", "L02", "L03"], after_lecture: "L03", items_ko: "설명 4, 결과 예측 4, 손 과제 1", question_count: 9 }
+  - { checkpoint_id: "CP2", covers: ["L04", "L05", "L06"], after_lecture: "L06", items_ko: "설명 4, 결과 예측 5, 손 과제 1", question_count: 10 }
+  - { checkpoint_id: "CP3", covers: ["L07", "L08", "L09", "L10"], after_lecture: "L10", items_ko: "설명 5, 결과 예측 4, 손 과제 1", question_count: 10 }

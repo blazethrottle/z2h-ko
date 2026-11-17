@@ -1,54 +1,63 @@
 ---
-// 강의 개요 /lectures/L01/
+// 강의 개요 /lectures/L01/. 단계 콘텐츠가 없는 편(02~10)은 같은 주소에 "준비 중" 안내(LecturePlan: docs/CURRICULUM.md 에서 옮긴 lectures.yaml 값)를 그린다.
 import Base from '../../../layouts/Base.astro';
 import LectureApp from '../../../components/LectureApp.tsx';
+import LecturePlan from '../../../components/LecturePlan.astro';
 import { fileNameOf, lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
 import { config } from '../../../config';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 import { unitHref } from '../../../lib/basics';
+import { STAMP_RULE } from '../../../badge-rules';
 
 export function getStaticPaths() {
-  return Object.keys(loadSite().details).map((lid) => ({ params: { lecture: lid }, props: { lid } }));
+  return loadSite().lectures.map((l) => ({ params: { lecture: l.lecture_id }, props: { lid: l.lecture_id } }));
 }
 const { lid } = Astro.props as { lid: string };
-const d: any = loadSite().details[lid];
-const L = d.lecture;
+const site = loadSite();
+const b = loadBasics();
+const d = site.details[lid];
+const item = site.lectures.find((l) => l.lecture_id === lid);
 const titles = unitTitles();
-const MR = d.mastery_rule ?? {};
-const speak = MR.speak_check
-  ? {
-      prompt_ko: String(MR.speak_check.prompt_ko ?? ''),
-      rubric: (MR.speak_check.rubric ?? []).map((r: any) => String(r?.criterion_ko ?? r)),
-    }
-  : null;
-const nbName = L.notebook?.student ? fileNameOf(String(L.notebook.student)) : null;
-const art = lectureArtifact(lid);
-const basicsReady: string[] = (loadBasics() as any).readyIds;
+const prereqIds = b.lecturePrereq[lid] ?? d?.lecture.prereq_units ?? [];
+const prereq = prereqIds.map((u) => ({ unit_id: u, title_ko: titles.get(u) ?? null, href: unitHref(u, b.readyIds) }));
+const MR = d?.mastery_rule;
+const speak = MR?.speak_check ? { prompt_ko: MR.speak_check.prompt_ko, rubric: (MR.speak_check.rubric ?? []).map((r) => r.criterion_ko) } : null;
+const nbName = d?.lecture.notebook.student ? fileNameOf(d.lecture.notebook.student) : null;
+const art = d ? lectureArtifact(lid) : null;
+const title = d?.lecture.title_ko ?? item?.title_ko ?? lid;
 ---
-<Base title={L.title_ko} nav="lectures" back="/home/">
-  <LectureApp
-    client:load
-    lectureId={lid}
-    lectureLabel={lectureLabel(lid, L.title_ko)}
-    title={L.title_ko}
-    videoSeconds={L.video_seconds}
-    studyHours={L.study_hours_ko ?? null}
-    objectives={L.objectives ?? []}
-    prereq={(L.prereq_units ?? []).map((u: string) => ({ unit_id: u, title_ko: titles.get(u) ?? null, href: unitHref(u, basicsReady) }))}
-    notebook={{ name: nbName, url: L.notebook?.student_available ? notebookPublicPath(lid, L.notebook.student) : null }}
-    rule={{
-      steps_complete_ratio: MR.steps_complete_ratio ?? 1,
-      question_score_ratio: MR.question_score_ratio ?? config.questionScoreRatio,
-      question_min_points: MR.question_min_points ?? undefined,
-      rebuild_max_hint_level: MR.rebuild_max_hint_level ?? 2,
-      extra_checks: MR.extra_checks ?? [],
-    }}
-    speak={speak}
-    steps={d.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, meaning_ko: s.meaning_ko, check_id: s.check_id ?? null, kind: s.kind }))}
-    questions={d.questions.map((q: any) => ({ question_id: q.question_id, max_points: q.max_points, must_pass: q.must_pass }))}
-    rebuild={d.rebuild.map((r: any) => ({ rebuild_id: r.rebuild_id, title_ko: r.title_ko, task_ko: r.task_ko ?? null }))}
-    contentVersion={L.content_version}
-    stampId={L.rewards?.stamp?.stamp_id ?? null}
-    artifact={art ? { name_ko: art.name_ko, unlock_step_id: art.unlock_step.step_id, unlock_label: `단계 ${art.unlock_step.order} · ${art.unlock_step.title_ko}`, href: `/share/?card=${art.artifact_id}` } : null}
-  />
+<Base title={title} nav="lectures" back="/home/">
+  {d && MR ? (
+    <LectureApp
+      client:load
+      lectureId={lid}
+      lectureLabel={lectureLabel(lid, d.lecture.title_ko)}
+      title={d.lecture.title_ko}
+      videoSeconds={d.lecture.video_seconds}
+      studyHours={d.lecture.study_hours_ko ?? null}
+      env={d.lecture.env ?? []}
+      objectives={d.lecture.objectives ?? []}
+      prereq={prereq}
+      prereqLabel={b.recommend.lecture_start.label_ko}
+      basics={{ units: b.units.map((u) => ({ unit_id: u.unit_id, ready: u.ready, mastery: u.mastery })), rule: b.rule }}
+      notebook={{ name: nbName, url: d.lecture.notebook.student_available ? notebookPublicPath(lid, d.lecture.notebook.student) : null }}
+      rule={{
+        steps_complete_ratio: MR.steps_complete_ratio ?? 1,
+        question_score_ratio: MR.question_score_ratio ?? config.questionScoreRatio,
+        question_min_points: MR.question_min_points ?? undefined,
+        rebuild_max_hint_level: MR.rebuild_max_hint_level ?? 2,
+        extra_checks: MR.extra_checks ?? [],
+      }}
+      speak={speak}
+      steps={d.steps.map((s) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, meaning_ko: s.meaning_ko, check_id: s.check_id ?? null, kind: s.kind }))}
+      questions={d.questions.map((q) => ({ question_id: q.question_id, max_points: q.max_points, must_pass: q.must_pass }))}
+      rebuild={d.rebuild}
+      basicsReady={b.readyIds}
+      contentVersion={d.lecture.content_version}
+      stampId={STAMP_RULE.idOf(lid, d.lecture.rewards?.stamp?.stamp_id ?? null)}
+      artifact={art ? { name_ko: art.name_ko, unlock_step_id: art.unlock_step.step_id, unlock_label: `단계 ${art.unlock_step.order} · ${art.unlock_step.title_ko}`, href: `/share/?card=${art.artifact_id}` } : null}
+    />
+  ) : (
+    item && <LecturePlan item={item} site={site} prereq={prereq} prereqLabel={b.recommend.lecture_start.label_ko} />
+  )}
 </Base>

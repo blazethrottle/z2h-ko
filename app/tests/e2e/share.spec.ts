@@ -176,27 +176,47 @@ test('이름 카드: 이름이 없으면 카드 대신 맛보기 끝 화면 안�
   expect(api.opsFor('share_card')).toEqual([]);
 });
 
-test('학습 기록 카드(01편): S15b 완료 전에는 잠김 (공유 화면·개요 둘 다)', async ({ page, api }) => {
+test('정본 01편에 공유 결과물(rewards.artifact)이 없으면 01편 카드를 지어내지 않는다: 공유 화면은 맛보기 카드만, 개요에 카드 칸 없음', async ({ page, api }) => {
+  test.skip(!!L01.lecture.rewards?.artifact, '정본 L01 에 rewards.artifact 가 있음');
   const m = await manifest(page);
   const L = m.lectures[0];
-  const unlock = String(L01.lecture.rewards.artifact.unlock).match(/L\d{2}-S\w+/)![0];
-  const s15b = L.steps.find((s: any) => s.step_id === unlock);
   await page.goto('/share/?card=ART-L01');
   await hydrated(page);
-  await expect(page.getByTestId('share')).toHaveAttribute('data-kind', 'ART-L01');
-  await expect(page.getByTestId('card-locked')).toContainText(`단계 ${s15b.order}`);
-  await expect(page.getByTestId('loss-paste')).toHaveCount(0);
-  await expect(page.getByTestId('save-image')).toBeDisabled();
-  await expect(page.getByTestId('share-x')).toBeDisabled();
+  await expect(page.getByTestId('card-kinds').locator('a')).toHaveCount(1);
+  await expect(page.getByTestId('share')).toHaveAttribute('data-kind', 'ART-TASTER');
+  await expect(page.getByTestId('share-l01')).toHaveCount(0);
+  await expect(page.getByText('자료 대기')).toHaveCount(0);
   await page.goto(`/lectures/${L.lecture_id}/`);
   await hydrated(page);
-  await expect(page.getByTestId('artifact-locked')).toContainText(`단계 ${s15b.order}`);
+  await expect(page.getByTestId('artifact')).toHaveCount(0);
   await expect(page.getByTestId('make-l01-card')).toHaveCount(0);
   await page.waitForLoadState('networkidle');
   expect(api.opsFor('share_card')).toEqual([]);
 });
 
-test('학습 기록 카드(01편): S15b 완료 뒤 개요에 링크, 붙여 넣은 손실 줄만으로 꺾은선, 숫자 못 읽으면 안내, PNG 1200x675', async ({ page, api }, info) => {
+test('학습 기록 카드(01편): 정본 artifact.unlock 단계를 마치기 전에는 잠김 (공유 화면·개요 둘 다)', async ({ page, api }) => {
+  test.skip(!L01.lecture.rewards?.artifact, '정본 L01 에 rewards.artifact 없음(클로드 버전): 위 테스트가 카드가 없는 것을 확인');
+  const m = await manifest(page);
+  const L = m.lectures[0];
+  const unlock = String(L01.lecture.rewards.artifact.unlock).match(/L\d{2}-S\w+/)![0];
+  const unlockStep = L.steps.find((s: any) => s.step_id === unlock);
+  await page.goto('/share/?card=ART-L01');
+  await hydrated(page);
+  await expect(page.getByTestId('share')).toHaveAttribute('data-kind', 'ART-L01');
+  await expect(page.getByTestId('card-locked')).toContainText(`단계 ${unlockStep.order}`);
+  await expect(page.getByTestId('loss-paste')).toHaveCount(0);
+  await expect(page.getByTestId('save-image')).toBeDisabled();
+  await expect(page.getByTestId('share-x')).toBeDisabled();
+  await page.goto(`/lectures/${L.lecture_id}/`);
+  await hydrated(page);
+  await expect(page.getByTestId('artifact-locked')).toContainText(`단계 ${unlockStep.order}`);
+  await expect(page.getByTestId('make-l01-card')).toHaveCount(0);
+  await page.waitForLoadState('networkidle');
+  expect(api.opsFor('share_card')).toEqual([]);
+});
+
+test('학습 기록 카드(01편): 정본 artifact.unlock 단계를 마친 뒤 개요에 링크, 붙여 넣은 손실 줄만으로 꺾은선, 숫자 못 읽으면 안내, PNG 1200x675', async ({ page, api }, info) => {
+  test.skip(!L01.lecture.rewards?.artifact, '정본 L01 에 rewards.artifact 없음(클로드 버전)');
   const m = await manifest(page);
   const L = m.lectures[0];
   const unlock = String(L01.lecture.rewards.artifact.unlock).match(/L\d{2}-S\w+/)![0];
