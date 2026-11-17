@@ -1,0 +1,103 @@
+"""`python -m z2h_server` 로 진도 서버를 띄운다. 주소는 127.0.0.1(고정), 포트 기본 8787. 값은 모두 config.Settings 에서.
+
+127.0.0.1 이 아닌 주소(0.0.0.0, ::, 빈 값 등)를 --host 나 Z2H_HOST 로 넘기면 띄우지 않고 끝낸다(종료 코드 2).
+Z2H_TAILSCALE_HOST·쿠키 설정 등 설정값이 틀려도 띄우지 않는다(ConfigRefused, 종료 코드 2).
+
+폰 로그인(Tailscale) 잇기 명령. 맥미니에서 직접 실행한다(HTTP API 는 없다). 서버를 켜지 않는다.
+  python -m z2h_server link-tailscale --login <로그인 이름> --user <user_id>
+  python -m z2h_server unlink-tailscale --login <로그인 이름>
+  python -m z2h_server list-tailscale
+종료 코드: 0 성공, 1 잇기·끊기 실패(이미 이어짐, 없는 계정, DB 없음 등), 2 설정·인자 오류.
+로그인 이름(이메일)이 출력에 나오는 것은 결과 줄뿐이고, 오류 글에는 넣지 않는다.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from collections.abc import Mapping
+
+import uvicorn
+
+from .app import create_app
+from .config import BIND_HOST, DEFAULT_PORT, ConfigRefused, Settings, load_settings
+
+TAILSCALE_COMMANDS = ("link-tailscale", "unlink-tailscale", "list-tailscale")
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="python -m z2h_server", description=f"Z2H 진도 서버({BIND_HOST} 전용)")
+    parser.add_argument("--host", default=None, help=f"{BIND_HOST} 만 됩니다(기본값). 다른 값은 실행 거부")
+    parser.add_argument("--port", type=int, default=None, help=f"기본 {DEFAULT_PORT}")
+    sub = parser.add_subparsers(dest="command", metavar="명령", help="없으면 서버를 켭니다")
+    link = sub.add_parser("link-tailscale", help="Tailscale 로그인 이름을 학습 계정에 잇기")
+    link.add_argument("--login", required=True, help="Tailscale 로그인 이름(예: someone@example.com)")
+    link.add_argument("--user", required=True, help="이을 학습 계정의 user_id")
+    unlink = sub.add_parser("unlink-tailscale", help="Tailscale 로그인 이름의 잇기 끊기")
+    unlink.add_argument("--login", required=True, help="Tailscale 로그인 이름")
+    sub.add_parser("list-tailscale", help="이어 둔 Tailscale 로그인 목록")
+    return parser
+
+
+def main(argv: list[str] | None = None, env: Mapping[str, str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+
+    try:
+        settings = load_settings(os.environ if env is None else env, host=args.host, port=args.port)
+        options = settings.server_options()  # 바인드 127.0.0.1 만, 접속 주소 머리말 안 믿음(불변식, config.py)
+    except ConfigRefused as exc:  # 바인드 주소, Z2H_TAILSCALE_HOST, 쿠키 설정 등
+        print(f"실행 거부: {exc}", file=sys.stderr)
+        return 2
+
+    if args.command in TAILSCALE_COMMANDS:
+        return _tailscale_command(args, settings)
+
+    app = create_app(settings)
+    print(f"Z2H 진도 서버: {settings.base_url}/  (멈추려면 Ctrl+C)", flush=True)
+    uvicorn.run(app, **options)
+    return 0
+
+
+def _tailscale_command(args: argparse.Namespace, settings: Settings) -> int:
+    """잇기·끊기·목록. 표를 만들거나 바꾸지 않는다(DB 는 서버를 한 번 켜서 만든다). DB 는 저장 계층(open_adapter) 뒤."""
+    from . import auth
+    from .storage import DatabaseMissing, open_adapter
+
+    try:
+        storage = open_adapter(settings.db_url, timeout_seconds=settings.db_timeout_seconds, must_exist=True)
+    except DatabaseMissing:
+        print(
+            "DB 파일이 없습니다. 먼저 서버를 한 번 켜고(python -m z2h_server), 맥에서 계정을 만든 뒤 다시 실행해 주세요.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        if storage.schema_version() is None:
+            print("DB 에 표가 없습니다. 먼저 서버를 한 번 켜서 표를 만들어 주세요.", file=sys.stderr)
+            return 1
+        if args.command == "link-tailscale":
+            login = auth.link_tailscale(storage, args.login, args.user)
+            print(f"연결함: {login} → {args.user}")
+        elif args.command == "unlink-tailscale":
+            login = auth.unlink_tailscale(storage, args.login)
+            print(f"연결 끊음: {login}")
+        else:
+            rows = auth.list_tailscale(storage)
+            if not rows:
+                print("이어 둔 Tailscale 로그인이 없습니다.")
+            for row in rows:
+                print(f"{row['subject']}\t{row['user_id']}\t{row['display_name'] or '-'}\t{row['created_at']}")
+        return 0
+    except auth.LinkError as exc:
+        print(f"실패: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # DB 오류 등. 글에 로그인 이름이 섞일 수 있어 종류만 보여 준다
+        print(f"실패: 처리 중 오류가 났습니다({type(exc).__name__}).", file=sys.stderr)
+        return 1
+    finally:
+        storage.close()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

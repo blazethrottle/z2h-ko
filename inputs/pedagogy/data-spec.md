@@ -261,4 +261,4 @@
 9. `rerun_first`, `edits[].target_step`, `question_ids`, `after_step`에 적힌 id는 같은 편 안에 있어야 합니다.
 10. 맛보기와 01편 JSON은 `content/build_content.py`로 만들고 `content/test_content.py`로 코드 실행을 점검합니다. JSON을 손으로 고치지 않습니다.
 11. `alternate_of`가 있는 문항은 원 문항과 `type`, `max_points`가 같아야 하고, 원 문항마다 대체 문항이 정확히 하나여야 합니다(checkpoint 문항 40개 = 대체 40개).
-12. 학습자 기록에는 `path_id`(full | office_worker | investor)를 두고, 점검 문항 목록은 `path_variants`로 계산합니다. 다리 카드 질문 id는 `B03-1-Q1`처럼 카드 id + 문항 번호이며 bridge-cards-03-04.md에 있습니다. 요약 경로 배지(`BADGE-S1-SUMMARY` 언어 모델 견습(요약 경로), `BADGE-SUMMARY-DONE` AI 속 들여다보기 수료)는 전체 배지와 다른 id이고, 전체 길에서 같은 단계를 마치면 전체 배지로 바뀝니다.
+12. 학습자 기록에는 `path_id`(full | office_worker | investor)를 두고, 점검 문항 목록은 `path_variants`로 계산합니다. 다리 카드 질문 id는 `B03-1-Q1`처럼 카드 id + 문항 번호이며 bridge-cards-03-04.md에 있습니다. 배지 id: 첫 셀 완주 `BADGE-S0`, 언어 모델 견습 `BADGE-S1`. 맛보기 완료는 배지가 아닌 표시 `TASTER-DONE`입니다. 요약 경로 배지(`BADGE-S1-SUMMARY` 언어 모델 견습(요약 경로), `BADGE-SUMMARY-DONE` AI 속 들여다보기 수료)는 전체 배지와 다른 id이고, 전체 길에서 같은 단계를 마치면 전체 배지로 바뀝니다.

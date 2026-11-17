@@ -249,3 +249,131 @@ claude --model fable --effort medium --settings ./.claude/z2h-run.settings.json
 - YouTube 플레이어 매개변수: developers.google.com/youtube/player_parameters (cc_load_policy, cc_lang_pref, hl)
 - 원본 저장소: karpathy/micrograd, makemore, nn-zero-to-hero, nanoGPT, minbpe(MIT), build-nanogpt(라이선스 표기 없음)
 - 맥 실측: MEASURE_M0.md
+
+---
+
+## 12. P0·P1 구현 계약 (PM, 2026-11-16 22:10 KST 갱신)
+
+0~11절(m0-setup 본문)은 그대로 두고, 이 절은 그 위에서 구현이 따르는 세부 계약이다. 0~11절과 다르면 0~11절이 이긴다. 다만 12.5절의 "5절과 다르게 둔 곳" 표는 이유와 함께 확인을 기다린다. 근거가 없는 값은 지어내지 않고 "미확인" 또는 "자료 대기"로 둔다.
+
+### 12.1 확정 요약
+| 항목 | 확정 | 한 줄 이유 |
+|---|---|---|
+| 앱 | Astro 7 + Preact 부품, 정적 빌드. 버전은 `app/package-lock.json`으로 고정 | 글이 대부분인 앱. 콘텐츠 오류를 빌드 때 잡음 |
+| 콘텐츠 정본 | 교사가 만든 `inputs/pedagogy/content/L01.json`(손으로 고치지 않음). 앱 로더 한 곳이 그대로 읽음 | data-spec 검수 규칙 10 |
+| 진도 서버 | FastAPI + uvicorn, `127.0.0.1:8787` 고정. 빌드된 앱(`app/dist/`)도 같은 주소에서 제공 | 결정 9. 같은 주소라 브라우저 보안 예외 설정(CORS)이 필요 없음 |
+| 저장 | `StorageAdapter`(추상) → `SqliteAdapter`. SQLAlchemy Core의 표준 SQL만 | Postgres로 옮길 때 어댑터만 추가 |
+| 스키마 | Alembic 마이그레이션 파일로만. 올리기·내리기 왕복 테스트 | 결정 9 |
+| 계정 | 고정 사용자 없음. `AuthAdapter` → `LocalDevAuth`(여러 계정 만들기·바꾸기, 이 컴퓨터 안 요청만). 이메일·Google은 자리만 | D43·D44 |
+| 브라우저 저장 | IndexedDB 대기열 + 마지막 상태 사본, 계정별로 나눔 | 결정 3 |
+| 실습 | Colab이 기본. 비공개 저장소 기간에는 "노트북 받기 + Colab에 올리기" 안내. 로컬 Jupyter는 선택 | 결정 10 |
+| 채점 결과 전달 | 노트북의 `finish("L01")`이 결과코드를 출력 → 앱에 붙여넣기 | Colab은 맥미니 127.0.0.1에 닿지 못함 |
+| 화면 검사 | Playwright(자동 브라우저)로 390px·1280px, 글꼴 로딩·굵기 | HANDOFF |
+| 글꼴 | Pretendard 1.3.9 woff2 4개 + JetBrains Mono 가변 1개를 앱 안에 파일로, OFL 사본 동봉 | HANDOFF 4절 |
+
+### 12.2 저장소 폴더
+```
+app/                  웹앱 (Astro). public/fonts/, src/, scripts/, tests/
+content/              lectures.yaml(10편 목록), ep00-basics/units.yaml(1편 선행 단위),
+                      ep01-micrograd/overlay_draft.yaml(앱 전용 칸 초안, 교사 확인 대기, 아직 화면에 쓰지 않음)
+server/               z2h_server/, alembic/, tests/. data/ 는 git 제외
+z2h_check/            채점 패키지(check, finish, 결과코드, graders/, reference/, 묶음)
+notebooks/ep01-micrograd/  학생용·정답용 노트북(교사 정본에서 생성), 생성 스크립트, Colab 안내
+tests/                verify_models.py, 채점 패키지 테스트
+third_party/licenses/ MIT 원본 LICENSE 전문 5개, 글꼴 OFL
+NOTICE.md             원본·저작권자·쓴 위치 표
+inputs/               팀 입력 자료(읽기 전용)
+```
+
+### 12.3 화면과 주소 (P1)
+| 주소 | 화면 | P1 |
+|---|---|---|
+| `/` | 랜딩 | 뼈대. 문구는 "자료 대기"·"예시 화면" 표시(공개 전 승인 항목) |
+| `/home/` | 홈·진도 | 구현. 2~10편은 이름과 "준비 중" |
+| `/lectures/L01/` | 강의 개요 | 구현. 선행 기초 단위 추천(잠금 아님), 노트북 받기 안내, 결과코드 붙여넣기 |
+| `/lectures/L01/{step_id 뒷부분}/` | 구간 → 따라 하기 → 확인 문제, 힌트 사다리 | 구현. 앞 셀을 고치는 단계는 "바뀐 줄만" 화면(기준 줄 회색 한 줄 + 새 줄 강조 + 전체 보기) |
+| `/basics/`, `/taste/`, `/taste/precomputed/`, `/badges/`, `/share/`, `/review/` | 기초, 맛보기, 배지, 공유 카드, 복습 | 뼈대와 데이터 자리 |
+| `/settings/` | 동기화 상태, 실행 장소, JSON 백업, 개발용 계정 바꾸기 | 구현 |
+
+가입·로그인 화면(이메일·Google)은 만들지 않는다. 자리 문구만 둔다. X 로그인 없음.
+
+### 12.4 콘텐츠와 빌드 검사
+- 단계 수는 코드에 박지 않고 콘텐츠에서 센다(지금 01편 26단계, 전체 169단계, 맛보기 8단계 별도. 최종 수는 X13).
+- 빌드 검사(`npm run check:content`, 어기면 빌드 실패): 스키마와 id 모양(step_id는 문자열, 정렬은 `order`) / `code` 줄 수 = `new_code_lines` + `moved_code_lines`(+ 바꾸는 줄), 줄별 풀이 개수 일치 / `long_step` 규칙(0~5 false, 6~10 true, 10 초과 오류, `copy_run` 제외) / choice 문항 보기와 정답 번호 범위 / 영상: `end_s` 필수, `start_s < end_s ≤ video_seconds`, 빈 배열은 "영상 없는 단계" 목록(L08-S01·S04·S08, 맛보기. 설정 한 곳)과 맞아야 함 / 문제마다 `answer_ko`와 `rubric`, id 중복 없음, `rerun_first`·`edits[].target_step`·`after_step`이 같은 편 안 / 힌트 개수(코드 단계와 설명·버그·적용 문제는 H1~H4, 예측 문제는 0개) / 화면 글에 긴 줄표(U+2014) 없음 / build-nanogpt 출처 금지.
+- 경고만 내는 것: 모르는 필드, `code` 안의 `#` 줄(정본 L01-S16이 줄을 막는 단계라 실패로 두지 않음).
+- 풀이(`answer_ko`, H4 정답)는 제출·열림 조건 전에는 화면 DOM에 없다.
+- 문제는 교사 문제 11개만. 새 문제를 지어 넣지 않는다.
+
+### 12.5 진도 서버
+- 실행 `python -m z2h_server`. 바인드는 `127.0.0.1`만, 다른 주소는 실행 거부. `Host`가 `127.0.0.1`·`localhost`일 때만 응답. 쓰기 요청은 `Origin`이 있으면 이 서버 주소일 때만, 없으면 받음. 본문 1MB 제한.
+- 개발용 로그인 잠금: 이 컴퓨터 안에서 직접 온 요청에만 동작. 전달 머리말(`CF-Connecting-IP`, `X-Forwarded-For` 등)이 있으면 거부. 허용 Host에 바깥 주소(터널 주소)를 넣거나 `Z2H_DEV_AUTH=0`이면 개발용 로그인이 통째로 꺼지고, 그때 기록 API는 로그인 수단이 없어 401이다. 폰 접속은 Tailscale serve(tailnet 안, Funnel 금지)로 정해졌고(CTO 22:35), serve도 프록시라 같은 잠금이 걸린다. 그래서 로그인 장치가 생기기 전에는 폰에서 진도를 읽고 쓸 수 없다. 로그인 장치는 안만 적고 구현하지 않는다. `docs/PHONE_ACCESS_PLAN.md`에서 다룬다.
+- API: `GET /api/health`, `GET /api/state?since={server_seq}`, `POST /api/sync`, `POST /api/result-code`, `POST /api/grade`, `GET /api/export`, `GET·POST /api/me`, `/api/dev-auth/{accounts,login,logout}`. 요청·응답 모양의 정본은 `server/API.md`(문서와 코드가 어긋나면 테스트 실패).
+- 동기화: 모든 기록 표에 `updated_at`(기기 시각), `content_version`, `server_seq`(서버가 반영할 때마다 1씩 올리는 번호). 이어 받기는 기기 시각이 아니라 `server_seq`로 비교한다. 같은 행은 `updated_at`이 늦은 쪽이 이기고 진 값은 `sync_conflicts`에 남긴다(같은 기기의 연속 수정과 `base_updated_at`이 서버 값과 같은 수정은 충돌로 남기지 않음). `step_progress`는 진도가 뒤로 가지 않게 status는 done 우선, `max_hint_level`·`active_seconds_auto`·`attempts`는 큰 값.
+- 쌓이는 기록(`question_attempt`, `rebuild_attempt`, `checkpoint_attempt`, `diagnostic_result`)의 열쇠는 기기가 만든 `attempt_id`, 번호(`attempt_no`)는 서버가 도착 순서로 매긴다. 기기가 번호를 매기면 두 기기가 오프라인에서 같은 문제를 풀 때 하나가 사라지기 때문이다.
+- `user_pref` 키: `run_place`(실행 장소), `resume`(이어서 하기 위치), `practice_week:{주 시작일}`(홈에서 고친 실습 시간 `{edited_seconds, edited_at}`, 비우면 자동 기록으로 되돌아감). 말하기 질문 자가 표시는 `mastery_state.extra_checks_ok`.
+- 요약 경로(CP 점수 기준, gate)와 단계 배지 계산은 스키마·자리만 있고 계산 코드는 없다. 서버는 동기화로 온 `user_badge` 행을 그대로 받는다(badge_id를 검증하지 않음). 단계 배지를 누가 계산하고 검증할지는 누적 점검을 만들 때 정한다.
+
+5절과 다르게 둔 곳(확인 대기)
+| 5절 | 구현 | 이유 |
+|---|---|---|
+| `question_attempt` PK(user_id, question_id, attempt_no) | PK(user_id, question_id, attempt_id), attempt_no는 서버가 매김. `rebuild_attempt`·`checkpoint_attempt`·`diagnostic_result`도 같은 방식, `help_note`는 note_id | 두 기기 오프라인 충돌 방지 |
+| `schema_migrations` | Alembic 기본 표 `alembic_version` | Alembic이 스스로 관리하는 표를 따로 만들지 않음 |
+| 표에 없음 | `grade_result`(노트북 채점 결과), `user_pref`, `step_progress.prediction`, `question_attempt.checkpoint_attempt_id`, 공통 칼럼 `server_seq`·`content_version`·`last_client_id`, `applied_ops`, `sync_counter` | 채점 결과 저장, 설정 동기화, 예측 칸, 동기화 판정 |
+| `taste_result` 표 없음 | `taster_result` 하나만 둠. 마이그레이션 0002가 `taste_result`를 지움 | 얼큰이 결정 11/17: 하나로 합침. 앱은 `taste_result`를 쓴 적이 없음 |
+| 이름 카드: 20글자 넘는 이름은 앞 20글자 + … (taster.md 4절, spec 13.5) | 20글자 넘는 줄과 a~z 밖 글자가 있는 줄은 저장·카드에서 뺌 | 개인 정보를 붙여 넣는 경우 대비(P2 검수). 교사·디자이너 확인 대기 |
+| 맛보기 완료는 배지가 아닌 표시(VALUE 2절) | 화면은 표시로만 보이고, 저장은 `user_badge`에 `TASTER-DONE` 행 | 완료 기록을 둘 표가 따로 없어서. 교사 확인 대기 |
+| 단계 배지 3개(1절·5절) / 화면은 4장(spec 13.4: 0 첫 셀 완주 포함) | 화면 4장. 0번 id `BADGE-S0`은 앱이 임시로 붙임 | spec 13.4. id는 교사 확인 대기 |
+
+### 12.6 바꾸기 쉽게 둔 설정값
+| 항목 | 지금 값 | 두는 곳 |
+|---|---|---|
+| 누적 점검 잠금(C5) | `lock`. `recommend`로 바꿀 수 있음 | `app/src/config.ts` |
+| Colab 바로 열기 주소 | null → 버튼 숨김, "받기 + 올리기" 안내 | `app/src/config.ts` |
+| 숫자 비교 허용 오차 | 상대 1e-4 | `app/src/config.ts` |
+| 영상 없는 단계 목록 | L08-S01·S04·S08, 맛보기 | `app/src/content-config.mjs` |
+| 공유 카드 크기 | 1200x675 | `app/src/config.ts` |
+| 배지 규칙 | 편 도장(그 편 익힘)과 맛보기 완료 표시는 앱이 계산해 `user_badge`에 저장. 단계 배지(CP 통과)와 요약 경로 변형은 자리만 | `app/src/badge-rules.ts` |
+| 익힘 문턱 | 교사 정본 `mastery_rule` 값을 읽음 | 콘텐츠 |
+
+### 12.7 채점
+- 세 갈래: A 노트북 채점(`z2h_check.check()` → `grade_result`), B 앱의 출력 붙여넣기 비교(점수 없음), C 앱의 확인 문제(`question_attempt`).
+- 채점 칸 id는 단계 id 그대로 + 재구성 `L01-R1`~`R3`. 개수는 등록 목록에서 센다. 틀리거나 미완성이어도 예외를 던지지 않는다.
+- 1편 핵심: 학생의 `Value`로 계산한 기울기를 PyTorch 기울기와 비교. 무작위로 달라지는 값은 범위로. 학습 반복 칸(S15b)은 정본에 시드 고정이 없어 "손실이 줄었는지"만 보고 0.1 위면 "한 번 더 실행" 안내(교사 확인 대기). 재구성 R3는 0.1 미만.
+- Colab용: 패키지를 파일 하나로 묶어 노트북 준비 셀에 넣는다("노트북 안 사본 = 패키지" 테스트).
+- 결과코드: `Z2H1.{base64url(JSON)}.{crc32 8자리 16진수 소문자}`, JSON은 `{"v":1,"l":"L01","p":[통과 id],"f":[실패 id],"t":"시각+09:00"}`, crc32는 base64url 글자(패딩 없음)에 대해. 비밀값이 아니고 위조를 막지 않는다. 서버·앱·채점 패키지가 같은 기준 예시로 테스트한다.
+- 로컬 Jupyter의 자동 전송(`/api/grade`)은 계정을 알려야 저장된다(`X-Z2H-User`). 노트북이 계정 번호를 얻는 방법은 미정이라 지금은 거부되면 결과코드로 넘어간다.
+
+### 12.8 열린 것 (PM이 본 것. 디자인·교사의 X 항목과 별개)
+1. 맛보기 노트북: CTO 20:47 통지로 P2 확정(닫힘).
+2. 1편 확인 문제는 교사 문제 11개만(기본값 유지, 교사 답 대기).
+3. 익힘 문턱: 교사 정본 `mastery_rule`을 따른다(P0 질문 3 닫음).
+4. `end_s` 빈 값: D49로 닫힘.
+5. Colab 바로 열기용 공개 노트북 주소: 공개 배포 승인 항목, 열림.
+6. 로컬 Jupyter 자동 전송의 계정 지정: 닫힘(12.9절 3번).
+7. 폰 접속 로그인 장치: A안으로 결정, 구현함(12.9절 1번). serve를 켜는 것은 CTO 검토 뒤.
+8. 같은 구간을 쓰는 단계 사이 재생 위치 유지: YouTube 외부 스크립트(IFrame API) 없이는 안 되어 만들지 않음. 외부 스크립트를 허용할지 결정 필요.
+9. `taste_result`·`taster_result` 중복: 닫힘(12.9절 4번).
+10. 교사 답(11/17)으로 닫힘: 금칙어 목록, 확인 문제 수, 재구성 채점, 배지 id(12.10절). 새로 열린 것: 정본 `taster.json`은 "21글자 넘는 줄", 앱은 결정대로 20글자를 넘는 줄(21글자부터)을 뺀다. 같은 뜻인지 교사 확인 필요.
+
+### 12.9 얼큰이 결정 반영 (2026-11-17 05:45 KST, P4 `p4-decisions`)
+1. 폰 로그인은 A안: Tailscale serve가 붙이는 접속자 정보(`Tailscale-User-Login`)를 서버가 학습 계정에 잇는다. 서버는 127.0.0.1에만 열리고, 이 머리말은 serve를 거친 요청(접속 쪽 127.0.0.1 + Host가 설정한 serve 이름)에서만 믿는다. 자동 가입 없음(맥미니에서 명령으로 이어 둔 로그인 이름만). Funnel 금지. 켜는 절차와 위험은 `docs/PHONE_ACCESS_PLAN.md`. 보안 변경이라 CTO 검토 전에는 serve를 켜지 않는다.
+2. 정답과 H4 풀이 파일을 앱이 미리 받는 구조는 그대로 둔다(서버 없이 채점. 개발자 도구로는 보임).
+3. 로컬 Jupyter의 결과는 지금처럼 결과코드 붙여넣기로 받는다. 노트북에 계정 번호를 넣지 않는다.
+4. `taste_result` 표를 지우고 `taster_result` 하나만 쓴다(마이그레이션 0002). 5절 표의 `taste_result` 줄은 이 결정으로 쓰지 않는다.
+5. 이름 카드: 20글자를 넘거나 a~z 밖 글자가 있는 줄은 저장과 카드에서 뺀다(유지).
+6. 옛 22단계 초안(커밋한 적 없는 `content/ep01-micrograd/`의 lecture·questions·rebuild·steps)은 지웠다. 1편 정본은 교사의 `inputs/pedagogy/content/L01.json`뿐이다.
+7. 맛보기 T-S01: 교사 문구는 그대로 두고, 바로 열기 주소가 없는 동안 앱이 "받기 + 올리기" 안내 한 줄을 덧붙인다(P3에서 반영됨).
+
+### 12.10 교사 정본 갱신 반영 (2026-11-17 05:50 KST)
+1. 금칙어: 정본 `inputs/pedagogy/content/taster_blocklist.json`을 빌드 때 읽는다(앱 소스에 목록을 복사하지 않음). 순서: 기존 규칙(a~z 밖 글자, 20글자 초과 줄 빼기) → 줄 전체가 makemore `names.txt`의 실제 이름이면 통과 → exact는 줄 전체 일치, substring은 포함이면 그 줄을 저장과 카드에서 뺌 → "이름을 몇 개 뺐어요. 셀을 다시 실행하면 새 이름이 나와요" 안내. 걸린 말은 화면에 다시 보이지 않는다. `names.txt`(32,033개, MIT)는 `third_party/makemore/`에 두고, 앱에는 "실제 이름인데 목록에 걸리는 이름"만 빌드 때 뽑아 싣는다. 자동 테스트가 names.txt 전체가 하나도 걸리지 않음을 확인한다.
+2. 확인 문제: 추가 없음. 1편은 교사 문제 11개 그대로.
+3. 재구성: 채점 노트북을 따로 만들지 않는다. R1~R3는 1편 노트북 끝의 자기 확인 구역에서 한다. R3는 손실 0.1 유지, 학습 셀(20번 반복)을 최대 5번까지 다시 실행해도 되고 재실행은 힌트로 세지 않는다. 값(`max_reruns`, `steps_per_run`)은 정본에서 읽는다.
+4. 배지 id `BADGE-S0`, 완료 표시 `TASTER-DONE`: 정본 채택(data-spec.md). 공유 카드 1200×675 확정. 맛보기 T-S01의 앱 안내 한 줄 덧붙이기 확정.
+
+### 12.11 공개 전환 대비 (CTO 2026-11-17 05:48. 지금 공개 전환·Funnel은 하지 않음)
+- 지금 배포는 Tailscale serve(내 기기만)뿐이다. 나중에 인터넷 공개로 바꿀 때 코드 대수술이 없게 세 곳으로 모았다.
+- 로그인: 수단은 `AuthAdapter` 구현 하나씩이고 서버 `auth.build_auth(settings, storage)` 한 곳에서 조립한다. API 코드는 수단 이름을 가르지 않는다. `TailscaleAuth`는 "serve 접속자 → 계정" 어댑터 하나이고, 일반 로그인(이메일 코드, Google)은 새 클래스와 조립 함수만 손대면 된다. 계정과 학습 기록은 그대로 두고 `auth_identity`에 로그인 수단 줄을 더해 잇는다(이메일이 같다고 저절로 잇지 않는다).
+- 설정 한 곳: 주소, 허용 Host·Origin, 쿠키(이름·기간·Secure·SameSite·Path·Domain), DB 접근은 서버 `config.py`의 `Settings`에서만 나온다(다른 소스에 박힌 값이 없음을 테스트가 확인). 앱은 `app/src/config.ts`의 `api`·`storage`·`auth`(로그인 수단별 화면 표)에서 나온다.
+- 설정으로 풀 수 없게 둔 것: 서버 바인드 `127.0.0.1`(공개 때도 서버 앞에 프록시를 둔다), 프록시 머리말로 접속 주소를 믿지 않음, 쿠키 HttpOnly, 개발용 로그인 잠금.
+- DB: SQLite를 아는 코드는 저장 계층(`storage/`)과 `config.py`뿐이다. Postgres는 어댑터 하나, 드라이버, `Z2H_DB_URL`을 바꾼다(미구현, 실제 실행 미확인).
+- 공개 때 바꿀 것 전체 목록: `server/README.md` 7절과 P4 PR 본문.

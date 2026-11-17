@@ -1,0 +1,2 @@
+names.txt: karpathy/makemore (MIT). https://github.com/karpathy/makemore/blob/master/names.txt
+받은 날, 해시, 쓰는 곳은 저장소 맨 위 NOTICE.md. LICENSE 전문은 third_party/licenses/makemore-LICENSE.txt.

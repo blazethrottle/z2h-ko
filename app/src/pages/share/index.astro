@@ -1,0 +1,46 @@
+---
+// E 공유 카드 미리 보기 /share/ (spec 13.5, D32·D42·D45·D54·D56). 내 기기에 이미지 저장만, 공개 공유 주소·자동 게시 없음(X4).
+// 카드 글은 정본 문구: 맛보기 taster.json lecture.artifact(card_fields, x_compose), 01편 L01.json lecture.rewards.artifact.
+// 크기는 config.shareCard(1200x675, D56. 정본 taster.json format.image 도 같은 값).
+// 이름 금칙어는 빌드 때 정본(taster_blocklist.json)에서 만든 nameFilter 를 넘긴다(카드 그리기 직전에도 한 번 더 건다).
+import Base from '../../layouts/Base.astro';
+import ShareApp from '../../components/ShareApp.tsx';
+import { loadTaster } from '../../lib/content/taster.mjs';
+import { lectureArtifact, loadSite } from '../../lib/pageData';
+
+const t: any = loadTaster();
+const a = t.lecture.artifact;
+const last = t.steps[t.steps.length - 1];
+const taster = a
+  ? {
+      name_ko: a.name_ko,
+      title_ko: a.title_ko,
+      credit_ko: a.credit_ko,
+      humble_line_ko: a.humble_line_ko,
+      disclaimer_ko: a.disclaimer_ko,
+      prefill_ko: a.prefill_ko,
+      content_version: t.lecture.content_version,
+      required_steps: t.lecture.requires_steps,
+      unlock_after: a.unlock_after,
+      names_step: { step_id: last.step_id, href: `/taste/${last.slug}/#names-h`, label: `맛보기 ${last.order} / ${t.steps.length} ${last.title_ko}` },
+    }
+  : null;
+const site: any = loadSite();
+const lid = site.lectures.find((l: any) => l.available && site.details[l.lecture_id]?.lecture?.rewards?.artifact)?.lecture_id ?? null;
+const art = lid ? lectureArtifact(lid) : null;
+const l01 = art
+  ? {
+      name_ko: art.name_ko,
+      title_ko: art.name_ko,
+      credit_ko: art.credit_ko,
+      lecture_label: art.lecture_label,
+      mark: art.mark,
+      prefill_ko: art.prefill_ko,
+      content_version: art.content_version,
+      unlock_step: { step_id: art.unlock_step.step_id, href: `/lectures/${lid}/${art.unlock_step.slug}/`, label: `단계 ${art.unlock_step.order} · ${art.unlock_step.title_ko}` },
+    }
+  : null;
+---
+<Base title="공유 카드" nav={null} back="/badges/" wide>
+  <ShareApp client:load taster={taster} l01={l01} nameFilter={t.nameFilter} />
+</Base>

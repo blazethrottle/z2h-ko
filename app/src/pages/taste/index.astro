@@ -1,0 +1,21 @@
+---
+// B 30분 맛보기 첫 화면 (spec 13.2, flow.md 6절). 가입·로그인 없이 시작. 단계 수·시간은 콘텐츠(taster.json)에서 센다.
+// 기록은 taster_result(self_reported, 붙여 넣은 값은 검증 안 된 값). 계정이 없으면 이 기기에 먼저 두고 계정이 생기면 올린다(P1 방식).
+import Base from '../../layouts/Base.astro';
+import TasteIntro from '../../components/TasteIntro.tsx';
+import { loadTaster } from '../../lib/content/taster.mjs';
+import { LANDING } from '../../content/landing.mjs';
+
+const t: any = loadTaster();
+const steps = t.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, minutes: s.minutes }));
+---
+<Base title="30분 맛보기" tabs={false} back="/">
+  <TasteIntro
+    client:load
+    title={t.lecture.title_ko}
+    promise={LANDING.hero.caption}
+    steps={steps}
+    requiredSteps={t.lecture.requires_steps}
+    totalMinutes={t.total_minutes}
+  />
+</Base>

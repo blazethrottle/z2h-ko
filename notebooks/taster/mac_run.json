@@ -1,0 +1,73 @@
+{
+ "about_ko": "맛보기 노트북(notebooks/taster/taster.ipynb)을 맥 저장소 .venv 에서 nbconvert 로 실제 실행해 나온 값입니다. 손으로 쓰지 않습니다. 다시 쓰는 명령: Z2H_TASTER_RECORD=1 .venv/bin/python -m pytest tests/test_notebooks_taster.py -q -s",
+ "recorded_kst": "2026-11-16T23:45:08+09:00",
+ "how_ko": "names.txt 를 pytest 임시 폴더에 미리 받아 두고 그 폴더에서 배포본(실행 출력 없는 사본, 맨 앞에 커널 확인 셀 1개)을 그대로 실행. names.txt 는 실행 뒤 지움",
+ "environment": {
+  "kernel_python": "3.12.13",
+  "torch": "2.15.0",
+  "nbconvert": "7.17.2",
+  "ipykernel": "7.4.0",
+  "platform": "macOS-27.2.1-arm64-arm-64bit",
+  "wget_on_path": true
+ },
+ "seconds": {
+  "nbconvert_total": 4.96,
+  "cells_span": 3.424,
+  "by_cell": {
+   "T-S02": 0.002,
+   "T-S03": 0.281,
+   "T-S03-alt-local": 0.031,
+   "T-S04": 0.986,
+   "T-S05": 0.002,
+   "T-S06": 2.11,
+   "T-S07": 0.003
+  }
+ },
+ "outputs": {
+  "T-S02": "안녕하세요\n",
+  "T-S03": "32033 ['emma', 'olivia', 'ava', 'isabella', 'sophia']\n",
+  "T-S04": "4410.0\n",
+  "T-S05": "anugeenvi\ns\nmabidushan\nstan\nsilaylelaremah\nli\nle\nepiachalen\ndiza\nk\n",
+  "T-S06": "0 3.839\n10 2.659\n20 2.555\n30 2.521\n40 2.503\n50 2.493\n60 2.486\n70 2.481\n80 2.477\n90 2.474\n99 2.472\n",
+  "T-S07": "gsli\ndi\nallayulyienorikan\nkenah\ndajamoo\nkrior\nsjjarenvaiaimi\nari\nonnnnny\nay\n"
+ },
+ "alt_local_outputs": {
+  "T-S03": "32033 ['emma', 'olivia', 'ava', 'isabella', 'sophia']\n"
+ },
+ "shell_lines_dropped": {},
+ "match_canon_expected_output_example": {
+  "T-S02": "exact",
+  "T-S03": "exact",
+  "T-S04": "exact",
+  "T-S05": "exact",
+  "T-S06": "exact",
+  "T-S07": "exact"
+ },
+ "match_teacher_outputs_json": {
+  "T-S02": "exact",
+  "T-S03": "exact",
+  "T-S04": "exact",
+  "T-S05": "exact",
+  "T-S06": "exact",
+  "T-S07": "exact"
+ },
+ "loss": {
+  "first": 3.839,
+  "last": 2.472,
+  "first_step": 0,
+  "last_step": 99
+ },
+ "local_without_wget": {
+  "nbconvert_total": 4.89,
+  "errors": [
+   {
+    "step": "T-S03",
+    "cell": "step-code",
+    "ename": "FileNotFoundError"
+   }
+  ],
+  "alt_local_outputs": {
+   "T-S03": "32033 ['emma', 'olivia', 'ava', 'isabella', 'sophia']\n"
+  }
+ }
+}

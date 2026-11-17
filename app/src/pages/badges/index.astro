@@ -1,0 +1,13 @@
+---
+// E 배지와 편 도장 /badges/ (spec 13.4, D31·D47). 규칙은 src/badge-rules.ts, 계산은 src/lib/badges.ts.
+// 편 도장 수는 콘텐츠 편 목록(lectures.yaml)에서 센다. 맛보기 완료 규칙은 taster.json completion_rule.
+import Base from '../../layouts/Base.astro';
+import BadgesApp from '../../components/BadgesApp.tsx';
+import { badgeLectures } from '../../lib/pageData';
+import { loadTaster } from '../../lib/content/taster.mjs';
+
+const t: any = loadTaster();
+---
+<Base title="배지" nav={null} back="/home/">
+  <BadgesApp client:load lectures={badgeLectures()} taste={{ required_steps: t.lecture.requires_steps, content_version: t.lecture.content_version }} />
+</Base>

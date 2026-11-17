@@ -1,4 +1,5 @@
 """L01.json, taster.json 코드를 학습자 순서대로 실행해 '보여야 하는 것'을 점검합니다(그림은 렌더하지 않음)."""
+# 테스트 환경: python3 + 사용자 설치 torch(CPU)·graphviz·numpy. 상자에서 패키지가 사라지면 `pip install --user --break-system-packages graphviz torch --index-url https://download.pytorch.org/whl/cpu` 후 실행(교훈 2026-11-17).
 import json, ast, io, contextlib, sys, os, random
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import l01_source as S
