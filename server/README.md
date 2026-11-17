@@ -217,7 +217,7 @@ Z2H_TAILSCALE_HOST=<기기>.<tailnet>.ts.net ../.venv/bin/python -m z2h_server
 | 속도 제한 | 없음 | 없음 | 로그인 코드 보내기·확인, 쓰기 API 에 필요(미구현, 방식 미정) | 불필요(구현 검토) |
 | 로그의 개인정보 | `app.py`·`auth.py`(로그인 이름을 쓰지 않음), `storage/sqlite.py`(SQL 값 숨김), uvicorn 접속 기록 | 터미널 출력만. 접속 기록에는 주소(`127.0.0.1`)·경로·상태 코드만, 로그인 이름 없음 | 로그를 어디에 얼마나 둘지 정하기(미정). 이메일 로그인이 생기면 이메일도 로그에 쓰지 않는 규칙 유지 | 필요(개인정보 처리 방침) |
 | 백업 | `GET /api/export`(계정별 JSON), DB 파일 | 손으로: 계정별 내보내기, 서버를 끈 뒤 `server/data/z2h.sqlite3` 복사 | Postgres 자동 백업 또는 정기 덤프(미정) | 유료 DB 면 필요 |
-| Tailscale 로그인 | `Z2H_TAILSCALE_HOST` | 켬(폰) | 계속 쓸지 끌지 결정(둘은 Host 로 나뉘어 같이 둘 수 있음) | 불필요 |
+| Tailscale 로그인 | `Z2H_TAILSCALE_HOST` | 설정하면 켜짐(기본값은 꺼짐. serve는 CTO 검토 뒤에 켬) | 계속 쓸지 끌지 결정(둘은 Host 로 나뉘어 같이 둘 수 있음) | 불필요 |
 
 자세한 메모
 - **로그인 수단 넣는 법**: 새 수단은 `AuthAdapter` 를 이어받아 `provider`, `no_user_message_ko`, `current_user_id`(필요하면 `dev_login`)만 채웁니다. 그다음 `build_auth` 에서 공개 이름 → 새 수단을 `ByHostAuth` 의 routes 에 더합니다. 이름표 `AUTH_PROVIDERS` 에 이미 `email_otp`·`google` 이 있습니다. 세션 쿠키는 `CookieSettings` 와 `sessions` 표를 그대로 쓸 수 있습니다.
