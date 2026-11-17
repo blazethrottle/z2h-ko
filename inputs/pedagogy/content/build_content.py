@@ -141,6 +141,90 @@ def taster():
                       "generated_by": "pedagogy/content/build_content.py"},
             "lecture": course, "steps": steps, "questions": qs, "hints": hints}
 
+def foundations():
+    """f_source.py -> F.json(00 사전 기초 모듈: 단위 지도 15개, 필수 8단위 내용, 진단 5문제). 출력 예시는 실제 실행으로 채웁니다."""
+    import f_source as F
+    from test_content import run_f_steps
+    outs = run_f_steps(F.STEPS)
+    steps, hints = [], []
+    for i, st in enumerate(F.STEPS, 1):
+        lines = [x for e in st.get("edits", []) for x in e[4]] + st["run"]
+        code = "\n".join(l for l, _ in lines)
+        repl = sum(len(e[4]) for e in st.get("edits", []) if e[2] == "replace")
+        new = len(lines) - repl
+        hid = [f"{st['id']}-H{k}" for k in range(1, 5)] if st["kind"] != "read" else []
+        assert new <= 10, st["id"]
+        steps.append({
+            "step_id": st["id"], "lecture_id": "F", "unit_id": st["unit"], "order": i, "title_ko": st["title"],
+            "video_segments": [], "long_step": 6 <= new <= 10, "new_code_lines": new, "moved_code_lines": 0,
+            "prepared_code": None, "prepared_code_line_notes_ko": None, "kind": st["kind"],
+            "edits": [{"target_step": t, "where_ko": w, "action": a, "anchor_line": None if an == "END" else an.strip(), "line_count": len(ls)}
+                      for t, w, a, an, ls in st.get("edits", [])],
+            "rerun_first": st.get("rerun", []), "read_first_ko": st["read_first"],
+            "input_ko": st["input"], "code": code, "code_line_notes_ko": [n for _, n in lines],
+            "expected_ko": st["expected"], "expected_output_example": outs.get(st["id"]),
+            "expected_check": st["check"], "meaning_ko": st["meaning"], "objective_ids": [st["unit"]], "hint_ids": hid})
+        if hid:
+            texts = [st["h1"], st["h2"], "빈칸을 채워 보세요.", f"정답 코드와 줄별 풀이를 봅니다. 흔한 원인: {st['mistake']}"]
+            for k in range(1, 5):
+                hints.append({"hint_id": hid[k-1], "target_id": st["id"], "level": k, "text_ko": texts[k-1],
+                              "code_with_blanks": blankify(code, st["blanks"]) if k == 3 else None,
+                              "show_solution": k == 4, "unlock": UNLOCK[k]})
+    questions = []
+    for q in F.DIAG:
+        item = {"question_id": q["id"], "lecture_id": "F", "unit_id": "F-DIAG", "type": q["type"], "after_step": None,
+                "prompt_ko": q["prompt"], "code": None, "answer_ko": q["answer"]}
+        if q["type"] == "choice":
+            item.update({"choices": q["choices"], "answer_index": q["answer_index"], "auto_grade": {"type": "choice"}})
+        else:
+            item.update({"auto_grade": q["grade"], "dont_know_allowed": True})
+        item.update({"recommend_units_if_wrong": q["rec"], "rubric": [{"point": 1, "criterion_ko": "정답"}], "max_points": 1,
+                     "must_pass": False, "objective_ids": [], "hint_ids": []})
+        questions.append(item)
+    for q in F.QUESTIONS:
+        hid = [f"{q['id']}-H{k}" for k in range(1, 5)] if q.get("h") else []
+        questions.append({"question_id": q["id"], "lecture_id": "F", "unit_id": q["unit"], "type": q["type"], "after_step": q["after"],
+                          "prompt_ko": q["prompt"], "code": q.get("code"), "answer_ko": q["answer"], "auto_grade": q["grade"],
+                          "rubric": [{"point": p, "criterion_ko": c} for p, c in q["rubric"]], "max_points": 1,
+                          "must_pass": True, "objective_ids": [q["unit"]], "hint_ids": hid})
+        for k, txt in enumerate(q.get("h", []), 1):
+            hints.append({"hint_id": hid[k-1], "target_id": q["id"], "level": k, "text_ko": txt,
+                          "code_with_blanks": txt if k == 3 else None, "show_solution": k == 4, "unlock": UNLOCK[k]})
+    rebuilds = []
+    for r in F.REBUILDS:
+        hid = [f"{r['id']}-H{k}" for k in range(1, 5)]
+        rebuilds.append({"rebuild_id": r["id"], "lecture_id": "F", "unit_id": r["unit"], "title_ko": r["title"], "task_ko": r["task"],
+                         "check": r["check"], "max_hint_level_for_pass": r["max_hint"], "hint_ids": hid})
+        for k, txt in enumerate(r["h"], 1):
+            hints.append({"hint_id": hid[k-1], "target_id": r["id"], "level": k, "text_ko": txt,
+                          "code_with_blanks": txt if k == 3 else None, "show_solution": k == 4, "unlock": UNLOCK[k]})
+    units = []
+    for uid, title, used_ko, used, req in F.UNIT_MAP:
+        written = uid in F.GOALS
+        units.append({"unit_id": uid, "title_ko": title, "used_in_ko": used_ko, "used_in": used, "required": req,
+                      "required_for": "L01" if req else None, "status": "written" if written else "planned",
+                      "goal_ko": F.GOALS.get(uid), "mastery_ko": F.MASTERY_KO.get(uid),
+                      "step_ids": [s["step_id"] for s in steps if s["unit_id"] == uid],
+                      "question_ids": [q["question_id"] for q in questions if q["unit_id"] == uid],
+                      "rebuild_ids": [r["rebuild_id"] for r in rebuilds if r["unit_id"] == uid]})
+    diag = dict(F.DIAG_INFO); diag["question_ids"] = [q["id"] for q in F.DIAG]
+    lecture = {"lecture_id": "F", "title_ko": F.TITLE, "video_url": None, "youtube_video_id": None, "video_seconds": 0, "video_minutes": 0,
+               "source_repos": [], "env": ["cpu"], "intro_ko": F.INTRO, "common_format_ko": F.COMMON_FORMAT,
+               "objectives": [{"objective_id": u["unit_id"], "text_ko": u["goal_ko"]} for u in units if u["goal_ko"]],
+               "prereq_units": [], "prereq_lectures": [], "mastery_rule_id": "F", "research_status": "merged",
+               "units": units, "diagnostic": diag}
+    return {"_meta": {"version": "1.1", "created_kst": "2026-11-17", "schema": "pedagogy/data-spec.md 2절(F 추가 칸: unit_id, read_first_ko, units, diagnostic, error_match)",
+                      "generated_by": "pedagogy/content/build_content.py F", "source": "pedagogy/00-foundations.md, pedagogy/content/f_source.py",
+                      "scope_ko": "필수 8단위(F-P1, F-P2, F-P5, F-P6, F-P7, F-M1, F-M2, F-M6), 있으면 좋음 3단위(F-P3, F-P4, F-P8), 진단 5문제. 나머지 4단위(F-P9, F-M3, F-M4, F-M5)는 units 목록에만 있음"},
+            "lecture": lecture, "steps": steps, "questions": questions, "rebuild_tasks": rebuilds,
+            "mastery_rule": F.MASTERY, "hints": hints}
+
+if __name__ == "__main__" and sys.argv[1:] == ["F"]:
+    fj = foundations()
+    json.dump(fj, open(os.path.join(HERE, "F.json"), "w"), ensure_ascii=False, indent=1)
+    print("F steps", len(fj["steps"]), "questions", len(fj["questions"]), "rebuild", len(fj["rebuild_tasks"]), "hints", len(fj["hints"]))
+    sys.exit(0)
+
 if __name__ == "__main__":
     a, b = l01(), taster()
     json.dump(a, open(os.path.join(HERE, "L01.json"), "w"), ensure_ascii=False, indent=1)

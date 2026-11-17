@@ -2,6 +2,7 @@
 // 힌트 본문(H4 정답 포함)은 /data/{편}/hints.json 에서 열 때 불러온다. 열기 전에는 화면 문서에 없다.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { canOpen, emptyHintState, lockText, scoreNoteKo, LEVEL_NAMES, STEP_HINT_NOTE, type HintState, type UnlockRule } from '../lib/hints';
+import { unitHref } from '../lib/basics';
 import { hintScoreRatio } from '../lib/grading';
 import { fetchJsonOnce, hintsUrl, type Runtime } from '../lib/runtime';
 import { nowKst, uuid4 } from '../lib/time';
@@ -54,7 +55,7 @@ interface Props {
   lectureId: string;
   targetId: string;
   targetTitle: string;
-  ctx: 'step' | 'question';
+  ctx: 'step' | 'question' | 'rebuild';
   levels: number[];
   unlock: Record<number, UnlockRule>;
   state: HintState | null;
@@ -63,6 +64,10 @@ interface Props {
   emphasize?: boolean;
   lastOutput?: string;
   runLocation?: string;
+  /** 내용이 준비된 기초 단위 id. H2가 가리키는 단위가 여기 있으면 그 단위 화면으로, 없으면 기초 목록으로 잇는다(D24) */
+  basicsReady?: string[];
+  /** ctx rebuild: 머리 아래 안내 한 줄(통과 한도) */
+  noteKo?: string;
 }
 
 export default function HintLadder(p: Props) {
@@ -112,9 +117,10 @@ export default function HintLadder(p: Props) {
   const byLevel = new Map((hints ?? []).map((h) => [h.level, h]));
 
   return (
-    <section class={`card stack${p.emphasize ? ' current' : ''}`} aria-label={p.ctx === 'step' ? '막혔나요? 힌트' : '힌트'} data-testid={`hints-${p.targetId}`}>
-      <h2 class="t3">{p.ctx === 'step' ? '막혔나요?' : '힌트'}</h2>
+    <section class={`card stack${p.emphasize ? ' current' : ''}`} aria-label={p.ctx === 'question' ? '힌트' : '막혔나요? 힌트'} data-testid={`hints-${p.targetId}`}>
+      <h2 class="t3">{p.ctx === 'question' ? '힌트' : '막혔나요?'}</h2>
       {p.ctx === 'step' && <p class="small muted">힌트는 4단계입니다. {STEP_HINT_NOTE}</p>}
+      {p.ctx === 'rebuild' && p.noteKo && <p class="small muted">힌트는 4단계입니다. {p.noteKo}</p>}
       <div aria-live="polite" class="stack">
         {loadErr && (
           <div class="result ng" role="status">
@@ -134,7 +140,7 @@ export default function HintLadder(p: Props) {
                 </p>
               )}
               {lv === 2 && h && /F-[PM]\d+/.test(h.text_ko) && (
-                <a href="/basics/" class="small">
+                <a href={unitHref(h.text_ko.match(/F-[PM]\d+/)![0], p.basicsReady)} class="small" data-testid={`hint-basics-${p.targetId}`}>
                   기초 {h.text_ko.match(/F-[PM]\d+/)![0]}로 돌아가 보기
                 </a>
               )}
@@ -179,6 +185,8 @@ export default function HintLadder(p: Props) {
       <p class="cap num">
         {p.ctx === 'step'
           ? `이 단계 힌트 사용: ${shownLevel} / 4`
+          : p.ctx === 'rebuild'
+          ? `이 과제 힌트 사용: ${shownLevel} / 4`
           : `이 문제 힌트: ${shownLevel} / 4${s.opened >= 2 ? ` · 이 문제는 ${Math.round(hintScoreRatio(s.opened) * 100)}%로 계산됩니다` : ''}`}
       </p>
     </section>

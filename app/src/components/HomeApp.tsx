@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { config } from '../config';
 import { parsePref, practicePrefKey, PREF_RESUME, setPref, STEP_DONE, weeklySeconds } from '../lib/progress';
 import { formatDateKo, formatHM, nowKst, weekStartMs } from '../lib/time';
+import { isBasicsId, unitMastery, type BasicsRule, type UnitMasteryRef } from '../lib/basics';
 import { useNow, useRuntime, useTables } from './hooks';
 import { gated } from './Gate';
 
@@ -16,14 +17,24 @@ interface LectureRow {
 interface Props {
   lectures: LectureRow[];
   main: { lectureId: string; lectureLabel: string; steps: { step_id: string; slug: string; order: number; title_ko: string }[] } | null;
-  prereq: { unit_id: string; title_ko: string | null }[];
+  /** 1편 선행 기초 단위. href: 준비된 단위는 그 단위 화면, 아니면 기초 목록 */
+  prereq: { unit_id: string; title_ko: string | null; href?: string }[];
+  /** 사전 기초 단위(완료 수 "2 / 15 단위 완료", spec 1절) */
+  basics?: { units: { unit_id: string; ready: boolean; mastery: UnitMasteryRef }[]; rule: BasicsRule } | null;
 }
 
 function HomeAppView(p: Props) {
   const rt = useRuntime();
   const now = useNow(60_000);
-  const t = useTables(rt, ['step_progress', 'study_session', 'user_pref']);
-  const rows = t?.step_progress ?? [];
+  const t = useTables(rt, ['step_progress', 'study_session', 'user_pref', 'question_attempt', 'rebuild_attempt']);
+  // 완료 단계·이어서 하기는 강의 단계만 센다(사전 기초 단계 F-xx 는 아래 기초 카드의 단위 완료로 센다)
+  const rows = (t?.step_progress ?? []).filter((r) => !isBasicsId(r.step_id));
+  // 사전 기초 "n / 15 단위 완료"(spec 1절): 익힘은 정본 mastery_rule(lib/basics.ts unitMastery). 준비 중 단위는 완료가 없다
+  const basicsUnits = p.basics?.units ?? [];
+  const basicsDone =
+    t && p.basics
+      ? basicsUnits.filter((u) => u.ready && unitMastery(u.mastery, p.basics!.rule, t.step_progress ?? [], t.question_attempt ?? [], t.rebuild_attempt ?? []).status === 'done').length
+      : 0;
   const statusOf = (id: string) => rows.find((r) => r.step_id === id)?.status as string | undefined;
   const steps = p.main?.steps ?? [];
   const doneSteps = rows.filter((r) => STEP_DONE.has(r.status));
@@ -240,12 +251,23 @@ function HomeAppView(p: Props) {
           </a>
         </section>
 
-        {p.prereq.length > 0 && (
+        {p.prereq.length > 0 && (basicsUnits.length === 0 || basicsDone < basicsUnits.length) && (
           <section class="card stack-sm" aria-label="사전 기초">
             <p class="kicker">강의 전에 권장</p>
             <h2 class="t3">사전 기초</h2>
+            {basicsUnits.length > 0 && (
+              <p class="small num" data-testid="home-basics-done">
+                {basicsDone} / {basicsUnits.length} 단위 완료
+              </p>
+            )}
             <p class="small">
-              01편에 필요한 단위: {p.prereq.map((u) => u.unit_id).join(' · ')}
+              01편에 필요한 단위:{' '}
+              {p.prereq.map((u, i) => (
+                <>
+                  {i > 0 && ' · '}
+                  <a href={u.href ?? '/basics/'}>{u.unit_id}</a>
+                </>
+              ))}
             </p>
             <a class="btn block" href="/basics/">
               기초 보기

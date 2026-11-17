@@ -1,8 +1,0 @@
-# 시험용 예시. 단위 이름은 pedagogy/00-foundations.md 단위 지도에서 옮김
-units:
-  - unit_id: F-P6
-    title_ko: 클래스와 객체(특수 메서드 포함)
-  - unit_id: F-P7
-    title_ko: 에러 메시지 읽기
-  - unit_id: F-M2
-    title_ko: 연쇄 법칙 감각

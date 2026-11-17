@@ -1,5 +1,6 @@
 // 페이지가 공통으로 쓰는 값 계산 (빌드 때만 실행)
 import { loadSite } from './content/build.mjs';
+import { loadBasics } from './content/basics.mjs';
 
 export function lectureLabel(lectureId: string, titleKo: string): string {
   const short = String(titleKo).split(':')[0].trim();
@@ -12,9 +13,9 @@ export function notebookPublicPath(lectureId: string, repoPath: string | null): 
   return `/notebooks/${lectureId}/${base}`;
 }
 
+/** 기초 단위 이름: 교사 정본 F.json lecture.units (예전 content/ep00-basics/units.yaml 은 쓰지 않는다) */
 export function unitTitles(): Map<string, string> {
-  const site = loadSite();
-  return new Map((site.units ?? []).map((u: any) => [u.unit_id, u.title_ko]));
+  return new Map(((loadBasics() as any).units ?? []).map((u: any) => [u.unit_id, u.title_ko]));
 }
 
 export { loadSite };

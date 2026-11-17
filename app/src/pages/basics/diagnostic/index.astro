@@ -1,0 +1,26 @@
+---
+// 사전 기초 시작 전 진단 /basics/diagnostic/ (spec 8절, 정본 lecture.diagnostic). 추천만, 건너뛰기 버튼 없음, 힌트 없음.
+// 정답은 페이지에 넣지 않는다(결과 보기를 누를 때 /data/F/answers.json). 제목·안내·결과 문구는 정본 글 그대로.
+import Base from '../../../layouts/Base.astro';
+import DiagnosticApp from '../../../components/DiagnosticApp.tsx';
+import { loadBasics } from '../../../lib/content/basics.mjs';
+
+const b: any = loadBasics();
+const units = b.units.map((u: any) => ({ unit_id: u.unit_id, group: u.group, title_ko: u.title_ko, ready: u.ready, mastery: u.mastery }));
+---
+<Base title={b.diagnostic.title_ko} nav="basics" back="/basics/" wide>
+  <div class="stack">
+    <p class="kicker">강의 전에 권장</p>
+    <h1 class="t1">{b.diagnostic.title_ko}</h1>
+    <DiagnosticApp
+      client:load
+      lectureId={b.lecture_id}
+      contentVersion={b.content_version}
+      purposeKo={b.diagnostic.purpose_ko}
+      resultKo={b.diagnostic.result_ko}
+      questions={b.diagnostic.questions}
+      units={units}
+      rule={b.rule}
+    />
+  </div>
+</Base>

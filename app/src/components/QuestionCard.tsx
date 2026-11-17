@@ -52,6 +52,45 @@ const GRADE_LABEL: Record<string, string> = {
   manual: '채점 기준을 스스로 확인',
 };
 
+/** 고르기 보기 목록 (spec 5절: radiogroup, 번호 원 + 글자, 고른 행 "고름"). 확인 문제와 기초 진단이 같이 쓴다 */
+export function ChoiceOptions({
+  labelledBy,
+  choices,
+  value,
+  locked,
+  onChange,
+}: {
+  labelledBy: string;
+  choices: string[];
+  value: number | null;
+  locked: boolean;
+  onChange: (i: number) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-labelledby={labelledBy} class="stack-sm">
+      {choices.map((c, i) => (
+        <button
+          type="button"
+          role="radio"
+          class="opt"
+          aria-checked={value === i}
+          aria-disabled={locked}
+          tabIndex={value === i || (value == null && i === 0) ? 0 : -1}
+          onClick={() => !locked && onChange(i)}
+          onKeyDown={(e) => {
+            if (locked) return;
+            handleRadioKey(e, value, choices.length, onChange);
+          }}
+        >
+          <span class="on num">{i + 1}</span>
+          <span class="grow">{c}</span>
+          {value === i && <span class="cap">고름</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function reasonKo(q: PublicQuestion, g: GradeResult): string {
   if (g.verdict === 'correct') return '';
   if (q.type === 'choice') return g.is_dont_know ? '모르겠어요를 골랐습니다. 감점 없이 기록만 합니다.' : '고른 보기가 답과 다릅니다.';
@@ -73,12 +112,18 @@ export default function QuestionCard({
   q,
   attempts,
   runLocation,
+  basicsReady,
+  allowRetry = false,
 }: {
   rt: Runtime | null;
   lectureId: string;
   q: PublicQuestion;
   attempts: Row[];
   runLocation?: string;
+  /** 힌트 H2의 기초 단위 링크용(준비된 단위 id) */
+  basicsReady?: string[];
+  /** 풀이가 열린 뒤에도 맞힌 기록이 없으면 "다시 풀기"를 보인다(사전 기초: 단위 완료가 "전부 정답"이라서) */
+  allowRetry?: boolean;
 }) {
   const [text, setText] = useState('');
   const [choice, setChoice] = useState<number | null>(null);
@@ -165,6 +210,16 @@ export default function QuestionCard({
     await record(gradeQuestion(gradable(answers), { text, checked: checks }));
   };
 
+  /** 다시 풀기: 풀이를 닫고(화면에서 뺀다) 답 칸을 비운다. 지난 시도 기록은 그대로 남는다 */
+  const retry = () => {
+    setRevealed(false);
+    setText('');
+    setChoice(null);
+    setLast(null);
+    setMsg(null);
+    setPhase('answer');
+  };
+
   const reveal = async () => {
     if (!answers && !(await loadAnswers())) return;
     setRevealed(true);
@@ -224,29 +279,7 @@ export default function QuestionCard({
       </h3>
       {q.code && <pre class="plain-code">{q.code.replace(/\n+$/, '')}</pre>}
 
-      {q.type === 'choice' && q.choices && (
-        <div role="radiogroup" aria-labelledby={`qh-${q.question_id}`} class="stack-sm">
-          {q.choices.map((c, i) => (
-            <button
-              type="button"
-              role="radio"
-              class="opt"
-              aria-checked={choice === i}
-              aria-disabled={locked}
-              tabIndex={choice === i || (choice == null && i === 0) ? 0 : -1}
-              onClick={() => !locked && setChoice(i)}
-              onKeyDown={(e) => {
-                if (locked) return;
-                handleRadioKey(e, choice, q.choices!.length, setChoice);
-              }}
-            >
-              <span class="on num">{i + 1}</span>
-              <span class="grow">{c}</span>
-              {choice === i && <span class="cap">고름</span>}
-            </button>
-          ))}
-        </div>
-      )}
+      {q.type === 'choice' && q.choices && <ChoiceOptions labelledBy={`qh-${q.question_id}`} choices={q.choices} value={choice} locked={locked} onChange={setChoice} />}
       {q.type === 'predict' && (
         <label class="field">
           내 답
@@ -348,6 +381,14 @@ export default function QuestionCard({
           )}
         </section>
       )}
+      {allowRetry && locked && !mine.some((a) => a.is_correct === true) && (
+        <div class="stack-sm">
+          <p class="small muted">아직 맞힌 기록이 없습니다. 풀이를 읽은 뒤 다시 풀 수 있습니다.</p>
+          <button type="button" class="btn" onClick={retry} data-testid={`retry-${q.question_id}`}>
+            다시 풀기
+          </button>
+        </div>
+      )}
 
       {showHints && (
         <HintLadder
@@ -363,6 +404,7 @@ export default function QuestionCard({
           onOpened={() => {}}
           emphasize={shownGrade != null && shownGrade.verdict !== 'correct'}
           runLocation={runLocation}
+          basicsReady={basicsReady}
         />
       )}
     </article>

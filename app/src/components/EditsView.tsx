@@ -37,6 +37,9 @@ export default function EditsView({ view }: { view: EditView }) {
   const [full, setFull] = useState(false);
   const target = view.targets[0];
   const insertText = view.blocks.flatMap((b) => b.lines).join('\n');
+  // 안내 한 줄은 고칠 곳 종류에 맞춘다: 넣기(insert)는 기준 줄 아래에 넣고, 바꾸기(replace)는 흐린 "바꾸기 전" 줄을 밝은 줄로 바꾼다
+  const hasInsert = view.blocks.some((b) => b.action !== 'replace');
+  const hasReplace = view.blocks.some((b) => b.action === 'replace');
   return (
     <>
       <section class="codeblock edits" aria-label="바뀐 줄만" data-testid="edits-view">
@@ -51,14 +54,25 @@ export default function EditsView({ view }: { view: EditView }) {
         </div>
         {!full ? (
           <>
-            <p class="edits-note">흐린 줄은 이미 있는 기준 줄입니다. 그 바로 아래에 밝게 표시한 줄을 넣습니다.</p>
+            {hasInsert && (
+              <p class="edits-note" data-testid="edits-note-insert">
+                흐린 줄은 이미 있는 기준 줄입니다. 그 바로 아래에 밝게 표시한 줄을 넣습니다.
+              </p>
+            )}
+            {hasReplace && (
+              <p class="edits-note" data-testid="edits-note-replace">
+                흐린 줄은 지금 셀에 있는 바꾸기 전 줄입니다. 그 줄을 지우고 밝게 표시한 줄로 바꿉니다.
+              </p>
+            )}
             {view.blocks.map((b, i) => (
               <div class="edit-block" data-testid="edit-block">
                 <p class="edit-title">
                   {i + 1} / {view.blocks.length} · <Inline text={b.where_ko} /> · {b.line_count}줄 {b.action === 'replace' ? '바꾸기' : '넣기'}
                 </p>
                 <Line text="…" cls="anchor" />
-                {b.action === 'replace'
+                {b.action === 'replace' && b.anchor_line
+                  ? [<Line text={b.anchor_line} cls="anchor" tag="바꾸기 전" />]
+                  : b.action === 'replace'
                   ? b.lines.map((ln) => <Line text={before(ln)} cls="anchor" tag="바꾸기 전" />)
                   : b.anchor_line
                     ? [<Line text={b.anchor_line} cls="anchor" tag="기준 줄" />]

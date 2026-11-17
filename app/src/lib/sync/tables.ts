@@ -10,6 +10,8 @@ export const TABLE_KEYS = {
   help_note: ['note_id'],
   mastery_state: ['target_id'],
   rebuild_attempt: ['rebuild_id', 'attempt_id'],
+  // 사전 기초 진단 5문제 결과(추천만). 쌓이는 기록: 다시 풀 때마다 새 attempt_id 한 행. answers·recommended_units 는 JSON
+  diagnostic_result: ['attempt_id'],
   // 맛보기 단계별 자기 확인 + 붙여 넣은 값. attempt_no 는 이 표에서만 기기가 정하는 열쇠(1부터, server/API.md 3절)
   taster_result: ['attempt_no', 'step_id'],
   // 배지·도장·맛보기 완료 표시 (src/badge-rules.ts). 같은 배지는 한 행

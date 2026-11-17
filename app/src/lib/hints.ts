@@ -59,13 +59,14 @@ export function canOpen(s: HintState, level: number, now: number, overrides: Rec
   return false;
 }
 
-export type HintContext = 'step' | 'question';
+/** step: 실습 단계, question: 확인 문제, rebuild: 사전 기초 "스스로 해 보기"(자기 확인, 통과 한도는 과제마다) */
+export type HintContext = 'step' | 'question' | 'rebuild';
 
 /** 잠긴 칸 오른쪽 조건 글자 (spec 6절) */
 export function lockText(level: number, ctx: HintContext, overrides: Record<number, UnlockRule> = {}): string {
   if (level === 5) return '정답을 넣고도 결과가 다르면 열림';
   const rule = { ...DEFAULT_UNLOCK[level], ...(overrides[level] ?? {}) };
-  const act = ctx === 'step' ? '결과를 한 번 더 비교하' : '답을 한 번 더 내';
+  const act = ctx === 'step' ? '결과를 한 번 더 비교하' : ctx === 'rebuild' ? '한 번 더 해 보고 "아직 안 돼요"를 누르' : '답을 한 번 더 내';
   if (rule.after_minutes != null) return `${act}거나 ${rule.after_minutes}분 뒤 열림`;
   return `${act}면 열림`;
 }
