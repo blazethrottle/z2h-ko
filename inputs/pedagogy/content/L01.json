@@ -1955,12 +1955,14 @@
    "rebuild_id": "L01-R3",
    "lecture_id": "L01",
    "title_ko": "MLP(3, [4,4,1]) 학습으로 손실 0.1 아래",
-   "task_ko": "Neuron, Layer, MLP를 만들고 S15 데이터로 학습해 손실을 0.1 아래로 내립니다. 이 조각에 필요한 Value 연산(숫자 섞기, 빼기, 거듭제곱)은 붙여 넣어도 됩니다.",
+   "task_ko": "Neuron, Layer, MLP를 만들고 S15 데이터로 학습해 손실을 0.1 아래로 내립니다. 학습 셀(20번 반복)은 최대 5번(합계 100번) 다시 실행해도 됩니다. 이 조각에 필요한 Value 연산(숫자 섞기, 빼기, 거듭제곱)은 붙여 넣어도 됩니다.",
    "check": {
     "type": "value_range",
     "min": 0.0,
     "max": 0.1,
-    "target": "마지막 손실"
+    "target": "마지막 손실",
+    "max_reruns": 5,
+    "steps_per_run": 20
    },
    "max_hint_level_for_pass": 2,
    "hint_ids": [

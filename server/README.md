@@ -51,7 +51,7 @@ curl -s -b /tmp/z2h.cookie http://127.0.0.1:8787/api/state
 
 ## 3. 바꿀 수 있는 설정
 
-모두 `z2h_server/config.py` 한 곳에 있습니다. 환경변수로도 바꿀 수 있습니다.
+주소·Origin·쿠키·DB 접근 값은 모두 `z2h_server/config.py` 의 `Settings` 한 곳에서 나옵니다(다른 파일에 박지 않음. 테스트가 확인). 환경변수로도 바꿀 수 있습니다. 값이 틀리면 서버를 켜지 않습니다(`실행 거부: ...`, 종료 코드 2).
 
 | 환경변수 | 기본값 | 뜻 |
 |---|---|---|
@@ -63,6 +63,18 @@ curl -s -b /tmp/z2h.cookie http://127.0.0.1:8787/api/state
 | `Z2H_EXTRA_HOSTS`, `Z2H_EXTRA_ORIGINS` | 없음 | 추가로 받을 주소(쉼표 구분). 나중 폰 접속용 자리이며 지금은 비워 둔다. 바깥 주소를 넣으면 개발용 로그인이 꺼진다 |
 | `Z2H_DEV_AUTH` | `1` | `0` 이면 개발용 로그인을 끈다 |
 | `Z2H_TAILSCALE_HOST` | 없음 | 폰 로그인을 켠다. 값은 `<기기>.<tailnet>.ts.net` 이름 1개(스킴·포트·쉼표 없이). 틀린 모양이면 서버를 켜지 않는다(종료 코드 2). 6절 |
+| `Z2H_SESSION_DAYS` | `30` | 로그인 쿠키 유지 일수(1~400) |
+| `Z2H_COOKIE_SECURE` | `0` | `1` 이면 쿠키에 Secure(https 에서만 보냄). 공개 때 켠다(7절) |
+| `Z2H_COOKIE_SAMESITE` | `strict` | `strict` 또는 `lax`. `none` 은 받지 않는다 |
+
+환경변수가 없는 설정(코드의 `Settings` 칸): 쿠키 이름 `z2h_dev_session`·Path `/`·Domain 없음(`CookieSettings`), DB 잠금 대기 30초(`db_timeout_seconds`), 로그 수준 `info`(`log_level`), 본문 상한 1MB(`max_body_bytes`).
+
+설정으로 풀 수 없게 막아 둔 것(불변식. 공개 전환 뒤에도 그대로)
+- 서버는 `127.0.0.1` 에만 붙습니다. **공개할 때도 서버는 127.0.0.1 에 두고, 앞에 프록시(터널 등)를 둡니다.** 이 서버가 직접 바깥에 열리는 일은 없습니다.
+- 접속한 쪽 주소를 머리말(X-Forwarded-For 등)로 바꾸지 않습니다(uvicorn `proxy_headers` 끔).
+- 개발용 로그인은 이 컴퓨터 안에서 바로 온 요청만 받습니다(1절 아래 조건, `auth.local_only`).
+- 세션 쿠키는 늘 HttpOnly 이고, SameSite=None 은 고를 수 없습니다.
+- DB 오류 기록에 SQL 값(로그인 이름·학습 기록)을 싣지 않습니다.
 
 ## 4. 표(스키마) 바꾸기
 
@@ -75,21 +87,33 @@ curl -s -b /tmp/z2h.cookie http://127.0.0.1:8787/api/state
   - 내리기는 표를 모두 지웁니다(기록도 지워짐). 먼저 `http://127.0.0.1:8787/api/export` 로 백업을 받습니다.
 - 표를 바꾸면 `z2h_server/schema.py` 도 같이 고칩니다. 둘이 다르면 테스트가 실패합니다.
 
+### 4-1. SQLite 에서 Postgres 로 옮길 때 바꿀 곳 (지금은 구현하지 않음)
+
+DB 종류를 아는 코드는 `z2h_server/storage/` 와 설정(`config.py`)뿐입니다. 서버의 나머지(API, 로그인, 잇기 명령, 마이그레이션 실행)는 `open_adapter(settings.db_url)`·`prepare_location` 만 씁니다(테스트가 확인).
+1. `z2h_server/storage/` 에 `PostgresAdapter` 파일 하나. 공통 `SqlAdapter` 를 이어받고 엔진 만들기만 다르게(`SqliteAdapter` 처럼).
+2. `z2h_server/storage/__init__.py` 의 `open_adapter`·`prepare_location` 에 postgresql 갈래 하나.
+3. `requirements.txt` 에 Postgres 드라이버 하나(어느 드라이버로 할지 미정).
+4. 환경변수 `Z2H_DB_URL=postgresql://...`(비밀번호가 든 값이라 파일·로그에 쓰지 않음).
+- 표·마이그레이션은 처음부터 Postgres 에서도 도는 표준 SQL 이고, 시각 칸은 Postgres 에서 TIMESTAMPTZ 입니다(오프라인 SQL 생성까지 테스트. 실제 Postgres 실행은 미확인).
+- 옮기기 전에 7절의 'server_seq·프로세스 1개 전제'를 먼저 봅니다.
+- 유료 DB 를 쓰면 승인이 필요합니다.
+
 ## 5. 폴더
 
 ```
 server/
   z2h_server/      서버 코드
-    config.py      설정 한 곳(경로·주소·제한)
+    config.py      설정 한 곳(주소·Origin·쿠키·DB 접근·제한) + 설정으로 못 푸는 불변식
     app.py         앱 만들기, 정적 파일
     api.py         /api/* (health, state, sync, result-code, grade, export, 개발 로그인, me)
-    auth.py        AuthAdapter(요청의 현재 계정) → LocalDevAuth(맥), TailscaleAuth(폰), ByHostAuth(Host 로 고름). 이메일·Google 은 자리만
+    auth.py        AuthAdapter(요청의 현재 계정) → LocalDevAuth(맥), TailscaleAuth(폰), ByHostAuth(Host 로 고름).
+                   build_auth(설정 → 수단 조립 한 곳), AUTH_PROVIDERS(수단 이름표). 이메일·Google 은 자리만
     __main__.py    서버 켜기, Tailscale 잇기 명령(link-tailscale 등)
     security.py    Host·Origin·본문 크기·접속 주소 검사
     sync.py        동기화 검사와 충돌 규칙
     result_code.py 결과코드 해독
     schema.py      표 정의(읽고 쓰기용. 만드는 것은 마이그레이션)
-    storage/       StorageAdapter(약속) → SqlAdapter(표준 SQL) → SqliteAdapter
+    storage/       StorageAdapter(약속) → SqlAdapter(표준 SQL) → SqliteAdapter. open_adapter(DB 주소 → 어댑터, DB 종류를 아는 유일한 곳)
   alembic/         마이그레이션
   tests/           pytest
   data/            DB 파일(git 제외)
@@ -172,3 +196,31 @@ Z2H_TAILSCALE_HOST=<기기>.<tailnet>.ts.net ../.venv/bin/python -m z2h_server
 - **tailnet 을 공유받은 사람:** 그 사람의 요청에도 로그인 이름이 붙습니다. 이어 두지 않았으면 401 이라 아무것도 못 읽지만, 주소와 화면(앱 정적 파일)은 열립니다.
 - **태그된 기기:** serve 가 로그인 이름을 붙이지 않아 로그인할 수 없습니다(401).
 - **Tailscale 로그인 = 바로 그 계정:** 비밀번호나 세션이 따로 없습니다. 폰을 잃어버리면 Tailscale 관리 화면에서 그 기기를 빼거나 6-2 끊기를 합니다.
+
+## 7. 공개 전환 시 바꿀 것
+
+지금은 Tailscale serve(내 기기만)로만 씁니다. 아래는 나중에 인터넷 공개로 바꿀 때 손댈 곳의 목록이고, **지금은 아무것도 바꾸지 않았습니다**(동작은 그대로). 공개 전환 자체(배포, 도메인, 터널, Funnel)는 승인 항목이며, 저장소 전체 기준은 `docs/PUBLIC_RELEASE_CHECKLIST.md` 입니다.
+
+전제: 공개 뒤에도 서버는 `127.0.0.1` 에 붙고, 앞에 프록시(Cloudflare Tunnel 같은 것)를 둡니다. 프록시·터널·DNS 설정은 CTO 가 CEO 에게 먼저 알린 뒤 합니다.
+
+| 무엇을 | 어느 설정·파일에서 | 지금 값 | 공개 때 값 | 승인 |
+|---|---|---|---|---|
+| 로그인 수단 교체 | `auth.py` 의 `build_auth`(조립 한 곳) + 새 클래스 `EmailOtpAuth`·`GoogleAuth` 구현. API 코드는 고치지 않음 | 맥: 개발용 로그인(`dev_local`), 폰: Tailscale(`tailscale`) | 공개 주소: 이메일 일회용 코드(`email_otp`)·Google(`google`). 공개 주소에서는 개발용 로그인 없음 | 필요(메일 발송 서비스·키, Google OAuth 키 발급) |
+| Tailscale 로 쓰던 계정을 일반 로그인에 잇기 | DB `auth_identity` 표(provider, subject → user_id) | `(tailscale, 로그인 이름) → user_id` | 같은 user_id 로 `(email_otp, 확인된 이메일)` 또는 `(google, Google 계정 고유번호)` 줄을 더함. 계정·학습 기록은 그대로(모두 user_id 기준) | 필요(개인정보 처리 방침) |
+| 허용 Host·Origin | `config.py` `Settings.allowed_hostnames`·`allowed_origins`·`serve_origin` | `127.0.0.1`·`localhost`(+ serve 이름), Origin `http://127.0.0.1:8787`·`http://localhost:8787`(+ `https://<serve 이름>`) | 공개 이름 1개를 serve 이름처럼 Host·Origin 을 묶어 받는 설정 칸(미구현). 임시로 `Z2H_EXTRA_HOSTS`·`Z2H_EXTRA_ORIGINS` 도 되지만 Origin 이 Host 와 묶이지 않음 | 필요(공개 배포, 도메인) |
+| 공개 기준 주소 | `config.py` `Settings.base_url` | `http://127.0.0.1:8787` | `https://<공개 이름>`(안내 글에 쓰임) | 공개 배포 승인에 포함 |
+| 쿠키 속성 | `config.py` `CookieSettings`, `Z2H_COOKIE_SECURE`·`Z2H_COOKIE_SAMESITE`·`Z2H_SESSION_DAYS` | 이름 `z2h_dev_session`, Secure 없음, SameSite=Strict, Path `/`, Domain 없음, HttpOnly, 30일 | Secure 켬(`Z2H_COOKIE_SECURE=1`), Domain 없음 유지. SameSite 는 Google 로그인 흐름에 따라 Strict 유지 또는 Lax(미확인). 이름을 바꾸면 모두 다시 로그인 | 불필요(CTO 검토) |
+| 개발용 로그인 끄기 | `Z2H_DEV_AUTH=0`. `Z2H_EXTRA_HOSTS` 에 바깥 이름이 있으면 저절로 꺼짐 | 켜짐(맥 안에서만) | 꺼짐 | 불필요 |
+| DB: SQLite → Postgres | 4-1절(`storage/`, `requirements.txt`, `Z2H_DB_URL`) | SQLite 파일 `server/data/z2h.sqlite3` | Postgres | 필요(유료 DB) |
+| 프로세스 1개 전제(server_seq) | `storage/sql.py` (프로세스 안 잠금 `threading.RLock`, `sync_counter` 한 줄, 시각이 앞으로만 가게 하는 `_now`) | uvicorn 프로세스 1개 | 1개로 유지. 늘리려면 번호 매기기(server_seq·attempt_no)를 DB 잠금으로 바꾼 뒤(미구현) | 불필요(설계 변경은 CTO 검토) |
+| 프록시 뒤 실제 접속 주소 | `config.py` `TRUST_PROXY_HEADERS`(불변식), `security.py`, `auth.py` | 머리말을 믿지 않음. 모든 요청의 접속 주소는 `127.0.0.1` | 그대로 둔다. 속도 제한 등에 실제 주소가 필요하면 '우리 프록시가 붙인 머리말 하나'만 읽는 코드를 따로 넣음(미구현, 프록시 종류 미정) | 필요(터널·프록시는 네트워크 설정) |
+| 속도 제한 | 없음 | 없음 | 로그인 코드 보내기·확인, 쓰기 API 에 필요(미구현, 방식 미정) | 불필요(구현 검토) |
+| 로그의 개인정보 | `app.py`·`auth.py`(로그인 이름을 쓰지 않음), `storage/sqlite.py`(SQL 값 숨김), uvicorn 접속 기록 | 터미널 출력만. 접속 기록에는 주소(`127.0.0.1`)·경로·상태 코드만, 로그인 이름 없음 | 로그를 어디에 얼마나 둘지 정하기(미정). 이메일 로그인이 생기면 이메일도 로그에 쓰지 않는 규칙 유지 | 필요(개인정보 처리 방침) |
+| 백업 | `GET /api/export`(계정별 JSON), DB 파일 | 손으로: 계정별 내보내기, 서버를 끈 뒤 `server/data/z2h.sqlite3` 복사 | Postgres 자동 백업 또는 정기 덤프(미정) | 유료 DB 면 필요 |
+| Tailscale 로그인 | `Z2H_TAILSCALE_HOST` | 켬(폰) | 계속 쓸지 끌지 결정(둘은 Host 로 나뉘어 같이 둘 수 있음) | 불필요 |
+
+자세한 메모
+- **로그인 수단 넣는 법**: 새 수단은 `AuthAdapter` 를 이어받아 `provider`, `no_user_message_ko`, `current_user_id`(필요하면 `dev_login`)만 채웁니다. 그다음 `build_auth` 에서 공개 이름 → 새 수단을 `ByHostAuth` 의 routes 에 더합니다. 이름표 `AUTH_PROVIDERS` 에 이미 `email_otp`·`google` 이 있습니다. 세션 쿠키는 `CookieSettings` 와 `sessions` 표를 그대로 쓸 수 있습니다.
+- **계정 잇기**: Tailscale 로그인 이름이 이메일처럼 보여도 그 이메일을 받는 사람이 같은 사람이라는 보장은 없습니다(예: `someone@github` 같은 이름도 있음). 그래서 이메일이 같다고 저절로 잇지 않습니다. 운영자가 맥미니에서 명령으로 잇거나(지금의 `link-tailscale` 같은 명령, 미구현), 이메일 코드로 확인된 뒤에만 잇습니다. Google 은 이메일이 아니라 Google 계정 고유번호를 subject 로 씁니다.
+- **server_seq**: 한 프로세스 안의 잠금으로 번호를 줄 세웁니다. 프로세스를 둘 이상 띄우거나 서버를 여러 대 두면 attempt_no 가 겹쳐 기록이 거절될 수 있습니다(미확인, 시험 안 함). 공개 직후에는 프로세스 1개로 둡니다.
+- **개발용 로그인**: 비밀번호가 없는 길이라 공개 주소에서는 열리면 안 됩니다. 지금도 공개 이름을 `Z2H_EXTRA_HOSTS` 에 넣으면 저절로 꺼지고, 프록시 머리말이 붙은 요청은 받지 않습니다. 그래도 공개 때는 `Z2H_DEV_AUTH=0` 을 명시합니다.

@@ -6,6 +6,7 @@
 // 들어갈 칸이 없다. share_card.payload 에도 이 입력 객체만 저장한다.
 // 공유: "X에 공유"는 X 글쓰기 창(intent)에 미리 채운 글만 넘긴다. 자동 게시·이미지 첨부·공개 주소 없음(D45, X4).
 import { config } from '../config';
+import { isBlockedName, type NameFilter } from './name-filter.mjs';
 
 export type CardKind = 'ART-TASTER' | 'ART-L01';
 
@@ -37,12 +38,20 @@ export type CardInput = TasterCardInput | L01CardInput;
 const ONLY_AZ = /^[a-z]+$/;
 const lossNum = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
-/** 화이트리스트 열쇠만 남기고 값 모양을 확인한다. 모르는 종류면 null */
-export function sanitizeCardInput(raw: unknown): CardInput | null {
+/**
+ * 화이트리스트 열쇠만 남기고 값 모양을 확인한다. 모르는 종류면 null.
+ * filter(이름 금칙어, 정본)를 주면 이름 카드의 이름에 같은 규칙을 한 번 더 건다(카드 그리기 직전 방어).
+ * 주지 않으면 모양 검사만 한다(저장해 둔 옛 카드 행과 비교할 때).
+ */
+export function sanitizeCardInput(raw: unknown, filter?: NameFilter | null): CardInput | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
   if (r.kind === 'ART-TASTER') {
-    const names = Array.isArray(r.names) ? r.names.filter((n): n is string => typeof n === 'string' && ONLY_AZ.test(n) && n.length <= config.taste.maxNameChars).slice(0, config.taste.maxNames) : [];
+    const names = Array.isArray(r.names)
+      ? r.names
+          .filter((n): n is string => typeof n === 'string' && ONLY_AZ.test(n) && n.length <= config.taste.maxNameChars && !isBlockedName(n, filter ?? null))
+          .slice(0, config.taste.maxNames)
+      : [];
     return { kind: 'ART-TASTER', names, loss_start: lossNum(r.loss_start), loss_end: lossNum(r.loss_end), taste_complete: r.taste_complete === true };
   }
   if (r.kind === 'ART-L01') {

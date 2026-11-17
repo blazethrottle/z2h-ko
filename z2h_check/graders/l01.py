@@ -1003,9 +1003,63 @@ def r2(Value=None):
     return "위상 정렬을 쓰는 backward() 가 원본 micrograd 와 같은 기울기를 냅니다." + U.torch_note(done, len(REUSE_EXPRS))
 
 
-@grader("L01-R3", "MLP(3, [4,4,1]) 학습으로 손실 0.1 아래", 'check("L01-R3", n, loss)')
-def r3(n=None, loss=None):
-    """n: 빈 노트북에서 다시 만들어 학습한 MLP(3, [4, 4, 1]), loss: 마지막으로 계산한 손실(Value 또는 숫자)."""
-    last = _check_trained(n, loss, ref()["R3"]["last_loss_max"],
-                          "반복을 늘려(예: 100번 이상) 더 학습한 뒤 다시 채점하세요.")
-    return f"MLP(3, [4, 4, 1]) 학습 손실이 0.1 아래로 내려갔습니다(마지막 손실 {F(last)})."
+_R3_PASSED = {}  # id(n) -> (n, 통과한 학습 셀 실행 번째). 기준 횟수를 넘긴 뒤 다시 확인해도 통과 기록을 지우지 않으려고 기억한다
+
+
+def _runs_number(runs):
+    """학습 셀 실행 횟수(1 이상 정수)."""
+    if isinstance(runs, bool) or not isinstance(runs, int):
+        raise U.Fail(f"runs 에는 학습 셀을 실행한 횟수(1 이상 정수)가 와야 합니다(받은 것: {U.type_name(runs)}). "
+                     f"이렇게 부르세요: {USAGE['L01-R3']}")
+    if runs < 1:
+        raise U.Fail(f"runs: 내 값 {runs}. 학습 셀을 실행한 횟수는 1 이상이어야 합니다.")
+    return runs
+
+
+@grader("L01-R3", "MLP(3, [4,4,1]) 학습으로 손실 0.1 아래", 'check("L01-R3", n, loss, runs=runs)')
+def r3(n=None, loss=None, runs=None):
+    """n: 빈 노트북에서 다시 만들어 학습한 MLP(3, [4, 4, 1]), loss: 학습 셀이 마지막으로 계산한 손실(Value 또는 숫자),
+    runs: 그 n 으로 학습 셀을 몇 번 실행했는지(1 이상, 노트북은 셀 실행을 세어 넣는다).
+
+    교사 정본 L01-R3: 학습 셀(steps_per_run 번 반복)은 최대 max_reruns 번 다시 실행해도 되고, 다시 실행은 힌트로 세지 않는다.
+    - runs 번째 안에서 마지막 손실이 기준 미만이면 통과.
+    - 아직 기준 위이고 runs < max_reruns 면 "○ 아직"(기록하지 않음: 결과코드·서버·시도 횟수에 안 들어감).
+    - runs == max_reruns 인데 기준 위면 "✕ 다시"(구현을 의심하고 힌트로).
+    - runs > max_reruns 면 통과로 치지 않는다(처음부터 다시). 같은 n 이 기준 안에서 이미 통과했다면 그 기록은 두고 "○ 참고"만.
+    - runs 를 모르면(None, 셀 실행을 셀 수 없는 곳) 손실만 본다."""
+    r = ref()["R3"]
+    limit, max_runs, steps = r["last_loss_max"], r["max_reruns"], r["steps_per_run"]
+    if runs is None:
+        last = _check_trained(n, loss, limit, f"학습 셀({steps}번 반복)은 최대 {max_runs}번까지 다시 실행해도 됩니다. "
+                                              "학습 셀을 한 번 더 실행한 뒤 다시 확인하세요.")
+        return (f"MLP(3, [4, 4, 1]) 학습 손실이 {F(limit)} 아래로 내려갔습니다(마지막 손실 {F(last)}). "
+                "학습 셀을 몇 번 실행했는지는 셀 수 없어 손실만 봤습니다.")
+    k = _runs_number(runs)
+    _check_mlp_41(n, "n")
+    last = _loss_number(loss, "마지막 loss")
+    now = _model_loss(n, "n")
+    if last < limit and not now < limit:
+        raise U.Fail(f"넘긴 n 으로 다시 계산한 손실: {F(now)}. {F(limit)} 미만이어야 합니다. 학습한 그 n 과 마지막 loss 를 함께 넘기세요.")
+    where = f"학습 셀 {k}번째 실행(합계 {k * steps}번 반복)"
+    total = f"학습 셀 {max_runs}번(합계 {max_runs * steps}번 반복)"
+    if k > max_runs:
+        passed = _R3_PASSED.get(id(n))
+        if passed is not None and passed[0] is n:
+            raise U.NotYet(f"이 n 은 학습 셀 {passed[1]}번째 실행에서 이미 통과했습니다. 지금은 {k}번째라 기준({max_runs}번)을 넘었고, "
+                           "그 뒤로 더 학습한 결과는 따로 채점하지 않습니다. 통과 기록은 그대로입니다.", mark="○ 참고")
+        raise U.Fail(f"{where}입니다. 재구성 기준은 {total} 안이라 이번 결과는 통과로 치지 않습니다(마지막 손실 {F(last)}). "
+                     "처음부터 다시 만들어 보세요: 만들기 셀부터 다시 실행하면 새 n 으로 1번째부터 다시 셉니다.")
+    if last < limit:
+        first = _R3_PASSED.get(id(n))
+        if first is None or first[0] is not n:  # 같은 n 이 처음 통과한 번째를 기억한다
+            _R3_PASSED[id(n)] = (n, k)
+        return (f"{where}에서 손실이 {F(limit)} 아래로 내려갔습니다(마지막 손실 {F(last)}). "
+                "학습 셀을 다시 실행한 횟수는 힌트로 세지 않습니다. 더 실행하지 않아도 됩니다.")
+    if k < max_runs:
+        raise U.NotYet(f"마지막 손실 {F(last)}, 목표는 {F(limit)} 미만입니다({where}). 학습 셀만 한 번 더 실행한 뒤 이 셀을 다시 "
+                       f"실행하세요(앞으로 {max_runs - k}번 더 됩니다). 다시 실행은 힌트로 세지 않습니다. "
+                       "만들기 셀을 다시 실행하면 새 n 이라 처음부터 셉니다.")
+    raise U.Fail(f"{total} 실행해도 마지막 손실이 {F(last)} 로 {F(limit)} 위입니다. 정답 구현은 거의 언제나 이 안에 내려가니 "
+                 "구현을 의심해 보세요: 갱신이 p.data += -0.05 * p.grad (빼기)인지, p.grad = 0.0 이 loss.backward() 앞에 있는지, "
+                 "Neuron·Layer·MLP 의 parameters() 가 모든 w, b 를 모으는지. 막히면 앱에서 이 조각의 힌트 H1부터 보세요. "
+                 "구현이 맞아 보이면 드물게 시작값 탓일 수 있으니 만들기 셀부터 다시 실행해 새 n 으로 해 보세요.")

@@ -26,6 +26,16 @@ class Skip(Exception):
         self.message_ko = message_ko
 
 
+class NotYet(Exception):
+    """아직 진행 중 ("○ 아직"). 통과도 실패도 아니고 기록하지 않는다(이 칸의 이전 기록은 그대로 둔다).
+    지금은 L01-R3 처럼 '학습 셀을 다시 실행해도 되는' 칸에서만 쓴다. mark 는 화면 앞머리("○ 아직", "○ 참고")."""
+
+    def __init__(self, message_ko, mark="○ 아직"):
+        super().__init__(message_ko)
+        self.message_ko = message_ko
+        self.mark = mark
+
+
 TORCH_SKIP_NOTE = "PyTorch 비교는 torch가 없어 건너뜀"
 MISSING = object()
 

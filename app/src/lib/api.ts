@@ -1,9 +1,11 @@
 // 진도 서버 API 주소와 요청 모양을 한 곳에 모은다 (DESIGN.md 12.5절 표가 계약).
-// 서버 작업자의 server/API.md 와 다르면 이 파일만 고친다.
+// 서버 작업자의 server/API.md 와 다르면 이 파일만 고친다. 기준 주소·credentials 는 config.api(공개 전환 때 바꿀 곳).
 
-import { config } from '../config';
+import { config, isAuthProvider, type AuthProvider } from '../config';
 
-export const API_BASE = '/api';
+export type { AuthProvider };
+
+export const API_BASE = config.api.base;
 
 export const API_PATHS = {
   health: `${API_BASE}/health`,
@@ -57,14 +59,12 @@ export interface StateResponse {
 }
 
 /**
- * 서버가 알려 주는 로그인 길(server/API.md 1절). /api/me 성공 응답과, Tailscale 경유인데 학습 계정에 안 이어진 401 본문에 온다.
- * dev_local: 맥미니(127.0.0.1)의 개발용 로그인. tailscale: 폰에서 Tailscale serve 로 연 화면(앱이 할 로그인 동작 없음).
- * 칸이 없는 옛 응답은 null 로 두고 지금과 똑같이 동작한다
+ * 서버가 알려 주는 로그인 길(server/API.md 1절). /api/me 성공 응답과 401 본문에 온다.
+ * 받는 값은 config.auth.screens 표에 있는 것만(dev_local, tailscale). 칸이 없거나 표에 없는 값("none" 등)은 null 로 두고
+ * 화면은 표의 fallback 행(지금과 같은 동작)을 쓴다
  */
-export type AuthProvider = 'dev_local' | 'tailscale';
-
 export function parseAuthProvider(v: unknown): AuthProvider | null {
-  return v === 'dev_local' || v === 'tailscale' ? v : null;
+  return isAuthProvider(v) ? v : null;
 }
 
 export class NetworkError extends Error {
@@ -92,7 +92,7 @@ async function requestJson<T>(fetchImpl: FetchLike, url: string, init: RequestIn
   const timer = ctrl ? setTimeout(() => ctrl.abort(), config.requestTimeoutMs) : null;
   let res: Response;
   try {
-    res = await fetchImpl(url, { ...init, signal: ctrl?.signal, credentials: 'same-origin' });
+    res = await fetchImpl(url, { ...init, signal: ctrl?.signal, credentials: config.api.credentials });
   } catch (e) {
     throw new NetworkError(String((e as Error)?.message ?? e));
   } finally {

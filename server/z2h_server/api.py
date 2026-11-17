@@ -1,9 +1,10 @@
 """HTTP API (DESIGN.md 12.5). 모두 JSON.
 
 학습 기록 API 는 요청의 현재 계정(AuthAdapter)으로 처리한다. 계정이 없으면 401 no_user.
-요청마다 먼저 그 요청을 맡을 로그인 수단 하나를 고른다(auth.for_request). Z2H_TAILSCALE_HOST 가 있으면
-Host 가 serve 이름인 요청은 TailscaleAuth, 그 밖은 개발용 로그인. 401 본문과 GET /api/me 에 그 수단(auth_provider)을 적는다.
-로컬 개발 로그인(LocalDevAuth) API 는 /api/dev-auth/* 에 있다(127.0.0.1 전용, serve 이름 Host 에서는 404).
+요청마다 먼저 그 요청을 맡을 로그인 수단 하나를 고른다(auth.for_request). 어떤 수단이 서는지는 auth.build_auth 가
+설정으로 정하고, 이 파일은 수단의 구체 이름·provider 글자로 가르지 않는다(AuthAdapter 의 속성·메서드만 쓴다).
+401 본문과 GET /api/me 에 그 수단(auth_provider)을 적는다.
+로컬 개발 로그인 API 는 /api/dev-auth/* 에 있다. 수단이 dev_login(request) 으로 열어 줄 때만 동작하고, 아니면 404.
 """
 
 from __future__ import annotations
@@ -29,11 +30,12 @@ _CHECK_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 
 
 class NoUser(Exception):
-    """현재 계정이 없음(로그인 전). provider = 이 요청을 맡은 로그인 수단(401 본문의 auth_provider)."""
+    """현재 계정이 없음(로그인 전). 이 요청을 맡은 수단의 provider(401 본문의 auth_provider)와 안내 글을 싣는다."""
 
-    def __init__(self, provider: str = ""):
-        self.provider = provider
-        super().__init__(provider)
+    def __init__(self, auth: AuthAdapter):
+        self.provider = auth.provider
+        self.message_ko = auth.no_user_message_ko
+        super().__init__(self.provider)
 
 
 class DevAuthOff(Exception):
@@ -57,7 +59,7 @@ def _who(request: Request) -> tuple[AuthAdapter, str]:
     auth = _auth(request)
     user_id = auth.current_user_id(request)
     if user_id is None:
-        raise NoUser(auth.provider)
+        raise NoUser(auth)
     return auth, user_id
 
 
@@ -89,20 +91,19 @@ def health(request: Request):
 def _dev_auth(request: Request) -> LocalDevAuth:
     """개발용 로그인 경로의 문. 공용 문 검사(security.py)와 따로, 여기서 직접 막는다.
 
-    꺼져 있거나(터널 주소 설정·Z2H_DEV_AUTH=0), 접속한 쪽이 127.0.0.1 이 아니거나,
-    프록시·터널 머리말이 있거나, Host 가 127.0.0.1·localhost 가 아니면 이 경로는 없는 것처럼 404.
-    Host 가 serve 이름이면 이 요청을 맡는 수단이 TailscaleAuth 라서 늘 404.
+    이 요청을 맡은 수단이 열어 주지 않으면(dev_login 이 None) 이 경로는 없는 것처럼 404.
+    개발용 로그인은 꺼져 있거나(터널 주소 설정·Z2H_DEV_AUTH=0), 접속한 쪽이 127.0.0.1 이 아니거나,
+    프록시·터널 머리말이 있거나, Host 가 127.0.0.1·localhost 가 아니면 열지 않는다. serve 이름 Host 에서는 늘 닫힘.
     """
-    auth = _auth(request)
-    if not isinstance(auth, LocalDevAuth) or not auth.allows(request):
+    dev = _auth(request).dev_login(request)
+    if dev is None:
         raise DevAuthOff()
-    return auth
+    return dev
 
 
 def _with_session_cookie(auth: LocalDevAuth, user: dict[str, Any]) -> JSONResponse:
-    token, seconds = auth.login(user["user_id"])
     resp = JSONResponse({"ok": True, "user": _public_user(user)})
-    resp.set_cookie(auth.COOKIE, token, max_age=seconds, httponly=True, samesite="strict", path="/")
+    auth.start_session(resp, user["user_id"])  # 쿠키 이름·속성은 설정(config.CookieSettings) 한 곳
     return resp
 
 
@@ -149,9 +150,8 @@ def dev_login(body: LoginBody, request: Request):
 @router.post("/dev-auth/logout")
 def dev_logout(request: Request):
     auth = _dev_auth(request)
-    auth.logout(request)
     resp = JSONResponse({"ok": True})
-    resp.delete_cookie(auth.COOKIE, path="/")
+    auth.end_session(request, resp)
     return resp
 
 

@@ -4,6 +4,7 @@
 // - "이미지 저장"은 PNG 를 내 기기에 내려받기만 한다(서버에 올리지 않음). "글 복사"는 사실 문장.
 // - "X에 공유"는 X 글쓰기 창(intent)을 새 창으로 열기만 한다. 자동 게시 API·공개 공유 주소·공개 카드 페이지 없음(X4).
 // - 카드를 만들면 share_card(visibility private, image_path 비움) 행을 동기화로 저장하고, 이름 카드는 taster_result.share_card_id 를 잇는다.
+// - 이름 금칙어(교사 정본, 빌드 때 만든 nameFilter): 저장해 둔 글을 정리할 때, 카드 입력을 만들 때, 그리기 직전에 한 번 더 건다.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { TASTE_MARK } from '../badge-rules';
 import { config } from '../config';
@@ -26,7 +27,7 @@ import {
   type L01CardText,
   type TasterCardText,
 } from '../lib/share-card';
-import { attemptOf, cleanNames, tasteStatus, TASTER_TABLE } from '../lib/taste';
+import { attemptOf, cleanNames, tasteStatus, TASTER_TABLE, type NameFilter } from '../lib/taste';
 import type { Runtime } from '../lib/runtime';
 import type { Row } from '../lib/sync/store';
 import { nowKst } from '../lib/time';
@@ -43,6 +44,8 @@ interface StepRef {
 interface Props {
   taster: (TasterCardText & { content_version: string; required_steps: string[]; unlock_after: string; names_step: StepRef; name_ko: string }) | null;
   l01: (L01CardText & { content_version: string; unlock_step: StepRef; name_ko: string }) | null;
+  /** 이름 금칙어(빌드 때 정본에서 만든 것) */
+  nameFilter: NameFilter | null;
 }
 
 
@@ -112,9 +115,9 @@ function ShareAppView(p: Props) {
         ))}
       </nav>
       {kind === 'ART-TASTER' ? (
-        p.taster ? <TasterCard p={p.taster} rt={rt} t={t} /> : <p class="waiting">자료 대기</p>
+        p.taster ? <TasterCard p={p.taster} rt={rt} t={t} filter={p.nameFilter} /> : <p class="waiting">자료 대기</p>
       ) : p.l01 ? (
-        <L01Card p={p.l01} rt={rt} t={t} />
+        <L01Card p={p.l01} rt={rt} t={t} filter={p.nameFilter} />
       ) : (
         <p class="waiting">자료 대기</p>
       )}
@@ -122,20 +125,23 @@ function ShareAppView(p: Props) {
   );
 }
 
-function TasterCard({ p, rt, t }: { p: NonNullable<Props['taster']>; rt: Runtime | null; t: Record<string, Row[]> | null }) {
+function TasterCard({ p, rt, t, filter }: { p: NonNullable<Props['taster']>; rt: Runtime | null; t: Record<string, Row[]> | null; filter: NameFilter | null }) {
   const rows = t?.[TASTER_TABLE] ?? [];
   const attemptNo = attemptOf(rows);
   const st = tasteStatus(rows, attemptNo, p.required_steps);
   const saved = rows.find((r) => Number(r.attempt_no) === attemptNo && r.step_id === p.unlock_after) ?? null;
-  const clean = cleanNames(String(saved?.pasted_names_text ?? ''));
+  const clean = cleanNames(String(saved?.pasted_names_text ?? ''), { filter });
   const done = st.complete || (t?.user_badge ?? []).some((r) => r.badge_id === TASTE_MARK.badge_id);
-  const input = sanitizeCardInput({
-    kind: 'ART-TASTER',
-    names: clean.names,
-    loss_start: saved?.pasted_loss_start ?? null,
-    loss_end: saved?.pasted_loss_end ?? null,
-    taste_complete: done,
-  });
+  const input = sanitizeCardInput(
+    {
+      kind: 'ART-TASTER',
+      names: clean.names,
+      loss_start: saved?.pasted_loss_start ?? null,
+      loss_end: saved?.pasted_loss_end ?? null,
+      taste_complete: done,
+    },
+    filter,
+  );
   const ready = cardReady(input);
 
   const onDrawn = async () => {
@@ -163,12 +169,12 @@ function TasterCard({ p, rt, t }: { p: NonNullable<Props['taster']>; rt: Runtime
         </div>
       ) : (
         <>
-          {clean.blockedRemoved.length > 0 && (
+          {clean.blocked > 0 && filter?.message && (
             <p class="small" data-testid="card-blocked">
-              카드에 넣지 않는 이름이 있어 뺐습니다. 셀을 다시 실행해 새 이름을 받아 보세요.
+              {filter.message}
             </p>
           )}
-          <CardView input={input!} text={p} contentVersion={p.content_version} onDrawn={onDrawn} />
+          <CardView input={input!} text={p} contentVersion={p.content_version} onDrawn={onDrawn} filter={filter} />
         </>
       )}
       {!ready && <SharePolicy ready={false} />}
@@ -176,7 +182,7 @@ function TasterCard({ p, rt, t }: { p: NonNullable<Props['taster']>; rt: Runtime
   );
 }
 
-function L01Card({ p, rt, t }: { p: NonNullable<Props['l01']>; rt: Runtime | null; t: Record<string, Row[]> | null }) {
+function L01Card({ p, rt, t, filter }: { p: NonNullable<Props['l01']>; rt: Runtime | null; t: Record<string, Row[]> | null; filter: NameFilter | null }) {
   const unlocked = (t?.step_progress ?? []).some((r) => r.step_id === p.unlock_step.step_id && r.status === 'done');
   const latest = latestOfKind(t?.share_card ?? [], 'ART-L01');
   const [made, setMade] = useState<CardInput | null>(null);
@@ -237,16 +243,29 @@ function L01Card({ p, rt, t }: { p: NonNullable<Props['l01']>; rt: Runtime | nul
           </div>
         </div>
       )}
-      {unlocked && ready ? <CardView input={current!} text={p} contentVersion={p.content_version} onDrawn={onDrawn} /> : <SharePolicy ready={false} />}
+      {unlocked && ready ? <CardView input={current!} text={p} contentVersion={p.content_version} onDrawn={onDrawn} filter={filter} /> : <SharePolicy ready={false} />}
     </section>
   );
 }
 
 /** 카드 그림 + 버튼 3개 + 안내 */
-function CardView({ input, text, onDrawn }: { input: CardInput; text: TasterCardText | L01CardText; contentVersion: string; onDrawn: () => Promise<void> }) {
+function CardView({
+  input: given,
+  text,
+  onDrawn,
+  filter,
+}: {
+  input: CardInput;
+  text: TasterCardText | L01CardText;
+  contentVersion: string;
+  onDrawn: () => Promise<void>;
+  filter: NameFilter | null;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [drawn, setDrawn] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  // 그리기 직전 방어: 이름 금칙어를 한 번 더 건다(앞에서 이미 걸렀으면 그대로)
+  const input = sanitizeCardInput(given, filter) ?? given;
   const spec = cardSpec(input, text);
   const key = JSON.stringify(input);
 

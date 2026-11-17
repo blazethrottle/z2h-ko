@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import { NOTEBOOKS, TASTER } from '../../content-config.mjs';
+import { NAMES_TXT, NOTEBOOKS, TASTER } from '../../content-config.mjs';
+import { splitNameLines } from '../name-filter.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const APP_DIR = path.resolve(HERE, '../../..');
@@ -106,15 +107,32 @@ export function readBundle(paths = resolvePaths()) {
   return bundle;
 }
 
-/** 맛보기 묶음 (검사 전): taster.json + 교사 실행 출력 taster_outputs.json + 노트북 있는지 */
+/** 맛보기 묶음 (검사 전): taster.json + 교사 실행 출력 taster_outputs.json + 금칙어 정본 + names.txt + 노트북 있는지 */
 export function readTasterBundle(paths = resolvePaths()) {
-  const bundle = { file: null, outputsFile: null, notebookPath: TASTER.notebook, notebookExists: false, rawTexts: [], parseErrors: [] };
+  const bundle = {
+    file: null,
+    outputsFile: null,
+    blocklistFile: null,
+    realNames: null,
+    namesPath: NAMES_TXT.path,
+    notebookPath: TASTER.notebook,
+    notebookExists: false,
+    rawTexts: [],
+    parseErrors: [],
+  };
   const f = path.join(paths.tasterDir, TASTER.file);
   if (fs.existsSync(f)) bundle.file = readJson(f, bundle);
   else bundle.parseErrors.push({ path: rel(f), message: '맛보기 콘텐츠(taster.json)가 없습니다' });
   const o = path.join(paths.tasterDir, TASTER.outputsFile);
   if (fs.existsSync(o)) bundle.outputsFile = readJson(o, bundle);
   else bundle.parseErrors.push({ path: rel(o), message: '교사 실행 출력(taster_outputs.json)이 없습니다' });
+  const b = path.join(paths.tasterDir, TASTER.blocklistFile);
+  if (fs.existsSync(b)) bundle.blocklistFile = readJson(b, bundle);
+  else bundle.parseErrors.push({ path: rel(b), message: '이름 금칙어 정본(taster_blocklist.json)이 없습니다' });
+  // names.txt 는 3만 줄이라 rawTexts(글 검사)에 넣지 않는다
+  const n = path.join(paths.repoRoot, NAMES_TXT.path);
+  if (fs.existsSync(n)) bundle.realNames = splitNameLines(fs.readFileSync(n, 'utf8'));
+  else bundle.parseErrors.push({ path: NAMES_TXT.path, message: 'names.txt 가 없습니다(NOTICE.md 의 makemore 줄을 보고 저장소에 넣어 주세요)' });
   bundle.notebookExists = fs.existsSync(path.join(paths.repoRoot, TASTER.notebook));
   return bundle;
 }

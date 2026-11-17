@@ -17,10 +17,9 @@ from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from .config import Settings
+from .config import LOOPBACK, Settings
 
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-LOOPBACK = "127.0.0.1"
 
 
 def host_allowed(raw: str | None, allowed: frozenset[str]) -> bool:
@@ -28,7 +27,7 @@ def host_allowed(raw: str | None, allowed: frozenset[str]) -> bool:
         return False
     text = raw.strip().lower()
     if not text or text.startswith("["):
-        return False  # IPv6 주소는 받지 않는다(127.0.0.1 에만 바인드)
+        return False  # IPv6 주소는 받지 않는다(IPv4 루프백에만 바인드)
     name, sep, port = text.rpartition(":")
     if not sep:
         name = text
@@ -76,12 +75,12 @@ class GuardMiddleware:
             client = scope.get("client")
             server = scope.get("server")
             if not client or client[0] != LOOPBACK or (server and server[0] != LOOPBACK):
-                resp = _error(403, "not_loopback", "이 서버는 이 컴퓨터 안(127.0.0.1)에서만 열 수 있습니다.")
+                resp = _error(403, "not_loopback", f"이 서버는 이 컴퓨터 안({LOOPBACK})에서만 열 수 있습니다.")
                 await resp(scope, receive, send)
                 return
 
         if not host_allowed(headers.get("host"), s.allowed_hostnames):
-            resp = _error(400, "bad_host", "주소가 맞지 않습니다. http://127.0.0.1:8787 로 열어 주세요.")
+            resp = _error(400, "bad_host", f"주소가 맞지 않습니다. {s.base_url} 로 열어 주세요.")
             await resp(scope, receive, send)
             return
 
@@ -107,7 +106,9 @@ class GuardMiddleware:
                 return
 
         limit = s.max_body_bytes
-        too_large = _error(413, "too_large", "보내는 내용이 너무 큽니다(최대 1MB). 나눠서 보내 주세요.")
+        too_large = _error(
+            413, "too_large", f"보내는 내용이 너무 큽니다(최대 {limit / (1024 * 1024):g}MB). 나눠서 보내 주세요."
+        )
         length = headers.get("content-length")
         if length is not None and (not length.strip().isdigit() or int(length) > limit):
             await too_large(scope, receive, send)

@@ -2,6 +2,9 @@
 // 저장 표 taster_result: 열쇠 (attempt_no, step_id), 칸 self_reported(similar|different), pasted_names_text,
 // pasted_loss_start, pasted_loss_end, share_card_id, at (server/API.md 3절). 붙여 넣은 값은 앱이 확인하지 않은 값이다.
 import { config } from '../config';
+import { isBlockedName, type NameFilter } from './name-filter.mjs';
+
+export type { NameFilter };
 
 export const TASTER_TABLE = 'taster_result';
 export type SelfReport = 'similar' | 'different';
@@ -18,17 +21,17 @@ export interface CleanNames {
   flagged: number[];
   /** maxNames 를 넘어 버린 줄 수 */
   dropped: number;
-  /** 금칙어라 뺀 이름 → "다시 실행" 권유 */
-  blockedRemoved: string[];
+  /** 금칙어라 뺀 줄 수 → 정본 안내("다시 실행"). 걸린 말 자체는 돌려주지 않는다(화면에 다시 보이지 않게) */
+  blocked: number;
 }
 
-export function cleanNames(
-  raw: string,
-  opts: { maxNames?: number; maxChars?: number; blocked?: string[] } = {},
-): CleanNames {
+/**
+ * 붙여 넣은 이름 정리. 순서: 기존 규칙(a~z 밖 글자·maxChars 초과 → 빼기, 얼큰이 결정) → 금칙어(정본, 허용 먼저) → 최대 maxNames 줄.
+ * filter 는 빌드 때 정본에서 만든 것(src/lib/content/taster.mjs nameFilter)을 화면 부품이 넘긴다. 없으면 금칙어 검사를 하지 않는다.
+ */
+export function cleanNames(raw: string, opts: { maxNames?: number; maxChars?: number; filter?: NameFilter | null } = {}): CleanNames {
   const maxNames = opts.maxNames ?? config.taste.maxNames;
   const maxChars = opts.maxChars ?? config.taste.maxNameChars;
-  const blocked = new Set((opts.blocked ?? config.taste.blockedNames).map((b) => b.trim().toLowerCase()).filter(Boolean));
   const lines = String(raw ?? '')
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -39,10 +42,9 @@ export function cleanNames(
     if (!ONLY_AZ.test(l) || [...l].length > maxChars) flagged.push(i + 1);
     else valid.push(l);
   });
-  const blockedRemoved = valid.filter((l) => blocked.has(l));
-  const kept = valid.filter((l) => !blocked.has(l));
+  const kept = valid.filter((l) => !isBlockedName(l, opts.filter ?? null));
   const names = kept.slice(0, maxNames);
-  return { names, text: names.join('\n'), flagged, dropped: Math.max(0, kept.length - maxNames), blockedRemoved };
+  return { names, text: names.join('\n'), flagged, dropped: Math.max(0, kept.length - maxNames), blocked: valid.length - kept.length };
 }
 
 /** 손실 칸(선택): 비우면 null, 0 이상 숫자(소수점은 점)만 */

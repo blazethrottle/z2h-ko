@@ -1,13 +1,12 @@
 """Alembic 실행 환경.
 
-DB 주소 우선순위: (1) 호출한 쪽이 넘긴 연결 (2) sqlalchemy.url 옵션 (3) z2h_server/config.py 규칙
-(Z2H_DB_URL, Z2H_DB_PATH, 기본 server/data/z2h.sqlite3).
+DB 주소 우선순위: (1) 호출한 쪽이 넘긴 연결 (2) sqlalchemy.url 옵션 (3) 서버 설정(z2h_server/config.py 의
+load_settings().db_url. 환경변수 규칙도 그쪽 한 곳). 처음 만들 때의 준비(SQLite 폴더)는 저장 계층(prepare_location).
 버전 표는 Alembic 기본 alembic_version(PM 지시, 따로 만들지 않음).
 """
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -27,13 +26,13 @@ def _db_url() -> str:
     url = config.get_main_option("sqlalchemy.url")
     if url:
         return url
-    from z2h_server.config import DEFAULT_DB_PATH, sqlite_url
+    from z2h_server.config import load_settings
+    from z2h_server.storage import prepare_location
 
-    if os.environ.get("Z2H_DB_URL"):
-        return os.environ["Z2H_DB_URL"]
-    path = Path(os.environ.get("Z2H_DB_PATH") or DEFAULT_DB_PATH)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return sqlite_url(path)
+    url = load_settings().db_url
+    if not context.is_offline_mode():
+        prepare_location(url)
+    return url
 
 
 def run_migrations_offline() -> None:

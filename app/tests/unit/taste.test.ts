@@ -50,16 +50,19 @@ describe('이름 붙여 넣기 정리 (최대 10줄, a~z 밖 줄·20글자 넘�
     expect(r.names).toEqual(['gsli', 'di']);
     expect(r.text).not.toMatch(/홍길동|010|@|Kenah/);
   });
-  it('금칙어 목록에 있는 이름은 뺀다 (목록은 설정 한 곳, 지금은 비어 있음. 지어 넣지 않는다)', () => {
-    expect(config.taste.blockedNames).toEqual([]);
-    const r = cleanNames('gsli\nbadword\ndi', { blocked: ['BadWord'] });
+  it('금칙어에 걸린 이름은 뺀다 (목록은 설정이 아니라 교사 정본, 빌드 때 만든 필터를 넘긴다. 자세한 검사는 nameFilter.test.ts)', () => {
+    expect('blockedNames' in config.taste).toBe(false);
+    const filter = { version: 't', exact: ['badword'], substring: [], allow: [], message: '뺐어요' };
+    const r = cleanNames('gsli\nbadword\ndi', { filter });
     expect(r.names).toEqual(['gsli', 'di']);
-    expect(r.blockedRemoved).toEqual(['badword']);
+    expect(r.blocked).toBe(1);
+    // 필터를 주지 않으면 금칙어 검사를 하지 않는다
+    expect(cleanNames('gsli\nbadword').blocked).toBe(0);
   });
   it('남은 이름이 없으면 0개 (저장·카드 불가)', () => {
     expect(cleanNames('  \n \n').names).toEqual([]);
     expect(cleanNames('홍길동\n010-1234-5678').names).toEqual([]);
-    expect(cleanNames('badword', { blocked: ['badword'] }).names).toEqual([]);
+    expect(cleanNames('badword', { filter: { version: 't', exact: ['badword'], substring: [], allow: [], message: '' } }).names).toEqual([]);
   });
 });
 

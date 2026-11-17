@@ -1,6 +1,7 @@
 // 배지·도장·맛보기 완료 표시 규칙 한 곳 (DESIGN.md 0-1절 D47, 1절 "badge_rules 설정 한 곳", 5절 badge_def).
 // 값의 출처: inputs/pedagogy/VALUE_CURRICULUM.md 2절(배지 조건, 공유 원칙), inputs/design/decisions.md D31·D47·D50,
 // 교사 정본 inputs/pedagogy/content/L01.json lecture.rewards(STAMP-L01, BADGE-S1 진행), taster.json completion_rule(TASTER-DONE).
+// 배지 id(첫 셀 완주 BADGE-S0, 맛보기 완료 표시 TASTER-DONE)는 교사 정본 data-spec.md 12번으로 확정(2026-11-17).
 // 계산은 src/lib/badges.ts 가 이 파일만 읽어서 한다. 여기에는 정의와 조건만 둔다.
 //
 // 지키는 것

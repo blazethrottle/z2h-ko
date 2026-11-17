@@ -3,7 +3,7 @@
 // 가입·로그인 화면(이메일·Google)은 만들지 않는다. 개발용 계정 바꾸기는 /settings/.
 // 폰(Tailscale serve 경유)에서는 서버가 접속자 정보로 계정을 정하므로 앱은 로그인 동작을 하지 않는다(authProvider).
 
-import { config } from '../config';
+import { authScreen, config } from '../config';
 import {
   NetworkError,
   createDevAccount,
@@ -37,10 +37,11 @@ export interface EnsuredAccount {
   authProvider?: AuthProvider;
 }
 
-const ACCOUNT_KEY = 'z2h.account';
-const CLIENT_KEY = 'z2h.client_id';
-export const PENDING_DB = 'z2h-pending';
-export const accountDbName = (userId: string) => `z2h-u-${userId}`;
+// 이 기기 저장소 이름은 config.storage 한 곳
+const ACCOUNT_KEY = config.storage.accountKey;
+const CLIENT_KEY = config.storage.clientIdKey;
+export const PENDING_DB = config.storage.pendingDb;
+export const accountDbName = (userId: string) => `${config.storage.accountDbPrefix}${userId}`;
 
 export function readLastAccount(): Account | null {
   try {
@@ -58,8 +59,8 @@ export function rememberAccount(a: Account | null) {
 /**
  * 지금 계정을 정한다. 있으면 그대로, 없으면(401) 개발용 계정 목록에서 마지막에 쓴 계정 → 첫 계정 → 새로 만들기 순.
  * 서버에 닿지 못하면 offline, 개발용 로그인이 막혀 있으면(예: 터널) none.
- * Tailscale 경유(폰): 로그인은 서버가 serve 의 접속자 정보로 정한다. /api/me 401 본문이 tailscale 이면
- * 학습 계정에 안 이어진 접속자라 개발용 로그인(그 길에서는 늘 404)을 부르지 않고 none. 이어 주는 일은 맥미니에서 명령으로만 한다.
+ * 401 본문의 로그인 길이 개발용 로그인을 쓰지 않는 길이면(config.auth.screens 의 devLogin: false, 예: Tailscale 경유 폰)
+ * 개발용 로그인(그 길에서는 늘 404)을 부르지 않고 none. Tailscale 은 서버가 serve 의 접속자 정보로 정하고, 이어 주는 일은 맥미니에서 명령으로만 한다.
  */
 export async function ensureAccount(f: FetchLike, last: Account | null = readLastAccount()): Promise<EnsuredAccount> {
   const withProvider = (r: EnsuredAccount, p: AuthProvider | null): EnsuredAccount => (p ? { ...r, authProvider: p } : r);
@@ -70,7 +71,7 @@ export async function ensureAccount(f: FetchLike, last: Account | null = readLas
   } catch (e) {
     if (!(e instanceof NetworkError) || e.status !== 401) return { account: null, state: 'offline' };
     provider = errorAuthProvider(e);
-    if (provider === 'tailscale') return { account: null, state: 'none', authProvider: provider };
+    if (provider && !authScreen(provider).devLogin) return { account: null, state: 'none', authProvider: provider };
   }
   try {
     const { accounts } = await listDevAccounts(f);

@@ -111,6 +111,9 @@
   "R3": {
     "last_loss_max": 0.1,
     "params": 41,
-    "_설명": "교사 정본 rebuild_tasks L01-R3: MLP(3, [4, 4, 1])을 S15 데이터로 학습해 마지막 손실 0.0~0.1"
+    "max_reruns": 5,
+    "steps_per_run": 20,
+    "_설명": "교사 정본 rebuild_tasks L01-R3: MLP(3, [4, 4, 1])을 S15 데이터로 학습해 마지막 손실 0.0~0.1",
+    "_max_reruns_설명": "교사 정본 L01-R3 check.max_reruns, check.steps_per_run (2026-11-17 재구성): 학습 셀(steps_per_run 번 반복)을 최대 max_reruns 번 실행해 그 안에 0.1 아래면 통과. 다시 실행한 횟수는 힌트로 세지 않는다. tests/test_l01_reference.py 가 정본과 같은지 확인"
   }
 }

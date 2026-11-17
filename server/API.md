@@ -22,7 +22,7 @@
 | 요청 | 하는 일 |
 |---|---|
 | `GET /api/dev-auth/accounts` | `{accounts:[{user_id, display_name, path_id, locale, created_at}], current_user_id}` |
-| `POST /api/dev-auth/accounts` `{display_name?, path_id?(기본 full), locale?}` | 새 계정을 만들고 그 계정으로 로그인. 응답 `{ok, user}` + 쿠키 `z2h_dev_session`(HttpOnly, SameSite=Strict, 30일) |
+| `POST /api/dev-auth/accounts` `{display_name?, path_id?(기본 full), locale?}` | 새 계정을 만들고 그 계정으로 로그인. 응답 `{ok, user}` + 쿠키 `z2h_dev_session`(HttpOnly, SameSite=Strict, Path=/, 30일. 속성은 서버 설정 `CookieSettings` 한 곳에서 오고 기본값이 이것) |
 | `POST /api/dev-auth/login` `{user_id}` | 다른 계정으로 바꾸기(쿠키 새로 받음). 없는 계정이면 404 |
 | `POST /api/dev-auth/logout` | 세션 지우기 |
 | `GET /api/me` | 현재 계정 `{ok, user, auth_provider}`. `auth_provider` 는 `"dev_local"`(맥 개발용 로그인) 또는 `"tailscale"`(폰). 없으면 401 |

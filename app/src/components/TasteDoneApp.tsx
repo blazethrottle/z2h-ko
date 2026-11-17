@@ -2,12 +2,13 @@
 // "맛보기 완료"는 배지가 아니라 표시다(VALUE 2절). 필요한 단계를 이 시도에서 모두 "직접 확인했어요"로 누르면 보인다.
 // 이름 붙여 넣기 카드: T-S07 출력(이름)과 첫·마지막 손실(선택)을 붙여 넣어 taster_result(T-S07 줄)에 저장한다. 앱이 확인하지 않은 값이다.
 // a~z 밖 글자가 있거나 20글자 넘는 줄은 저장·카드에서 뺀다(개인 정보를 붙여 넣는 경우 대비, P2 검수 권고 2).
+// 그다음 이름 금칙어(교사 정본 taster_blocklist.json, 빌드 때 만든 nameFilter)에 걸린 줄도 빼고 정본 안내를 보인다. 걸린 말은 다시 보이지 않는다.
 // 저장한 뒤 "이름 카드 만들기"로 공유 카드 화면(/share/?card=ART-TASTER)에 간다. 가입·로그인 화면은 없다(자리 문구 한 줄).
 // 맛보기 완료가 되면 완료 표시(user_badge TASTER-DONE, 배지 아님)를 저장한다(src/badge-rules.ts).
 import { useEffect, useState } from 'preact/hooks';
 import { config } from '../config';
 import { openHint, recordAttempt } from '../lib/hints';
-import { cleanNames, parseLoss, saveNames, saveSelfReport, splitSummary, type SelfReport } from '../lib/taste';
+import { cleanNames, parseLoss, saveNames, saveSelfReport, splitSummary, type NameFilter, type SelfReport } from '../lib/taste';
 import { nowKst } from '../lib/time';
 import { useHintState } from './HintLadder';
 import Inline from './Inline';
@@ -30,6 +31,8 @@ interface Props {
   contentVersion: string;
   artifact: TasteArtifact | null;
   links: { diagnostic: string; basics: string; lecture: string; lectureLabel: string };
+  /** 이름 금칙어(빌드 때 정본에서 만든 것) */
+  nameFilter: NameFilter | null;
 }
 
 function TasteDoneAppView(p: Props) {
@@ -204,7 +207,7 @@ function NamesCard(p: Props & { rows: Record<string, any>[]; attemptNo: number; 
     if (saved.pasted_loss_end != null) setLossEnd(String(saved.pasted_loss_end));
   }, [saved?.pasted_names_text, saved?.pasted_loss_start, saved?.pasted_loss_end]);
 
-  const clean = cleanNames(names);
+  const clean = cleanNames(names, { filter: p.nameFilter });
   const savedText = saved?.pasted_names_text ?? null;
 
   const save = async () => {
@@ -212,9 +215,11 @@ function NamesCard(p: Props & { rows: Record<string, any>[]; attemptNo: number; 
     if (!clean.names.length)
       return setMsg({
         ok: false,
-        text: clean.flagged.length || clean.blockedRemoved.length
+        text: clean.flagged.length
           ? '남은 이름이 없어 저장하지 않았습니다. 모델 출력만 넣어 주세요. 카드도 만들 수 없습니다.'
-          : '붙여 넣은 이름이 없습니다. Colab의 출력 칸에서 이름 줄을 복사해 붙여 넣어 주세요.',
+          : clean.blocked
+            ? '남은 이름이 없어 저장하지 않았습니다. 셀을 다시 실행해 새 이름을 붙여 넣어 주세요. 카드도 만들 수 없습니다.'
+            : '붙여 넣은 이름이 없습니다. Colab의 출력 칸에서 이름 줄을 복사해 붙여 넣어 주세요.',
       });
     const ls = parseLoss(lossStart);
     const le = parseLoss(lossEnd);
@@ -307,9 +312,9 @@ function NamesCard(p: Props & { rows: Record<string, any>[]; attemptNo: number; 
               </p>
             )}
             {clean.dropped > 0 && <p class="small">이름은 {config.taste.maxNames}줄까지만 저장합니다. 뒤 {clean.dropped}줄은 넣지 않습니다.</p>}
-            {clean.blockedRemoved.length > 0 && (
+            {clean.blocked > 0 && p.nameFilter?.message && (
               <p class="small" data-testid="taste-names-blocked">
-                카드에 넣지 않는 이름이 있어 뺐습니다. 셀을 다시 실행해 새 이름을 받아 보세요.
+                {p.nameFilter.message}
               </p>
             )}
             {names.trim() !== '' && clean.names.length === 0 && (

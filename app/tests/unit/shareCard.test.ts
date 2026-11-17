@@ -43,10 +43,11 @@ const NAMES: string[] = OUT['T-S07'].trim().split('\n');
 const PERSONAL = { email: 'me@mail.com', display_name: '홍길동', user_id: 'u-1', device: 'iPhone', active_seconds: 1234, rank: 1, created_at: '2026-11-17T00:00:00+09:00' };
 
 describe('카드 크기와 토큰', () => {
-  it('설정 1200x675 = tokens.json share-card (D56, taster.json format 의 1080 × 1080 은 쓰지 않음)', () => {
+  it('설정 1200x675 = tokens.json share-card = 정본 taster.json format.image (D56, 2026-11-17 정본 확정)', () => {
     expect([config.shareCard.width, config.shareCard.height]).toEqual([1200, 675]);
     expect([TOKENS['share-card'].width, TOKENS['share-card'].height]).toEqual([config.shareCard.width, config.shareCard.height]);
-    expect(TASTER.lecture.artifact.format.image).toMatch(/1080/); // 정본에 남은 옛 값(보고 대상)
+    const m = String(TASTER.lecture.artifact.format.image).match(/(\d+)\s*×\s*(\d+)/);
+    expect(m && [Number(m[1]), Number(m[2])]).toEqual([config.shareCard.width, config.shareCard.height]);
   });
 });
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'preact/hooks';
 import { getRuntime, type Runtime } from '../lib/runtime';
 import type { Row } from '../lib/sync/store';
 import type { SyncState } from '../lib/sync/manager';
-import type { AuthProvider } from '../lib/api';
+import type { AuthProvider } from '../config';
 
 export function useRuntime(): Runtime | null {
   const [rt, setRt] = useState<Runtime | null>(null);
@@ -40,7 +40,7 @@ export function useTables(rt: Runtime | null, tables: string[]): Record<string, 
 
 /**
  * 지금 로그인 길. 기록 API 401 본문이 알려 준 값 → 계정 확인(/api/me) 값 순. 옛 서버거나 아직 모르면 null(지금 동작 그대로).
- * tailscale 이면 폰에서 Tailscale serve 로 연 화면이라 개발용 계정 바꾸기·만들기를 보이지 않는다
+ * 화면은 이 값으로 config.auth.screens 의 행을 고른다(authScreen). null 이면 fallback 행
  */
 export function authProviderOf(rt: Runtime | null, s: SyncState | null): AuthProvider | null {
   return s?.authProvider ?? rt?.authProvider ?? null;

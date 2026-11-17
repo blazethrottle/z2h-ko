@@ -21,6 +21,17 @@ export const TASTER = {
   outputsFile: 'taster_outputs.json',
   notebook: 'notebooks/taster/taster.ipynb',
   publicDir: '/notebooks/taster/',
+  /** 이름 카드 금칙어 (교사 정본, 같은 폴더). 빌드 때 읽어 names.txt 와 대조한다(src/lib/name-filter.mjs). 앱 소스에 목록을 옮겨 적지 않는다 */
+  blocklistFile: 'taster_blocklist.json',
+};
+
+/**
+ * 맛보기 학습 데이터 names.txt (karpathy/makemore, MIT. 출처·받은 날은 저장소 NOTICE.md).
+ * 금칙어의 허용 규칙(줄 전체가 실제 이름이면 둔다)에 쓴다. 앱에는 3만 개를 싣지 않고, 빌드 때 "실제 이름인데 금칙어에 걸리는 이름"만 뽑아 싣는다.
+ */
+export const NAMES_TXT = {
+  path: 'third_party/makemore/names.txt',
+  count: 32033,
 };
 
 /** 편별 학생용 노트북 경로(저장소 기준). 교사 JSON 에는 노트북 칸이 없어 여기 둔다. 파일이 없으면 화면에 "노트북 준비 중" */

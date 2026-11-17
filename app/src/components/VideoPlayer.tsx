@@ -21,7 +21,7 @@ export interface PlayerProps {
 function initialCollapsed(context: PlayerProps['context']): boolean {
   if (typeof window === 'undefined') return false;
   const desktop = window.matchMedia?.('(min-width: 1024px)').matches ?? true;
-  const key = `z2h.video.collapsed.${context}.${desktop ? 'desktop' : 'mobile'}`;
+  const key = `${config.storage.videoCollapsedPrefix}.${context}.${desktop ? 'desktop' : 'mobile'}`;
   const v = window.localStorage?.getItem(key);
   if (v === '1') return true;
   if (v === '0') return false;
@@ -30,7 +30,7 @@ function initialCollapsed(context: PlayerProps['context']): boolean {
 
 function rememberCollapsed(context: PlayerProps['context'], v: boolean) {
   const desktop = window.matchMedia?.('(min-width: 1024px)').matches ?? true;
-  window.localStorage?.setItem(`z2h.video.collapsed.${context}.${desktop ? 'desktop' : 'mobile'}`, v ? '1' : '0');
+  window.localStorage?.setItem(`${config.storage.videoCollapsedPrefix}.${context}.${desktop ? 'desktop' : 'mobile'}`, v ? '1' : '0');
 }
 
 export default function VideoPlayer(p: PlayerProps) {

@@ -3,6 +3,14 @@
 서버의 다른 곳은 user_id 를 이 계층(AuthAdapter)으로만 얻는다. 고정 user_id 는 어디에도 없다.
 API 는 먼저 for_request(request) 로 그 요청을 맡을 로그인 수단 하나를 고르고, 그 수단의 current_user_id 만 본다.
 
+조립과 이름표(공개 전환 대비, 이 파일 맨 아래)
+- build_auth(settings, storage): 설정값 → 로그인 수단. 서버가 쓰는 수단은 여기서만 정한다(app.py 는 부르기만).
+- AUTH_PROVIDERS: provider 이름 → 수단 클래스. 응답의 auth_provider 와 auth_identity.provider 에 쓰는 이름표.
+- API(api.py·app.py)는 수단의 구체 이름·provider 글자로 가르지 않고 AuthAdapter 의 속성·메서드
+  (provider, no_user_message_ko, for_request, dev_login, current_user_id)만 쓴다.
+  새 수단(EmailOtpAuth·GoogleAuth)을 넣을 때는 새 클래스와 build_auth 만 고치면 된다. 두 수단은 아직 자리만 있다.
+- 쿠키 이름·속성·유지 기간은 config.CookieSettings 에서 온다(LocalDevAuth.start_session·end_session).
+
 1. LocalDevAuth (provider "dev_local"): 맥 개발용 로그인
 - 계정을 여러 개 만들고 바꿀 수 있다. 비밀번호 없음.
 - 이 컴퓨터 안에서 바로 온 요청에서만 동작한다(local_only). 요청마다 직접 검사하고, 공용 문 검사에만 기대지 않는다.
@@ -51,22 +59,24 @@ API 는 먼저 for_request(request) 로 그 요청을 맡을 로그인 수단 �
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import secrets
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
 from starlette.requests import Request
+from starlette.responses import Response
 
-from .config import validate_tailscale_host
+from .config import LOCAL_HOSTNAMES, LOOPBACK, CookieSettings, Settings, validate_tailscale_host
 from .security import host_allowed, serve_host_in
 from .storage.base import StorageAdapter
 from .timeutil import KST, to_kst_iso
 
-LOOPBACK = "127.0.0.1"
-LOCAL_HOSTNAMES = frozenset({"127.0.0.1", "localhost"})
+log = logging.getLogger("z2h_server")
 # 이 중 하나라도 있으면 프록시·터널을 거친 요청으로 본다
 FORWARDING_HEADERS = (
     "cf-connecting-ip",
@@ -98,14 +108,30 @@ NO_TAILSCALE_USER_KO = (
 )
 
 
+DEV_NO_USER_KO = "먼저 계정을 고르거나 만들어 주세요(/api/dev-auth/accounts)."
+
+
 class AuthAdapter(ABC):
-    """요청 → 현재 계정. 없으면 None(그러면 학습 기록 API 는 401)."""
+    """요청 → 현재 계정. 없으면 None(그러면 학습 기록 API 는 401).
+
+    API(api.py·app.py)는 수단의 구체 이름이나 provider 글자로 가르지 않고 아래 속성·메서드만 쓴다.
+    새 수단(EmailOtpAuth·GoogleAuth 등)은 이 클래스를 이어받고 build_auth 에 한 줄을 더하면 된다.
+    - provider: 응답의 auth_provider 값이자 auth_identity.provider 값(AUTH_PROVIDERS 이름표)
+    - no_user_message_ko: 이 수단이 맡은 요청에 계정이 없을 때 401 본문의 안내 글
+    - for_request: 이 요청을 맡을 수단(묶음 수단만 고른다)
+    - dev_login: 개발용 로그인 주소(/api/dev-auth/*)를 이 요청에 열지. 열면 그 수단, 아니면 None(404)
+    """
 
     provider: str = ""
+    no_user_message_ko: str = "먼저 로그인해 주세요."
 
     def for_request(self, request: Request) -> AuthAdapter:
         """이 요청을 맡을 로그인 수단. 수단이 하나면 자기 자신(ByHostAuth 만 Host 로 고른다)."""
         return self
+
+    def dev_login(self, request: Request) -> LocalDevAuth | None:
+        """개발용 로그인 주소를 열 수단. 기본은 닫힘(LocalDevAuth 만, 이 컴퓨터 안 요청에서 연다)."""
+        return None
 
     @abstractmethod
     def current_user_id(self, request: Request) -> str | None: ...
@@ -115,6 +141,7 @@ class NoAuth(AuthAdapter):
     """로그인 수단이 없는 상태(개발용 로그인을 끈 때). 모든 요청이 누구도 아니므로 기록 API 는 401."""
 
     provider = "none"
+    no_user_message_ko = DEV_NO_USER_KO  # 지금 글 그대로(개발용 로그인을 켜는 것은 맥미니에서)
 
     def current_user_id(self, request: Request) -> str | None:
         return None
@@ -164,16 +191,22 @@ def local_only(request: Request) -> bool:
 
 class LocalDevAuth(AuthAdapter):
     provider = "dev_local"
-    COOKIE = "z2h_dev_session"
+    no_user_message_ko = DEV_NO_USER_KO
+    COOKIE = CookieSettings().name  # 기본 쿠키 이름(설정 한 곳: config.CookieSettings). 만든 수단은 self.cookie.name
+    # 브라우저 밖 도구(로컬 Jupyter 의 finish())와 약속한 머리말 이름. 배포 설정이 아니라 API 약속이라 여기 둔다
     HEADER = "x-z2h-user"
 
-    def __init__(self, storage: StorageAdapter, *, session_days: int = 30):
+    def __init__(self, storage: StorageAdapter, *, cookie: CookieSettings | None = None):
         self.storage = storage
-        self.session_days = session_days
+        self.cookie = cookie or CookieSettings()
+        self.COOKIE = self.cookie.name
 
     # ---- 요청의 현재 계정 ----
     def allows(self, request: Request) -> bool:
         return local_only(request)
+
+    def dev_login(self, request: Request) -> LocalDevAuth | None:
+        return self if self.allows(request) else None
 
     def current_user_id(self, request: Request) -> str | None:
         if not self.allows(request):
@@ -202,15 +235,24 @@ class LocalDevAuth(AuthAdapter):
         if self.storage.get_user(user_id) is None:
             raise KeyError(user_id)
         token = secrets.token_urlsafe(32)
-        seconds = self.session_days * 24 * 3600
+        seconds = self.cookie.max_age_seconds
         expires = to_kst_iso(datetime.now(KST) + timedelta(seconds=seconds), micro=True)
         self.storage.create_session(user_id, _hash(token), expires)
         return token, seconds
+
+    def start_session(self, response: Response, user_id: str) -> None:
+        """세션을 만들고 응답에 쿠키를 단다. 쿠키 속성은 설정(CookieSettings) 한 곳에서."""
+        token, _seconds = self.login(user_id)
+        response.set_cookie(**self.cookie.set_kwargs(token))
 
     def logout(self, request: Request) -> None:
         token = request.cookies.get(self.COOKIE)
         if token:
             self.storage.delete_session(_hash(token))
+
+    def end_session(self, request: Request, response: Response) -> None:
+        self.logout(request)
+        response.delete_cookie(**self.cookie.delete_kwargs())
 
 
 # ---------------- 폰 로그인 A안: Tailscale serve ----------------
@@ -249,6 +291,7 @@ class TailscaleAuth(AuthAdapter):
     """serve 를 거친 폰 요청 → 맥미니에서 이어 둔 계정. 자동 가입 없음, 세션·쿠키 없음."""
 
     provider = "tailscale"
+    no_user_message_ko = NO_TAILSCALE_USER_KO
 
     def __init__(self, storage: StorageAdapter, serve_host: str):
         self.storage = storage
@@ -278,20 +321,23 @@ class TailscaleAuth(AuthAdapter):
 
 
 class ByHostAuth(AuthAdapter):
-    """Host 로 로그인 수단 하나를 고른다: serve 이름이면 TailscaleAuth, 아니면 개발용(LocalDevAuth 또는 NoAuth)."""
+    """Host 로 로그인 수단 하나를 고른다: routes 의 이름(지금은 serve 이름 → TailscaleAuth)이면 그 수단,
+    아니면 local(개발용 로그인 LocalDevAuth 또는 NoAuth). 나중 공개 주소 → 공개용 수단도 routes 에 한 줄이면 된다."""
 
     provider = "by_host"
 
-    def __init__(self, local: AuthAdapter, tailscale: TailscaleAuth):
+    def __init__(self, local: AuthAdapter, routes: Mapping[str, AuthAdapter]):
         self.local = local
-        self.tailscale = tailscale
+        self.routes = dict(routes)
 
     def for_request(self, request: Request) -> AuthAdapter:
-        # Host 가 여러 개(같은 컴퓨터 안 프로그램만 만들 수 있음)여도 하나라도 serve 이름이면 Tailscale 쪽으로 보낸다.
-        # 거기서 Host 가 1개가 아니라 거부되므로, 그런 요청은 개발용 로그인에도 Tailscale 로그인에도 닿지 않는다.
+        # Host 가 여러 개(같은 컴퓨터 안 프로그램만 만들 수 있음)여도 하나라도 routes 이름이면 그 수단으로 보낸다.
+        # TailscaleAuth 는 Host 가 1개가 아니면 거부하므로, 그런 요청은 개발용 로그인에도 Tailscale 로그인에도 닿지 않는다.
         # 공용 문(security.py)의 Origin 규칙도 같은 함수로 serve 요청을 가른다.
-        if serve_host_in(request.headers.getlist("host"), self.tailscale.serve_host):
-            return self.tailscale
+        hosts = request.headers.getlist("host")
+        for name, adapter in self.routes.items():
+            if serve_host_in(hosts, name):
+                return adapter
         return self.local
 
     def current_user_id(self, request: Request) -> str | None:
@@ -346,3 +392,40 @@ def unlink_tailscale(storage: StorageAdapter, login: str) -> str:
 def list_tailscale(storage: StorageAdapter) -> list[dict[str, Any]]:
     """[{subject(로그인 이름), user_id, display_name, created_at}] 이은 순서."""
     return storage.list_identities(TailscaleAuth.provider)
+
+
+# ---------------- 수단 이름표와 조립(설정 → 수단, 한 곳) ----------------
+
+# provider 이름 → 수단. 응답의 auth_provider, auth_identity.provider 칸에 쓰는 이름은 이 표에만 있다.
+AUTH_PROVIDERS: dict[str, type[AuthAdapter]] = {
+    cls.provider: cls for cls in (NoAuth, LocalDevAuth, TailscaleAuth, EmailOtpAuth, GoogleAuth)
+}
+
+
+def build_auth(settings: Settings, storage: StorageAdapter) -> AuthAdapter:
+    """설정값으로 로그인 수단을 만든다. 서버가 쓰는 수단은 여기서만 정한다(app.py 는 이 함수를 부를 뿐).
+
+    - 이 컴퓨터 안(127.0.0.1·localhost Host) 요청: 개발용 로그인. 바깥 주소 설정·Z2H_DEV_AUTH=0 이면 NoAuth(잠금 그대로)
+    - Z2H_TAILSCALE_HOST: 그 Host 요청만 TailscaleAuth
+    - 나중(공개 승인 뒤): 공개 주소 Host → EmailOtpAuth·GoogleAuth 를 routes 에 더하고, 공개 주소에서는 local 을 NoAuth 로.
+      EmailOtpAuth·GoogleAuth 는 지금 만들 수 없다(자리만).
+    설정이 없으면 조립은 지금과 같다(ByHostAuth 를 만들지 않음).
+    """
+    off = settings.dev_auth_off_reason
+    local: AuthAdapter
+    if off is not None:
+        # 터널 등 바깥 주소를 허용하면 개발용 로그인을 끈다. 로그인 수단이 없으므로 기록 API 는 모두 401.
+        log.warning("개발용 로그인 꺼짐: %s. 기록 API 는 로그인 수단이 없어 401 을 돌려줍니다.", off)
+        local = NoAuth()
+    else:
+        local = LocalDevAuth(storage, cookie=settings.session_cookie)
+
+    routes: dict[str, AuthAdapter] = {}
+    if settings.tailscale_host:
+        # serve 이름 Host 요청만 TailscaleAuth. 이름(tailnet)과 로그인 이름은 로그에 쓰지 않는다.
+        log.warning(
+            "Tailscale 로그인 켜짐(Z2H_TAILSCALE_HOST): serve 주소로 온 요청은 맥미니에서 이어 둔 계정으로만 "
+            "들어옵니다(자동 가입 없음, 잇기: python -m z2h_server link-tailscale)."
+        )
+        routes[settings.tailscale_host] = TailscaleAuth(storage, settings.tailscale_host)
+    return ByHostAuth(local, routes) if routes else local

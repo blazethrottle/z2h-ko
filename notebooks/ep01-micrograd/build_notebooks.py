@@ -15,6 +15,12 @@ karpathy/nn-zero-to-hero(둘 다 MIT 라이선스)를 따라 만든 것이다. L
 - 고칠 셀이 클래스가 아닌 셀이면(L01-S16 의 S15b 셀): rerun_first 칸 → 고친 셀 → 새 셀
 정답 노트북은 그 순서대로 "고친 뒤의 셀 전체"와 다시 실행할 칸을 그 단계 자리에 다시 둔다.
 학생 노트북은 같은 틀에 안내 글, 빈 셀, 채점 셀만 두고, 앞 셀은 학생이 그 자리에서 고친다.
+
+맨 끝(마무리 셀 앞)에는 "재구성(자기 확인)" 구역을 둔다(교사 결정 2026-11-17: 재구성 채점 노트북을 따로 만들지 않음).
+- 정본 rebuild_tasks 순서대로 조각마다 과제 문구(정본 그대로), 빈 작업 셀, 자기 확인 셀.
+- 학생용 작업 셀은 비어 있다. 정답용 작업 셀은 교사 힌트 H4 가 가리키는 정본 단계 코드를 합친 것이다(REBUILD_PARTS).
+- L01-R3 학습 셀은 다시 실행하는 셀이다. 정답 노트북만 "손실이 아직 기준 위일 때만 학습 셀을 한 번 더" 셀을 둔다
+  (정본 check.max_reruns - 1 개). 기준 숫자는 정본에서 읽는다.
 """
 import argparse
 import ast
@@ -73,6 +79,25 @@ CHECK_CALLS = {
                 'check("L01-S16", seen=True)   # 눈으로 비교하는 단계라 "봤어요" 표시'],
 }
 
+# 재구성(자기 확인) 구역. 조각 id·순서·문구는 정본 rebuild_tasks 에서 읽고, 여기에는 부르는 모양과 정답 조합만 둔다.
+REBUILD_CHECK_CALLS = {
+    "L01-R1": ['check("L01-R1", Value)'],
+    "L01-R2": ['check("L01-R2", Value)'],
+    "L01-R3": ['check("L01-R3", n, loss, runs=_z2h_runs(n))   # runs: 학습 셀을 몇 번째 실행했는지(셀 실행을 세어 넣습니다)'],
+}
+CLASS_STEP = "L01-S04"  # Value 클래스 셀
+# 조각 -> {작업 셀 이름: 합칠 정본 코드}. 교사 힌트 H4("정답은 … 코드")가 가리키는 단계와 같다(tests 가 확인).
+# ("class", X): L01-S04 셀을 X 단계까지 고친 모습(None 이면 모든 고침이 들어간 끝난 모습), ("own", X): X 단계 셀 코드 그대로.
+REBUILD_PARTS = {
+    "L01-R1": {"work": [("class", "L01-S10b")]},
+    "L01-R2": {"work": [("class", "L01-S11b")]},
+    "L01-R3": {"model": [("class", None), ("own", "L01-S14"), ("own", "L01-S14b"), ("own", "L01-S14c"), ("own", "L01-S15")],
+               "train": [("own", "L01-S15b")]},
+}
+REBUILD_TRAIN = {"L01-R3": "train"}  # 다시 실행하는 학습 셀(정본 check.max_reruns, check.steps_per_run)
+REBUILD_NAMES = {"L01-R1": "`Value`", "L01-R2": "`Value`",
+                 "L01-R3": "`n`(다시 만들어 학습한 MLP(3, [4, 4, 1]) 모델), `loss`(학습 셀이 마지막으로 계산한 손실)"}
+
 # 채점 셀이 절대 예외를 내지 않게 하는 도우미. 준비 셀의 z2h_check 묶음 바로 뒤에 붙인다.
 PREP_TRAILER = '''
 
@@ -93,21 +118,80 @@ def _z2h_shown():
     return shown[max(shown)]
 
 
+class _Z2HNotStarted(Exception):
+    """재구성 구역의 '재구성 시작' 셀을 아직 실행하지 않았을 때."""
+
+
+_Z2H_KEEP = {"check", "finish", "In", "Out", "get_ipython", "exit", "quit"}
+
+
+def _z2h_rebuild_start():
+    """재구성 시작 셀: 위 본문에서 만든 이름(밑줄로 시작하지 않는 것)을 지워 빈 노트북처럼 만들고, 학습 셀 실행 세기를 켭니다.
+    채점 도구(check, finish)와 채점 기록은 그대로 둡니다."""
+    ns = globals()
+    keep = set(_Z2H_KEEP)
+    try:
+        keep |= set(get_ipython().user_ns_hidden)  # IPython 이 스스로 넣어 둔 이름은 지우지 않는다
+    except Exception:
+        pass
+    gone = sorted(name for name in list(ns) if not name.startswith("_") and name not in keep)
+    for name in gone:
+        ns.pop(name, None)
+    try:
+        from z2h_check import runs as _z2h_runs_mod
+        counting = _z2h_runs_mod.watch(("n",))
+    except Exception:
+        counting = False
+    ns["_z2h_rebuild_on"] = True
+    if gone:
+        shown = ", ".join(gone[:6]) + (" 등" if len(gone) > 6 else "")
+        print(f"재구성 시작: 위에서 만든 이름 {len(gone)}개({shown})를 지워 빈 노트북처럼 만들었습니다. 채점 기록은 그대로입니다.")
+    else:
+        print("재구성 시작: 지울 이름이 없습니다(빈 노트북 상태). 채점 기록은 그대로입니다.")
+    if counting:
+        print("학습 셀 실행 세기를 켰습니다. L01-R3 자기 확인 셀이 학습 셀을 몇 번째 실행했는지 알려 줍니다.")
+    else:
+        print("이곳에서는 셀 실행을 셀 수 없어 L01-R3 자기 확인은 손실만 봅니다.")
+    print("이제 아래 조각의 빈 셀에 처음부터 다시 만들어 보세요. 위 본문 셀은 다시 실행하지 않습니다.")
+
+
+def _z2h_rebuild_ready(check_id):
+    """재구성 자기 확인 셀 첫 줄: '재구성 시작' 셀을 실행했는지 봅니다(위 본문에서 만든 것을 그대로 채점하지 않도록)."""
+    if not globals().get("_z2h_rebuild_on"):
+        raise _Z2HNotStarted(check_id)
+
+
+def _z2h_runs(model):
+    """이 모델로 학습 셀을 몇 번째 실행했는지(재구성 시작 셀이 켠 세기). 셀 수 없는 곳이면 None(그때는 손실만 봄)."""
+    try:
+        from z2h_check import runs as _z2h_runs_mod
+        return _z2h_runs_mod.runs_of(model)
+    except Exception:
+        return None
+
+
 def _z2h_not_yet(check_id, err):
     """채점 셀에서 check(...)에 넘길 값이 아직 없거나 만들다 오류가 나면, 예외 대신 "○ 아직" 한 줄만 보여 줍니다.
     이때는 채점 기록을 남기지 않으므로 finish("L01") 채점표에는 "아직 안 함"으로 나옵니다."""
     try:
         if isinstance(err, _Z2HNotShown):
             print(f"○ 아직: 바로 위 단계 셀을 먼저 실행한 뒤 이 채점 셀을 다시 실행하세요. [{check_id}]")
+        elif isinstance(err, _Z2HNotStarted):
+            print(f"○ 아직: 먼저 위의 '재구성 시작' 셀을 실행한 뒤, 이 조각의 빈 셀과 이 자기 확인 셀을 차례로 다시 실행하세요. "
+                  f"[{check_id}]")
         elif isinstance(err, NameError):
             name = getattr(err, "name", None)
             what = f"이름 {name}" if name else "이름"
-            print(f"○ 아직: 이 칸에 필요한 {what}이(가) 아직 없어요. 위 단계 셀을 먼저 실행한 뒤 "
-                  f"이 채점 셀을 다시 실행하세요. [{check_id}]")
+            if "-R" in check_id:  # 재구성 조각: 이 조각의 빈 셀에 다시 만든 뒤
+                print(f"○ 아직: 이 칸에 필요한 {what}이(가) 아직 없어요. 위 빈 셀에 처음부터 다시 만들어 실행한 뒤 "
+                      f"이 자기 확인 셀을 다시 실행하세요. [{check_id}]")
+            else:
+                print(f"○ 아직: 이 칸에 필요한 {what}이(가) 아직 없어요. 위 단계 셀을 먼저 실행한 뒤 "
+                      f"이 채점 셀을 다시 실행하세요. [{check_id}]")
         else:
             text = " ".join(str(err).split())[:120]
             print(f"○ 아직: 채점에 넘길 값을 만들다 오류가 났어요({type(err).__name__}: {text}). "
-                  f"위 단계 셀이 오류 없이 실행됐는지 보고 이 채점 셀을 다시 실행하세요. [{check_id}]")
+                  f"위 셀이 오류 없이 실행됐는지 보고 이 셀을 다시 실행하세요. [{check_id}]")
     except Exception:
         print(f"○ 아직: 위 단계 셀을 먼저 실행하세요. [{check_id}]")
 '''
@@ -255,6 +339,130 @@ def student_answers(canon=None):
     return {sid: "\n".join(state[sid]) for sid in owners}
 
 
+# ---- 재구성(자기 확인) 구역: 정본에서 읽기와 정답 조합 ------------------------------
+
+def rebuild_tasks(canon):
+    return list(canon.get("rebuild_tasks") or [])
+
+
+def rebuild_parts(rid):
+    """조각의 작업 셀 이름 순서(예: ['model', 'train'])."""
+    return list(REBUILD_PARTS[rid])
+
+
+def class_state(canon, until):
+    """L01-S04 셀(Value 클래스)을 until 단계까지 고친 모습(줄 목록). until 이 None 이면 끝난 모습."""
+    state = None
+    for plan in plan_steps(canon):
+        sid = plan["step"]["step_id"]
+        if sid == CLASS_STEP:
+            state = list(plan["own"])
+        for target, lines in plan["edited"]:
+            if target == CLASS_STEP:
+                state = list(lines)
+        if until is not None and sid == until:
+            return state
+    if until is not None or state is None:
+        raise BuildError(f"재구성 정답: {CLASS_STEP} 셀을 {until} 단계까지 고친 모습을 정본에서 찾지 못했습니다")
+    return state
+
+
+def _step_code(canon, sid):
+    for st in canon["steps"]:
+        if st["step_id"] == sid:
+            return st.get("code") or ""
+    raise BuildError(f"재구성 정답: 정본에 {sid} 단계가 없습니다")
+
+
+def _import_lines(canon):
+    """정본 첫 단계 셀의 import 줄과 그 줄이 만드는 이름. 빈 노트북에서 다시 만들 때 필요한 줄만 골라 앞에 붙인다."""
+    out = []
+    for line in _lines(ordered_steps(canon)[0].get("code") or ""):
+        try:
+            tree = ast.parse(line)
+        except SyntaxError:
+            continue
+        if len(tree.body) == 1 and isinstance(tree.body[0], (ast.Import, ast.ImportFrom)):
+            out.append((line, [a.asname or a.name.split(".")[0] for a in tree.body[0].names]))
+    return out
+
+
+def _needed_imports(canon, code):
+    used = {node.id for node in ast.walk(ast.parse(code)) if isinstance(node, ast.Name)}
+    return [line for line, names in _import_lines(canon) if any(name in used for name in names)]
+
+
+def rebuild_part_source(canon, rid, part):
+    """정답 작업 셀: 첫 줄 설명 주석 + 필요한 import 줄(정본 첫 단계) + 정본 코드를 합친 것."""
+    pieces, labels, owns = [], [], []
+    for kind, sid in REBUILD_PARTS[rid][part]:
+        if kind == "class":
+            pieces.append("\n".join(class_state(canon, sid)))
+            labels.append(f"{CLASS_STEP} 셀을 {sid}까지 고친 Value 클래스" if sid
+                          else f"{CLASS_STEP} 셀의 끝난 모습인 Value 클래스")
+        elif kind == "own":
+            pieces.append(_step_code(canon, sid))
+            owns.append(sid)
+        else:
+            raise BuildError(f"{rid}: 모르는 정답 조합 {kind!r}")
+    if owns:
+        labels.append(" · ".join(owns) + " 셀")
+    body = "\n".join(pieces)
+    header = f"# {rid} 정답: 교사 정본 코드를 합친 것({', '.join(labels)})"
+    if REBUILD_TRAIN.get(rid) == part:
+        steps = _rebuild_check(canon, rid)["steps_per_run"]
+        header += f". 학습 셀입니다(1번 실행 = {steps}번 반복)"
+    return "\n".join([header] + _needed_imports(canon, body) + [body])
+
+
+def _rebuild_check(canon, rid):
+    for task in rebuild_tasks(canon):
+        if task["rebuild_id"] == rid:
+            return task["check"]
+    raise BuildError(f"정본 rebuild_tasks 에 {rid} 가 없습니다")
+
+
+def rebuild_rerun_source(canon, rid, k):
+    """정답 노트북만: 학습 셀 다시 실행(k번째). 손실이 아직 기준 위일 때만 학습 셀과 같은 코드를 한 번 더 돌린다."""
+    chk = _rebuild_check(canon, rid)
+    limit = chk["max"]
+    train = "\n".join(_step_code(canon, sid) for _kind, sid in REBUILD_PARTS[rid][REBUILD_TRAIN[rid]])
+    lines = [f"# 정답 노트북만: 학습 셀 다시 실행({k}번째). 손실이 아직 {limit} 위일 때만 위 학습 셀과 같은 코드를 한 번 더 돌립니다.",
+             "# 학생 노트북에서는 위 학습 셀을 다시 실행한 뒤 자기 확인 셀도 다시 실행합니다.",
+             f"if loss.data >= {limit!r}:"]
+    lines += [("    " + line) if line else line for line in _lines(train)]
+    src = "\n".join(lines)
+    ast.parse(src)
+    return src
+
+
+def rebuild_answers(canon=None):
+    """학생 노트북 재구성 빈 셀마다 넣을 정답 {(조각 id, 작업 셀 이름): 소스}. 정답 노트북 작업 셀과 같다. 시험용."""
+    canon = canon or load_canon()
+    return {(task["rebuild_id"], part): rebuild_part_source(canon, task["rebuild_id"], part)
+            for task in rebuild_tasks(canon) for part in rebuild_parts(task["rebuild_id"])}
+
+
+def rebuild_check_source(rid):
+    body = "\n".join("    " + line for line in REBUILD_CHECK_CALLS[rid])
+    return ("# 자기 확인 셀: 고치지 말고 실행만 하세요.\n"
+            "try:\n"
+            f"    _z2h_rebuild_ready(\"{rid}\")\n"
+            f"{body}\n"
+            "except Exception as _err:\n"
+            f"    _z2h_not_yet(\"{rid}\", _err)")
+
+
+def rebuild_placeholder(canon, rid, part):
+    if part == "model":
+        return PLACEHOLDER + ": 만들기 셀(Value 연산, Neuron, Layer, MLP, 데이터 xs·ys, 모델 n)"
+    if REBUILD_TRAIN.get(rid) == part:
+        chk = _rebuild_check(canon, rid)
+        return (PLACEHOLDER + f": 학습 셀({chk['steps_per_run']}번 반복). 손실이 {chk['max']} 아래가 될 때까지 "
+                f"이 셀과 아래 자기 확인 셀을 다시 실행합니다(최대 {chk['max_reruns']}번).")
+    return PLACEHOLDER
+
+
 # ---- 노트북 셀 만들기 -----------------------------------------------------------
 
 def _cell_id(index, step_id, kind):
@@ -370,6 +578,7 @@ def _intro(canon, solution):
         "- PyTorch(torch): L01-S13e에서 씁니다. Colab에 깔려 있는지는 이 노트북을 만들 때 확인하지 않았습니다(미확인). "
         "없으면 L01-S13e 채점은 \"건너뜀\"으로 나옵니다.",
         "- 채점 셀이 \"○ 아직\"이라고 하면 그 위 단계 셀을 아직 실행하지 않은 것입니다. 오류 대신 안내만 나옵니다.",
+        "- 맨 끝 \"재구성(자기 확인)\" 구역은 본문을 마친 뒤(다른 날도 됩니다) 위 코드를 보지 않고 처음부터 다시 만들어 보는 연습입니다.",
     ])
 
 
@@ -380,7 +589,72 @@ PREP_GUIDE = ("## 준비 셀: 채점 도구\n\n"
 FINISH_GUIDE = ("## 마무리: 채점표와 결과코드\n\n"
                 "아래 셀을 실행하면 채점표와 결과코드가 나옵니다. 맨 아래 줄의 결과코드를 앱의 '결과코드 붙여넣기' 칸에 붙여 넣으세요. "
                 "로컬 Jupyter에서 진도 서버가 켜져 있으면 결과를 서버로도 보내 보고, Colab에서는 \"서버에 닿지 못했습니다\"가 정상입니다.\n\n"
-                "채점표의 L01-R1~R3(재구성 과제)는 이 노트북에서 채점하지 않으므로 \"아직 안 함\"으로 보입니다.")
+                "위 \"재구성(자기 확인)\" 구역의 결과(L01-R1~R3)도 같은 결과코드에 들어갑니다. 재구성을 아직 하지 않았다면 "
+                "그 칸은 \"아직 안 함\"으로 보이고, 그대로 붙여 넣어도 됩니다. 재구성을 다른 날 했다면 그날의 결과코드를 한 번 더 붙여 넣습니다.")
+
+
+def rebuild_intro_markdown(canon):
+    tasks = rebuild_tasks(canon)
+    ids = ", ".join(t["rebuild_id"] for t in tasks)
+    levels = sorted({t.get("max_hint_level_for_pass") for t in tasks if t.get("max_hint_level_for_pass") is not None})
+    hint = (f"- 힌트는 앱의 조각 화면에서 봅니다. 힌트 H{levels[0]}까지 보고 완성하면 통과로 칩니다(그보다 높은 힌트를 쓰면 앱이 연습으로 기록). "
+            "노트북은 힌트를 세지 않습니다." if len(levels) == 1 else
+            "- 힌트는 앱의 조각 화면에서 봅니다. 노트북은 힌트를 세지 않습니다.")
+    return "\n".join([
+        "## 재구성(자기 확인)",
+        "",
+        f"본문을 마친 뒤(다른 날도 됩니다) 위 코드를 보지 않고 처음부터 다시 만들어 보는 연습입니다. 조각은 {len(tasks)}개({ids})이고, "
+        "따로 채점 노트북 없이 조각마다 이 노트북의 자기 확인 셀이 바로 알려 줍니다.",
+        "",
+        "- 순서: 아래 \"재구성 시작\" 셀 → 조각마다 빈 셀에 작성하고 실행 → 그 아래 자기 확인 셀.",
+        "- \"재구성 시작\" 셀은 위 본문에서 만든 이름(Value, n 같은 것과 math 같은 불러온 도구까지)을 지워 빈 노트북처럼 만듭니다. "
+        "채점 도구와 채점 기록은 그대로 남습니다. 그래서 `import math` 같은 줄도 다시 씁니다. "
+        "이 셀을 실행한 뒤에는 위 본문 셀을 다시 실행하지 않습니다(지운 이름이 다시 생겨 본문 코드를 채점하게 됩니다).",
+        "- 다른 날 이어서 할 때: 맨 위 준비 셀 → \"재구성 시작\" 셀 → 조각 순서대로 → 마무리 셀.",
+        hint,
+        "- 자기 확인 결과도 마무리 셀의 결과코드에 들어갑니다.",
+    ])
+
+
+REBUILD_START_GUIDE = ("### 재구성 시작\n\n"
+                       "아래 셀을 실행하면 위에서 만든 이름을 지워 빈 노트북처럼 만들고, L01-R3에서 학습 셀을 몇 번째 실행했는지 세기 시작합니다. "
+                       "자기 확인 셀은 이 셀을 실행한 뒤에만 채점합니다.")
+
+REBUILD_START_SOURCE = ("# 재구성 시작 셀: 고치지 말고 실행만 하세요. 위 본문에서 만든 이름을 지워 빈 노트북처럼 만들고, 학습 셀 실행 세기를 켭니다.\n"
+                        "_z2h_rebuild_start()")
+
+
+def rebuild_guide_markdown(canon, task):
+    rid, chk = task["rebuild_id"], task["check"]
+    out = [f"## {rid} {task['title_ko']}", "", f"**과제**: {task['task_ko']}", ""]
+    if chk.get("type") == "value_range":
+        steps, max_runs = chk.get("steps_per_run"), chk.get("max_reruns")
+        line = f"**점검**: {chk.get('target', '값')} {chk['min']} ~ {chk['max']}."
+        if steps and max_runs:
+            line += (f" 학습 셀 1번 실행 = {steps}번 반복이고, {max_runs}번(합계 {steps * max_runs}번 반복) 안에 {chk['max']} 아래가 되면 "
+                     "통과입니다. 다시 실행한 횟수는 힌트로 세지 않습니다.")
+        out.append(line)
+    else:
+        ref_text = f" (대조: {chk['reference']})" if chk.get("reference") else ""
+        out.append(f"**점검**: {chk.get('test_ko', '')}{ref_text}")
+    out += ["", f"**자기 확인 셀이 보는 이름**: {REBUILD_NAMES[rid]}", ""]
+    parts = rebuild_parts(rid)
+    train = REBUILD_TRAIN.get(rid)
+    if train:
+        steps, max_runs, limit = chk["steps_per_run"], chk["max_reruns"], chk["max"]
+        out += ["**실행 순서**: 만들기 셀 → 학습 셀 → 자기 확인 셀. 손실이 아직 "
+                f"{limit} 위면 학습 셀만 다시 실행하고 자기 확인 셀도 다시 실행합니다. "
+                "만들기 셀을 다시 실행하면 새 모델이라 1번째부터 다시 셉니다.",
+                "",
+                f"**몇 번째인지 세는 법**: \"재구성 시작\" 셀이 켠 세기가 셀을 실행할 때마다 `n`의 값이 바뀌었는지 보고 학습 셀 실행을 "
+                f"셉니다(학습 셀 하나에 {steps}번 반복을 넣습니다). {max_runs}번을 넘기면 통과로 치지 않으니 만들기 셀부터 처음부터 다시 "
+                "만들어 보세요. 셀 실행을 셀 수 없는 곳에서는 손실만 봅니다."]
+    else:
+        out.append("**실행 순서**: 아래 빈 셀" + " → 빈 셀" * (len(parts) - 1) + " → 자기 확인 셀")
+    if rid == "L01-R2":
+        out += ["", "**작성 방법**: L01-R1 셀의 Value 클래스에 backward()를 넣고 그 셀을 다시 실행해도 되고, "
+                "아래 빈 셀에 backward()가 들어간 Value 클래스 전체를 다시 써도 됩니다."]
+    return "\n".join(out)
 
 
 def _metadata(canon, kind):
@@ -403,6 +677,32 @@ def _check_registry(canon):
         missing = [i for i in ids if i not in CHECK_CALLS]
         extra = [i for i in CHECK_CALLS if i not in ids]
         raise BuildError(f"정본 단계와 채점 셀 목록이 다릅니다. 채점 셀 없음: {missing}, 정본에 없음: {extra}")
+    rids = [t["rebuild_id"] for t in rebuild_tasks(canon)]
+    if set(rids) != set(REBUILD_CHECK_CALLS) or set(rids) != set(REBUILD_PARTS):
+        raise BuildError(f"정본 재구성 조각 {rids} 와 이 프로그램의 자기 확인 목록 {sorted(REBUILD_CHECK_CALLS)} 이 다릅니다")
+    for rid, part in REBUILD_TRAIN.items():
+        chk = _rebuild_check(canon, rid)
+        if not (chk.get("max_reruns") and chk.get("steps_per_run")):
+            raise BuildError(f"{rid}: 정본 check 에 max_reruns, steps_per_run 이 없습니다(학습 셀 다시 실행 규칙)")
+        if part not in REBUILD_PARTS[rid]:
+            raise BuildError(f"{rid}: 학습 셀 {part!r} 이 작업 셀 목록에 없습니다")
+
+
+def _rebuild_section(b, canon, solution):
+    """마무리 셀 앞의 재구성(자기 확인) 구역."""
+    b.md("rebuild", "rebuild-intro", rebuild_intro_markdown(canon))
+    b.md("rebuild", "rebuild-start-guide", REBUILD_START_GUIDE)
+    b.code("rebuild", "rebuild-start", REBUILD_START_SOURCE)
+    for task in rebuild_tasks(canon):
+        rid = task["rebuild_id"]
+        b.md(rid, "rebuild-guide", rebuild_guide_markdown(canon, task))
+        for part in rebuild_parts(rid):
+            src = rebuild_part_source(canon, rid, part) if solution else rebuild_placeholder(canon, rid, part)
+            b.code(rid, "rebuild-code", src, [f"part-{part}"])
+            if solution and REBUILD_TRAIN.get(rid) == part:
+                for k in range(2, _rebuild_check(canon, rid)["max_reruns"] + 1):
+                    b.code(rid, "rebuild-rerun", rebuild_rerun_source(canon, rid, k), [f"rerun-{k}"])
+        b.code(rid, "self-check", rebuild_check_source(rid))
 
 
 def _build(canon, solution):
@@ -442,6 +742,7 @@ def _build(canon, solution):
             if plan["own"]:
                 b.code(sid, "step-code", PLACEHOLDER)
         b.code(sid, "check", check_cell_source(sid))
+    _rebuild_section(b, canon, solution)
     b.md(LECTURE_ID, "finish-guide", FINISH_GUIDE)
     b.code(LECTURE_ID, "finish", FINISH_SOURCE)
     nb = nbformat.v4.new_notebook(cells=b.cells, metadata=_metadata(canon, "solution" if solution else "student"))
@@ -457,14 +758,18 @@ def build_student(canon=None):
     return _build(canon or load_canon(), solution=False)
 
 
-def inject_answers(student_nb, answers=None):
-    """학생 노트북 사본의 빈 셀(step-code)에 정답(끝난 모습)을 넣는다. 시험용."""
+def inject_answers(student_nb, answers=None, rebuild=None):
+    """학생 노트북 사본의 빈 셀(step-code)에 정답(끝난 모습)을, 재구성 빈 셀(rebuild-code)에 재구성 정답을 넣는다. 시험용."""
     answers = answers if answers is not None else student_answers()
+    rebuild = rebuild if rebuild is not None else rebuild_answers()
     nb = copy.deepcopy(student_nb)
     for cell in nb.cells:
         tags = cell.metadata.get("tags", [])
         if cell.cell_type == "code" and "step-code" in tags:
             cell.source = answers[tags[0]]
+        elif cell.cell_type == "code" and "rebuild-code" in tags:
+            part = next(t for t in tags if t.startswith("part-"))[len("part-"):]
+            cell.source = rebuild[(tags[0], part)]
     return nb
 
 

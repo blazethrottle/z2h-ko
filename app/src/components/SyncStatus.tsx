@@ -2,8 +2,10 @@
 // 서버가 계정 없음(401)이면 오프라인과 구분해 "계정을 골라 주세요" (설정의 개발용 계정으로 이동)
 // 계정·첫 서버 확인이 끝나기 전(정적 HTML 포함)은 checking: 옅은 글자 "확인 중"을 보인다(spec 0.6 "늘 표시", P2 검수 권고).
 // "저장됨"은 계정과 첫 확인이 끝난 뒤에만 보인다
+// 계정 없음 글은 로그인 길별 표(config.auth.screens needAccountLabel): 개발용은 "계정을 골라 주세요",
 // 폰(Tailscale serve 경유)에서 학습 계정에 안 이어진 접속자는 고를 계정이 없으므로 "계정 연결 필요" (설정에 연결 안내)
 import { useState } from 'preact/hooks';
+import { authScreen } from '../config';
 import { authProviderOf, useRuntime, useSyncState } from './hooks';
 import { IconCheck, IconCross, IconSync } from './Icons';
 import { gated } from './Gate';
@@ -13,7 +15,7 @@ function SyncStatusView() {
   const s = useSyncState(rt);
   const [open, setOpen] = useState(false);
   const display = s?.display ?? 'checking';
-  const tailscale = authProviderOf(rt, s) === 'tailscale';
+  const screen = authScreen(authProviderOf(rt, s));
 
   return (
     <div class="sync" data-testid="sync-status">
@@ -24,7 +26,7 @@ function SyncStatusView() {
           </span>
         ) : display === 'account' ? (
           <a class="sync-btn account" href="/settings/#account" data-state="account">
-            {tailscale ? '계정 연결 필요' : '계정을 골라 주세요'}
+            {screen.needAccountLabel}
           </a>
         ) : display === 'offline' ? (
           <button class="sync-btn offline" type="button" aria-expanded={open} onClick={() => setOpen(!open)} data-state="offline">

@@ -128,7 +128,7 @@ function TasteStepAppView(p: Props) {
           {s.kind === 'copy_run' && ' 코드를 이해할 필요는 없고, 풀이를 읽기만 하면 됩니다.'}
         </p>
         {first && !p.colabUrl && (
-          // 정본 문구("맛보기 노트북 열기 단추를 누르면 …")는 그대로 두고, 바로 열기 주소가 없는 동안의 앱 문구를 덧붙인다
+          // 정본 문구("맛보기 노트북 열기 단추를 누르면 …")는 그대로 두고, 바로 열기 주소가 없는 동안의 앱 문구를 덧붙인다(DESIGN.md 12.9절 7번 확정)
           <p class="small" data-testid="taste-open-note">
             지금은 노트북을 받아 Colab에 올려서 엽니다(아래 안내).
           </p>

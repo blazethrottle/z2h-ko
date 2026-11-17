@@ -60,6 +60,8 @@ def test_reference_ranges_match_teacher_expected_check():
     assert "seed" not in json.dumps(t, ensure_ascii=False).lower()
     r3 = [r for r in t["rebuild_tasks"] if r["rebuild_id"] == "L01-R3"][0]["check"]
     assert ref["R3"]["last_loss_max"] == r3["max"]
+    # 2026-11-17 재구성: 학습 셀(steps_per_run 번 반복)을 최대 max_reruns 번. 채점기는 이 기준값 파일에서 읽는다
+    assert (ref["R3"]["max_reruns"], ref["R3"]["steps_per_run"]) == (r3["max_reruns"], r3["steps_per_run"])
     for key in ("x1.grad", "w1.grad", "x2.grad", "w2.grad"):
         assert ref["S11b"]["lecture_grads"][key.split(".")[0]] == exp["L01-S11b"]["values"][key]
 

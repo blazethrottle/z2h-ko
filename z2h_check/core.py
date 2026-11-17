@@ -2,6 +2,7 @@
 
 - check() 는 어떤 경우에도 예외를 밖으로 내보내지 않는다(Ctrl+C로 멈추는 것만 그대로 둔다).
 - 학생 코드가 틀리거나 비어 있으면 "✕ 다시", 채점 프로그램 자체가 고장 나면 "⚠ 채점기 오류"로 따로 보인다.
+- 아직 진행 중인 칸(예: L01-R3 학습 셀을 다시 실행하는 중)은 "○ 아직"만 보이고 기록하지 않는다(이전 기록 그대로).
 - finish() 는 채점표와 결과코드를 늘 출력하고, 로컬 진도 서버(127.0.0.1)로 보내기를 시도한다.
 """
 import contextlib
@@ -78,6 +79,10 @@ def _check(check_id, args, kwargs):
              "(이 칸은 기록하지 않았습니다)")
         return False
     status, message = _run_grader(cid, args, kwargs)
+    if status == "notyet":
+        mark, text = message
+        _say(f"{mark}: {text} [{cid}]")  # 기록하지 않는다: 결과코드·서버 보내기·시도 횟수에 들어가지 않음
+        return False
     prev = _RESULTS.get(cid)
     _RESULTS[cid] = {
         "check_id": cid,
@@ -131,6 +136,8 @@ def _run_grader(cid, args, kwargs):
         return "fail", exc.message_ko
     except _util.Skip as exc:
         return "skip", exc.message_ko
+    except _util.NotYet as exc:
+        return "notyet", (exc.mark, exc.message_ko)
     except KeyboardInterrupt:
         raise
     except BaseException as exc:

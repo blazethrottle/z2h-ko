@@ -2,7 +2,8 @@
 // 1편 로더(build.mjs·validate.mjs)와 같은 방식: 묶음을 읽고(load.mjs) → 검사(어기면 빌드 실패) → 화면이 쓰는 모양으로 바꾼다.
 // 풀이(answer_ko)와 힌트 본문은 페이지에 넣지 않고 /data/TASTER/answers.json·hints.json 으로 늦게 불러온다.
 import crypto from 'node:crypto';
-import { isNoVideoStep, TASTER } from '../../content-config.mjs';
+import { isNoVideoStep, NAMES_TXT, TASTER } from '../../content-config.mjs';
+import { buildNameFilter, checkBlocklist, isBlockedName } from '../name-filter.mjs';
 import { readTasterBundle, resolvePaths } from './load.mjs';
 import { hintSchema, KNOWN, TASTER_ID, tasterLectureSchema, tasterQuestionSchema, tasterStepSchema } from './schema.mjs';
 import { codeLines, RULES, strings, zodIssues } from './validate.mjs';
@@ -144,6 +145,19 @@ export function validateTaster(tb) {
   if (lecture.artifact?.unlock_after && !stepIds.has(lecture.artifact.unlock_after)) err(12, file, `artifact.unlock_after ${lecture.artifact.unlock_after}가 없습니다`);
   if (lecture.completion_rule?.questions_scored === true) err(12, file, 'completion_rule.questions_scored 는 false 여야 합니다');
 
+  // 12 이름 카드 금칙어(정본 taster_blocklist.json) + names.txt(허용 규칙)
+  const blFile = tb.blocklistFile?.path ?? TASTER.blocklistFile;
+  if (tb.blocklistFile?.data || tb.realNames) {
+    for (const m of checkBlocklist(tb.blocklistFile?.data ?? null, tb.realNames, NAMES_TXT.count)) err(12, m.startsWith('names.txt') ? NAMES_TXT.path : blFile, m);
+  }
+  // 교사 실행 출력의 이름(카드에 넣는 단계)이 금칙어에 걸리면 알린다(경고만)
+  if (tb.blocklistFile?.data && Array.isArray(tb.realNames) && lecture.artifact?.unlock_after) {
+    const nf = buildNameFilter(tb.blocklistFile.data, tb.realNames);
+    const out = String(tb.outputsFile?.data?.[lecture.artifact.unlock_after] ?? '');
+    const hit = out.split('\n').filter((l) => isBlockedName(l, nf)).length;
+    if (hit) warn(tb.outputsFile?.path ?? TASTER.outputsFile, `${lecture.artifact.unlock_after} 출력 이름 ${hit}줄이 금칙어에 걸립니다`);
+  }
+
   // 7 긴 줄표
   for (const [at, v] of strings(d)) if (v.includes('\u2014')) err(7, file, `${at}: 긴 줄표(U+2014)가 있습니다`);
   if (tb.outputsFile?.data) for (const [at, v] of strings(tb.outputsFile.data)) if (v.includes('\u2014')) err(7, tb.outputsFile.path, `${at}: 긴 줄표(U+2014)가 있습니다`);
@@ -238,6 +252,8 @@ export function buildTaster(tb) {
     outputs,
     elapsed_s: Number.isFinite(elapsed) ? elapsed : null,
     total_minutes: steps.reduce((a, s) => a + (Number(s.minutes) || 0), 0),
+    // 이름 카드 금칙어: 정본 목록 + 허용 목록(names.txt 대조로 뽑은 것만). 끝 화면·공유 화면 부품에 넘긴다
+    nameFilter: buildNameFilter(tb.blocklistFile?.data, tb.realNames ?? []),
   };
 }
 

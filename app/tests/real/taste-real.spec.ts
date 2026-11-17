@@ -2,6 +2,7 @@
 // 끝 화면에 붙여 넣은 이름·손실이 실제 서버의 taster_result 에 저장되는지 본다.
 // 서버는 테스트가 직접 켜고 끈다(임시 DB, 포트 8797, 127.0.0.1). 저장소 server/ 폴더에는 아무것도 쓰지 않는다.
 import { test, expect, type Page } from '@playwright/test';
+import { LOCAL_HOST, REAL_TEST_PORT } from '../../src/lib/api-target.mjs';
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -13,8 +14,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '../..');
 const REPO = path.resolve(APP, '..');
 const PY = path.join(REPO, '.venv/bin/python');
-const PORT = 8797;
-const BASE = `http://127.0.0.1:${PORT}`;
+const PORT = REAL_TEST_PORT;
+const BASE = `http://${LOCAL_HOST}:${PORT}`;
 const OUT = JSON.parse(fs.readFileSync(path.join(REPO, 'inputs/pedagogy/content/taster_outputs.json'), 'utf8'));
 
 let tmp = '';

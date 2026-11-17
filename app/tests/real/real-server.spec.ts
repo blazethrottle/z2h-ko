@@ -1,6 +1,7 @@
 // 실제 서버 통합 (P1 완료 기준): python -m z2h_server 하나로 앱을 열어 모든 단계를 넘기고,
 // 서버를 끈 채 단계 완료·문제 풀이 → 서버를 켜면 기록이 올라가며 표시가 오프라인 → 저장됨.
 import { test, expect, type Page } from '@playwright/test';
+import { LOCAL_HOST, REAL_TEST_PORT } from '../../src/lib/api-target.mjs';
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -13,8 +14,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '../..');
 const REPO = path.resolve(APP, '..');
 const PY = path.join(REPO, '.venv/bin/python');
-const PORT = 8797;
-const BASE = `http://127.0.0.1:${PORT}`;
+const PORT = REAL_TEST_PORT;
+const BASE = `http://${LOCAL_HOST}:${PORT}`;
 
 let tmp = '';
 let proc: ChildProcess | null = null;

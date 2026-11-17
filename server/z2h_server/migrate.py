@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TextIO
 
 import sqlalchemy as sa
@@ -24,15 +23,11 @@ def make_config(db_url: str, *, output_buffer: TextIO | None = None) -> Config:
     return cfg
 
 
-def _ensure_sqlite_dir(db_url: str) -> None:
-    url = sa.engine.make_url(db_url)
-    if url.get_backend_name() == "sqlite" and url.database and url.database != ":memory:":
-        Path(url.database).parent.mkdir(parents=True, exist_ok=True)
-
-
 def upgrade(db_url: str, revision: str = "head", *, sql: bool = False, output_buffer: TextIO | None = None) -> None:
     if not sql:
-        _ensure_sqlite_dir(db_url)
+        from .storage import prepare_location  # DB 종류별 준비(SQLite 폴더 만들기)는 저장 계층이 안다
+
+        prepare_location(db_url)
     command.upgrade(make_config(db_url, output_buffer=output_buffer), revision, sql=sql)
 
 

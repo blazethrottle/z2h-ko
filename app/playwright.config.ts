@@ -1,6 +1,9 @@
 // 자동 브라우저 검사: 390px(폰)·1280px(맥) 두 폭. 빌드된 app/dist 를 astro preview(127.0.0.1)로 연다.
 // /api 는 테스트 안의 가짜 서버(tests/e2e/fixtures.ts)가 받는다.
 import { defineConfig, devices } from '@playwright/test';
+import { LOCAL_HOST, PREVIEW_PORT } from './src/lib/api-target.mjs';
+
+const BASE = `http://${LOCAL_HOST}:${PREVIEW_PORT}`;
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -11,7 +14,7 @@ export default defineConfig({
   reporter: [['list']],
   outputDir: 'test-results/artifacts',
   use: {
-    baseURL: 'http://127.0.0.1:4329',
+    baseURL: BASE,
     trace: 'retain-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
     locale: 'ko-KR',
@@ -24,8 +27,8 @@ export default defineConfig({
   webServer: {
     // --ignore-lock: Astro 7은 자동 실행 환경에서 preview를 뒤로 돌리는데, 테스트는 앞에서 돌아야 끝날 때 함께 꺼진다
     // Z2H_API_PROXY=off: /api 프록시를 끈다. 가짜 서버를 벗어난 요청이 켜 둔 진도 서버(8787)에 닿지 않고 404 로 끝난다
-    command: 'Z2H_API_PROXY=off ASTRO_TELEMETRY_DISABLED=1 npx astro preview --host 127.0.0.1 --port 4329 --ignore-lock',
-    url: 'http://127.0.0.1:4329/home/',
+    command: `Z2H_API_PROXY=off ASTRO_TELEMETRY_DISABLED=1 npx astro preview --host ${LOCAL_HOST} --port ${PREVIEW_PORT} --ignore-lock`,
+    url: `${BASE}/home/`,
     reuseExistingServer: false,
     timeout: 60_000,
   },

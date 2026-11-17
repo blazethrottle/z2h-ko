@@ -5,7 +5,12 @@ z2h_check/README.md 의 호출 규약 표와 같은 모양으로 부른다. 노�
 """
 import random
 
-R3_STEPS = 200  # 재구성 3: 손실 0.1 아래까지 충분히 반복
+from z2h_check._resources import load_json
+
+# 재구성 3: 교사 정본 L01-R3 규칙(학습 셀 steps_per_run 번 반복을 최대 max_reruns 번). 값은 기준값 파일(정본과 같음, 시험이 확인)에서 읽는다.
+_R3 = load_json("reference/l01.json")["R3"]
+R3_STEPS_PER_RUN = _R3["steps_per_run"]
+R3_MAX_RUNS = _R3["max_reruns"]
 
 
 def mse_loss(model, xs, ys):
@@ -151,10 +156,15 @@ def run(ns, check, torch=None, seed=0, skip=()):
     # 재구성 3조각
     call("L01-R1", Value)
     call("L01-R2", Value)
+    # 노트북처럼: 학습 셀(20번 반복)을 실행할 때마다 자기 확인 셀을 runs=몇 번째 로 부르고, 통과하면 멈춘다(최대 5번).
     random.seed(seed)
     model = MLP(3, [4, 4, 1])
-    if cell(lambda: ns.train(model, steps=R3_STEPS, lr=0.05)) is not CELL_ERROR:
-        call("L01-R3", model, mse_loss(model, ns.XS, ns.YS))
+    for k in range(1, R3_MAX_RUNS + 1):
+        if cell(lambda: ns.train(model, steps=R3_STEPS_PER_RUN, lr=0.05)) is CELL_ERROR:
+            break
+        call("L01-R3", model, mse_loss(model, ns.XS, ns.YS), runs=k)
+        if out.get("L01-R3"):
+            break
     return out
 
 

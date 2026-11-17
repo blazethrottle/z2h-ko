@@ -1,7 +1,7 @@
-"""`python -m z2h_server` 로 진도 서버를 띄운다. 주소는 127.0.0.1:8787 고정.
+"""`python -m z2h_server` 로 진도 서버를 띄운다. 주소는 127.0.0.1(고정), 포트 기본 8787. 값은 모두 config.Settings 에서.
 
 127.0.0.1 이 아닌 주소(0.0.0.0, ::, 빈 값 등)를 --host 나 Z2H_HOST 로 넘기면 띄우지 않고 끝낸다(종료 코드 2).
-Z2H_TAILSCALE_HOST 값이 '<기기>.<tailnet>.ts.net' 이름 1개가 아니어도 띄우지 않는다(종료 코드 2).
+Z2H_TAILSCALE_HOST·쿠키 설정 등 설정값이 틀려도 띄우지 않는다(ConfigRefused, 종료 코드 2).
 
 폰 로그인(Tailscale) 잇기 명령. 맥미니에서 직접 실행한다(HTTP API 는 없다). 서버를 켜지 않는다.
   python -m z2h_server link-tailscale --login <로그인 이름> --user <user_id>
@@ -21,15 +21,15 @@ from collections.abc import Mapping
 import uvicorn
 
 from .app import create_app
-from .config import BindRefused, Settings, TailscaleHostRefused, load_settings, validate_bind_host
+from .config import BIND_HOST, DEFAULT_PORT, ConfigRefused, Settings, load_settings
 
 TAILSCALE_COMMANDS = ("link-tailscale", "unlink-tailscale", "list-tailscale")
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="python -m z2h_server", description="Z2H 진도 서버(127.0.0.1 전용)")
-    parser.add_argument("--host", default=None, help="127.0.0.1 만 됩니다(기본값). 다른 값은 실행 거부")
-    parser.add_argument("--port", type=int, default=None, help="기본 8787")
+    parser = argparse.ArgumentParser(prog="python -m z2h_server", description=f"Z2H 진도 서버({BIND_HOST} 전용)")
+    parser.add_argument("--host", default=None, help=f"{BIND_HOST} 만 됩니다(기본값). 다른 값은 실행 거부")
+    parser.add_argument("--port", type=int, default=None, help=f"기본 {DEFAULT_PORT}")
     sub = parser.add_subparsers(dest="command", metavar="명령", help="없으면 서버를 켭니다")
     link = sub.add_parser("link-tailscale", help="Tailscale 로그인 이름을 학습 계정에 잇기")
     link.add_argument("--login", required=True, help="Tailscale 로그인 이름(예: someone@example.com)")
@@ -45,8 +45,8 @@ def main(argv: list[str] | None = None, env: Mapping[str, str] | None = None) ->
 
     try:
         settings = load_settings(os.environ if env is None else env, host=args.host, port=args.port)
-        host = validate_bind_host(settings.host)
-    except (BindRefused, TailscaleHostRefused) as exc:
+        options = settings.server_options()  # 바인드 127.0.0.1 만, 접속 주소 머리말 안 믿음(불변식, config.py)
+    except ConfigRefused as exc:  # 바인드 주소, Z2H_TAILSCALE_HOST, 쿠키 설정 등
         print(f"실행 거부: {exc}", file=sys.stderr)
         return 2
 
@@ -54,31 +54,24 @@ def main(argv: list[str] | None = None, env: Mapping[str, str] | None = None) ->
         return _tailscale_command(args, settings)
 
     app = create_app(settings)
-    print(f"Z2H 진도 서버: http://{host}:{settings.port}/  (멈추려면 Ctrl+C)", flush=True)
-    uvicorn.run(
-        app,
-        host=host,
-        port=settings.port,
-        proxy_headers=False,  # 접속한 쪽 주소를 머리말로 바꾸지 않는다
-        server_header=False,
-        log_level="info",
-    )
+    print(f"Z2H 진도 서버: {settings.base_url}/  (멈추려면 Ctrl+C)", flush=True)
+    uvicorn.run(app, **options)
     return 0
 
 
 def _tailscale_command(args: argparse.Namespace, settings: Settings) -> int:
-    """잇기·끊기·목록. 표를 만들거나 바꾸지 않는다(DB 는 서버를 한 번 켜서 만든다)."""
+    """잇기·끊기·목록. 표를 만들거나 바꾸지 않는다(DB 는 서버를 한 번 켜서 만든다). DB 는 저장 계층(open_adapter) 뒤."""
     from . import auth
-    from .storage import open_adapter
+    from .storage import DatabaseMissing, open_adapter
 
-    path = settings.sqlite_path
-    if path is not None and not path.exists():
+    try:
+        storage = open_adapter(settings.db_url, timeout_seconds=settings.db_timeout_seconds, must_exist=True)
+    except DatabaseMissing:
         print(
             "DB 파일이 없습니다. 먼저 서버를 한 번 켜고(python -m z2h_server), 맥에서 계정을 만든 뒤 다시 실행해 주세요.",
             file=sys.stderr,
         )
         return 1
-    storage = open_adapter(settings.db_url)
     try:
         if storage.schema_version() is None:
             print("DB 에 표가 없습니다. 먼저 서버를 한 번 켜서 표를 만들어 주세요.", file=sys.stderr)

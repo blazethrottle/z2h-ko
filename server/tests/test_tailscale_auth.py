@@ -358,9 +358,9 @@ def test_local_host_with_tailscale_header_is_not_trusted(ts_client):
     """Host 가 로컬이면 Tailscale 머리말을 믿지 않는다. 그런 요청은 개발용 로그인도 쓰지 못한다(전달된 요청 표시로 본다)."""
     c = ts_client
     auth = c.app.state.auth
-    assert isinstance(auth.tailscale, TailscaleAuth)
+    assert isinstance(auth.routes[SERVE], TailscaleAuth)
     for host in ("127.0.0.1:8787", "localhost:8787", "127.0.0.1"):
-        assert auth.tailscale.current_user_id(fake(hosts=(host,), headers=[("Tailscale-User-Login", LOGIN)])) is None
+        assert auth.routes[SERVE].current_user_id(fake(hosts=(host,), headers=[("Tailscale-User-Login", LOGIN)])) is None
     for name in ("Tailscale-User-Login", "Tailscale-User-Name", "Tailscale-User-Profile-Pic"):
         hdr = {name: LOGIN}
         assert not local_only(fake(hosts=("127.0.0.1:8787",), headers=list(hdr.items())))
@@ -394,10 +394,10 @@ def test_one_request_never_spans_both(ts_client):
     two = [("Tailscale-User-Login", LOGIN), ("X-Z2H-User", c.user_id)]
     for hosts in (("127.0.0.1:8787", SERVE), (SERVE, "127.0.0.1:8787")):
         req = fake(hosts=hosts, headers=two)
-        assert auth.for_request(req) is auth.tailscale
+        assert auth.for_request(req) is auth.routes[SERVE]
         assert auth.current_user_id(req) is None
     assert auth.for_request(fake(hosts=("127.0.0.1:8787",))) is auth.local
-    assert auth.for_request(fake(hosts=(SERVE,))) is auth.tailscale
+    assert auth.for_request(fake(hosts=(SERVE,))) is auth.routes[SERVE]
     assert auth.for_request(fake(hosts=())) is auth.local
 
 
@@ -411,7 +411,7 @@ def test_non_loopback_peer_is_refused(ts_settings):
     with make_client(replace(ts_settings, require_loopback_peer=False), client=far_peer) as far:
         r = far.get("/api/me", headers=ts())
         assert r.status_code == 401 and r.json()["auth_provider"] == "tailscale"
-        tsa = far.app.state.auth.tailscale
+        tsa = far.app.state.auth.routes[SERVE]
         good = [("Tailscale-User-Login", LOGIN)]
         assert tsa.current_user_id(fake(headers=good)) is not None
         assert tsa.current_user_id(fake(client=far_peer, headers=good)) is None
@@ -540,7 +540,7 @@ def test_funnel_or_cloudflare_marks_refuse_tailscale_login(ts_client, name, valu
     assert r.status_code == 401 and r.json()["auth_provider"] == "tailscale"
     r = c.post("/api/sync", headers=ts(Origin=SERVE_ORIGIN, **{name: value}), json=sync_body("f", "L01-S01"))
     assert r.status_code == 401
-    tsa = c.app.state.auth.tailscale
+    tsa = c.app.state.auth.routes[SERVE]
     assert tsa.current_user_id(fake(headers=[("Tailscale-User-Login", LOGIN), (name, value)])) is None
     assert tsa.current_user_id(fake(headers=[("Tailscale-User-Login", LOGIN)])) == c.user_id
 
