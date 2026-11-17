@@ -211,7 +211,7 @@ export function xIntentUrl(prefill: string): string {
 export const cardFileName = (kind: CardKind) => `z2h-${kind.toLowerCase()}.png`;
 
 /** share_id: 추측 불가 임의 값 (crypto.getRandomValues 16바이트 → 소문자 16진수 32자, server/API.md 3절 16~64자) */
-export function newShareId(rand: (b: Uint8Array) => Uint8Array = (b) => crypto.getRandomValues(b)): string {
+export function newShareId(rand: (b: Uint8Array<ArrayBuffer>) => Uint8Array = (b) => crypto.getRandomValues(b)): string {
   const b = rand(new Uint8Array(16));
   return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
 }

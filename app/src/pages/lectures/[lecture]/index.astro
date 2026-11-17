@@ -2,7 +2,7 @@
 // 강의 개요 /lectures/L01/
 import Base from '../../../layouts/Base.astro';
 import LectureApp from '../../../components/LectureApp.tsx';
-import { lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
+import { fileNameOf, lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
 import { config } from '../../../config';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 import { unitHref } from '../../../lib/basics';
@@ -21,7 +21,7 @@ const speak = MR.speak_check
       rubric: (MR.speak_check.rubric ?? []).map((r: any) => String(r?.criterion_ko ?? r)),
     }
   : null;
-const nbName = L.notebook?.student ? String(L.notebook.student).split('/').pop() : null;
+const nbName = L.notebook?.student ? fileNameOf(String(L.notebook.student)) : null;
 const art = lectureArtifact(lid);
 const basicsReady: string[] = (loadBasics() as any).readyIds;
 ---

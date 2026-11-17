@@ -349,7 +349,7 @@ export function TasteHints({
           const h = byLevel.get(lv);
           return (
             <div class="hint-item stack-sm" data-testid={`taste-hint-${lv}`}>
-              <h3 class="label" tabIndex={-1} ref={(el) => (titles.current[lv] = el)}>
+              <h3 class="label" tabIndex={-1} ref={(el) => { titles.current[lv] = el; }}>
                 {lv === 5 ? '도움 요청 메모' : `${lv}단계 · ${h?.role_ko ?? ROLE_FALLBACK[lv]}`}
               </h3>
               {h?.text_ko && (

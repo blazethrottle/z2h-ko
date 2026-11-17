@@ -31,11 +31,16 @@ export class MockApi {
   /** 서버에 이미 있는 행(다른 기기에서 올린 것처럼). 첫 상태 받기(since 없음)에만 돌려준다 */
   serverTables: Record<string, any[]> = {};
 
+  /** 응답을 늦추는 동안 테스트가 mode 를 바꿀 수 있어 볼 때마다 새로 읽는다 */
+  isDown(): boolean {
+    return this.mode === 'down';
+  }
+
   async attach(page: Page) {
     await page.route('**/api/**', async (route) => {
-      if (this.mode === 'down') return route.abort('connectionrefused');
+      if (this.isDown()) return route.abort('connectionrefused');
       if (this.delayMs) await new Promise((r) => setTimeout(r, this.delayMs));
-      if (this.mode === 'down') return route.abort('connectionrefused');
+      if (this.isDown()) return route.abort('connectionrefused');
       const url = new URL(route.request().url());
       const now = new Date(Date.now() + 9 * 3600_000).toISOString().replace('Z', '+09:00');
       const method = route.request().method();

@@ -26,7 +26,7 @@ export interface QueuedOp extends SyncOp {
 
 /** 서버로 보내는 data: 서버가 정하는 칸(user_id, updated_at, attempt_no 등)과 열쇠 칸은 뺀다 (server/API.md 3절) */
 export function opData(table: string, row: Row): Row {
-  const keyCols = new Set(TABLE_KEYS[table as TableName] ?? []);
+  const keyCols = new Set<string>(TABLE_KEYS[table as TableName] ?? []);
   const out: Row = {};
   for (const [k, v] of Object.entries(row)) if (!SERVER_FIELDS.has(k) && !keyCols.has(k)) out[k] = v;
   return out;

@@ -2,7 +2,7 @@
 // 단계 화면 /lectures/L01/S04/ (step_id 뒷부분은 문자열 그대로, 예 S14b)
 import Base from '../../../layouts/Base.astro';
 import StepApp from '../../../components/StepApp.tsx';
-import { codeCredit, lectureLabel, loadSite } from '../../../lib/pageData';
+import { codeCredit, fileNameOf, lectureLabel, loadSite } from '../../../lib/pageData';
 import CodeCredit from '../../../components/CodeCredit.astro';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 
@@ -18,7 +18,7 @@ const step = d.steps.find((s: any) => s.step_id === stepId);
 const label = lectureLabel(lid, d.lecture.title_ko);
 const questions = step.question_ids.map((q: string) => d.questions.find((x: any) => x.question_id === q)).filter(Boolean);
 const steps = d.steps.map((s: any) => ({ step_id: s.step_id, slug: s.slug, order: s.order, title_ko: s.title_ko, video_segments: s.video_segments }));
-const nb = d.lecture.notebook?.student ? String(d.lecture.notebook.student).split('/').pop() : null;
+const nb = d.lecture.notebook?.student ? fileNameOf(String(d.lecture.notebook.student)) : null;
 const repos: string[] = d.lecture.source_repos ?? [];
 const basicsReady: string[] = (loadBasics() as any).readyIds;
 ---

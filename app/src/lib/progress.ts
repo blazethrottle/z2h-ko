@@ -5,7 +5,8 @@ import { nowKst, uuid4, weekStartKst, weekStartMs } from './time';
 import { ActivityTracker } from './activity';
 import { config } from '../config';
 
-export const STEP_DONE = new Set(['done', 'skipped_optional']);
+// 기록이 아직 없는 단계(status undefined)도 그대로 물어볼 수 있게 undefined 를 받는다
+export const STEP_DONE: ReadonlySet<string | undefined> = new Set(['done', 'skipped_optional']);
 
 /** 이번 주 실습 시간: 자동 = study_session(auto) 합, 홈에서 고친 값(user_pref practice_week:{주 시작일}.edited_seconds)이 있으면 그 값 */
 export function weeklySeconds(

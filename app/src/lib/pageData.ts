@@ -7,6 +7,11 @@ export function lectureLabel(lectureId: string, titleKo: string): string {
   return `${lectureId.slice(1)} ${short}`;
 }
 
+/** 경로의 마지막 조각(파일 이름). / 가 없으면 그대로 */
+export function fileNameOf(repoPath: string): string {
+  return repoPath.slice(repoPath.lastIndexOf('/') + 1);
+}
+
 export function notebookPublicPath(lectureId: string, repoPath: string | null): string | null {
   if (!repoPath) return null;
   const base = repoPath.split('/').pop();

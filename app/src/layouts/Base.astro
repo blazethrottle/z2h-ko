@@ -20,7 +20,7 @@ interface Props {
 }
 const { title, nav = null, back = null, wide = false, tabs = true, bar = 'app', description } = Astro.props;
 const site = loadSite();
-const firstLecture = site.lectures.find((l) => l.available)?.lecture_id ?? 'L01';
+const firstLecture = site.lectures.find((l: { lecture_id: string; available: boolean }) => l.available)?.lecture_id ?? 'L01';
 const lecturesHref = `/lectures/${firstLecture}/`;
 const items = [
   { id: 'home', href: '/home/', label: '홈' },

@@ -21,9 +21,16 @@ import {
   sanitizeCardInput,
   shareCardRow,
   xIntentUrl,
+  type CardInput,
   type L01CardText,
+  type TasterCardInput,
   type TasterCardText,
 } from '../../src/lib/share-card';
+
+function asTaster(c: CardInput | null): TasterCardInput {
+  if (c?.kind !== 'ART-TASTER') throw new Error(`맛보기 카드 입력이 아닙니다: ${JSON.stringify(c)}`);
+  return c;
+}
 
 const TASTER = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster.json'), 'utf8'));
 const L01 = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/L01.json'), 'utf8'));
@@ -204,7 +211,7 @@ describe('share_card 기록', () => {
     expect(a).toMatch(/^[0-9a-f]{32}$/);
   });
   it('행: visibility private, image_path 비움, payload = 화이트리스트 입력 그대로', () => {
-    const input = sanitizeCardInput({ kind: 'ART-TASTER', names: ['gsli'], loss_start: 3.84, loss_end: 2.47, taste_complete: true, ...PERSONAL })!;
+    const input = asTaster(sanitizeCardInput({ kind: 'ART-TASTER', names: ['gsli'], loss_start: 3.84, loss_end: 2.47, taste_complete: true, ...PERSONAL }));
     const row = shareCardRow(input, 'a'.repeat(32), '2026-11-17T10:00:00+09:00', 'v1');
     expect(row).toEqual({
       share_id: 'a'.repeat(32),

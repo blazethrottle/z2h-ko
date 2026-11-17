@@ -4,6 +4,7 @@ import { findBanned } from '../../src/content/landing-banned.mjs';
 import { LANDING } from '../../src/content/landing.mjs';
 
 const EM_DASH = String.fromCharCode(0x2014);
+type PathRow = (typeof LANDING.path.rows)[number];
 const SECTIONS = ['landing-hero', 'landing-gains', 'landing-audience', 'landing-path', 'landing-support', 'landing-end', 'landing-footer'];
 
 test('랜딩: 구역 7개, 예시 화면 표시, 문구·숫자의 출처, 쓰지 않는 말·긴 줄표 0', async ({ page, api }, info) => {
@@ -24,8 +25,8 @@ test('랜딩: 구역 7개, 예시 화면 표시, 문구·숫자의 출처, 쓰�
   await expect(page.getByTestId('landing-footer')).toContainText('관계나 보증이 없습니다');
   // 단계 수는 video-segments.json 에서 센 값 (하드코딩 아님)
   const counts: Record<string, number> = m.step_counts;
-  const rows = LANDING.path.rows.filter((r: any) => r.lecture_id);
-  const total = rows.reduce((a: number, r: any) => a + (counts[r.lecture_id] ?? 0), 0);
+  const rows = LANDING.path.rows.filter((r): r is PathRow & { lecture_id: string } => Boolean(r.lecture_id));
+  const total = rows.reduce((a, r) => a + (counts[r.lecture_id] ?? 0), 0);
   expect(total).toBeGreaterThan(0);
   await expect(page.getByTestId('landing-path-lead')).toContainText(`${rows.length}편, ${total}단계`);
   for (const r of rows) await expect(page.locator(`[data-lecture="${r.lecture_id}"]`)).toContainText(`${counts[r.lecture_id]}단계`);

@@ -131,7 +131,7 @@ export default function HintLadder(p: Props) {
           const h = byLevel.get(lv);
           return (
             <div class="hint-item stack-sm" data-testid={`hint-${p.targetId}-H${lv}`}>
-              <h3 class="label" tabIndex={-1} ref={(el) => (titleRefs.current[lv] = el)}>
+              <h3 class="label" tabIndex={-1} ref={(el) => { titleRefs.current[lv] = el; }}>
                 {lv === 5 ? '도움 요청 메모' : `${lv}단계 · ${LEVEL_NAMES[lv]}`}
               </h3>
               {h?.text_ko && (
