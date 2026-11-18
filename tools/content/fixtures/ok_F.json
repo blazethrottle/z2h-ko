@@ -1,0 +1,254 @@
+{
+  "_meta": {
+    "fixture": "ok_F",
+    "note_ko": "기초 파일 검사 확인용 예시입니다. 단위 안에 단계, 문제, 힌트를 두는 모양은 도구 담당의 추측이며 data-spec이 정한 것이 아닙니다."
+  },
+  "units": [
+    {
+      "unit_id": "F-P1",
+      "title_ko": "이름표에 숫자 붙이기",
+      "order": 1,
+      "objectives": [
+        {"objective_id": "F-P1-O1", "text_ko": "이름표에 숫자를 붙이고 바꿀 수 있다"}
+      ],
+      "steps": [
+        {
+          "step_id": "F-P1-S01",
+          "unit_id": "F-P1",
+          "order": 1,
+          "title_ko": "사과 개수 적기",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 2,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "새 셀에 두 줄을 칩니다.",
+          "code": "apples = 3\nprint(apples)",
+          "code_line_notes_ko": ["apples라는 이름표에 3을 붙입니다", "apples에 붙은 숫자를 찍습니다"],
+          "expected_ko": "3이 찍힙니다.",
+          "expected_check": {"type": "output_match", "expected": "3"},
+          "meaning_ko": "이름표는 숫자를 기억합니다.",
+          "objective_ids": ["F-P1-O1"],
+          "hint_ids": ["F-P1-S01-H1"]
+        },
+        {
+          "step_id": "F-P1-S02",
+          "unit_id": "F-P1",
+          "order": 2,
+          "title_ko": "사과 두 개 더 사기",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 2,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "새 셀에 두 줄을 칩니다.",
+          "code": "apples = apples + 2\napples",
+          "code_line_notes_ko": ["지금 숫자에 2를 더해 다시 붙입니다", "apples를 화면에 보여 줍니다"],
+          "expected_ko": "5가 보입니다.",
+          "expected_check": {"type": "output_match", "expected": "5"},
+          "meaning_ko": "같은 단위 안에서는 앞 셀의 이름표가 남아 있습니다.",
+          "objective_ids": ["F-P1-O1"],
+          "hint_ids": []
+        },
+        {
+          "step_id": "F-P1-S3",
+          "unit_id": "F-P1",
+          "order": 3,
+          "title_ko": "런타임을 다시 시작하면",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 1,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "메뉴에서 런타임을 다시 시작한 뒤 새 셀에 한 줄을 칩니다. 에러가 나는 것이 정상입니다.",
+          "code": "apples",
+          "code_line_notes_ko": ["apples를 화면에 보여 달라고 합니다"],
+          "expected_ko": "NameError 에러가 납니다.",
+          "expected_check": {"type": "manual"},
+          "restart_first": true,
+          "expected_error": "NameError: apples",
+          "meaning_ko": "다시 시작하면 기억이 모두 비워집니다.",
+          "objective_ids": ["F-P1-O1"],
+          "hint_ids": []
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "F-P1-Q1",
+          "unit_id": "F-P1",
+          "type": "predict",
+          "prompt_ko": "아래 코드를 실행하면 무엇이 찍힐까요?",
+          "code": "n = 4\nn = n + 3\nprint(n)",
+          "answer_ko": "4에 3을 더해 7이 찍힙니다.",
+          "auto_grade": {"type": "exact", "value": "7"},
+          "rubric": [{"point": 1, "criterion_ko": "7이라고 답함"}],
+          "max_points": 1,
+          "objective_ids": ["F-P1-O1"],
+          "hint_ids": ["F-P1-Q1-H1"]
+        }
+      ],
+      "hints": [
+        {
+          "hint_id": "F-P1-S01-H1",
+          "target_id": "F-P1-S01",
+          "level": 1,
+          "text_ko": "등호 왼쪽과 오른쪽 중 어느 쪽이 이름표일까요?",
+          "code_with_blanks": null,
+          "unlock": {"after_attempts": 1, "after_minutes": null}
+        },
+        {
+          "hint_id": "F-P1-Q1-H1",
+          "target_id": "F-P1-Q1",
+          "level": 1,
+          "text_ko": "두 번째 줄 오른쪽을 먼저 계산해 보세요.",
+          "code_with_blanks": null,
+          "unlock": {"after_attempts": 1, "after_minutes": null}
+        }
+      ]
+    },
+    {
+      "unit_id": "F-M1",
+      "title_ko": "조금 움직이면 얼마나 변할까",
+      "order": 2,
+      "objectives": [
+        {"objective_id": "F-M1-O1", "text_ko": "아주 조금 움직였을 때의 변화량을 숫자로 구할 수 있다"}
+      ],
+      "steps": [
+        {
+          "step_id": "F-M1-S01",
+          "unit_id": "F-M1",
+          "order": 1,
+          "title_ko": "앞 단위의 이름표는 없습니다",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 1,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "새 셀에 한 줄을 칩니다. 에러가 나는 것이 정상입니다.",
+          "code": "print(apples)",
+          "code_line_notes_ko": ["앞 단위에서 만든 apples를 찍어 봅니다"],
+          "expected_ko": "NameError 에러가 납니다.",
+          "expected_check": {"type": "manual"},
+          "expected_error": "NameError",
+          "meaning_ko": "단위마다 새 노트북에서 시작합니다.",
+          "objective_ids": ["F-M1-O1"],
+          "hint_ids": []
+        },
+        {
+          "step_id": "F-M1-S02",
+          "unit_id": "F-M1",
+          "order": 2,
+          "title_ko": "제곱 함수의 기울기 재기",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 5,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "새 셀에 다섯 줄을 칩니다.",
+          "code": "def f(x):\n    return x * x\nh = 0.001\nslope = (f(3 + h) - f(3)) / h\nprint(round(slope, 2))",
+          "code_line_notes_ko": [
+            "숫자를 받는 함수 f를 만듭니다",
+            "받은 숫자를 제곱해 돌려줍니다",
+            "아주 작은 움직임 h를 정합니다",
+            "3에서 h만큼 움직였을 때 변한 양을 h로 나눕니다",
+            "결과를 소수 둘째 자리까지 찍습니다"
+          ],
+          "expected_ko": "6에 아주 가까운 숫자가 찍힙니다.",
+          "expected_check": {"type": "value_range", "expr": "slope", "min": 5.99, "max": 6.01},
+          "meaning_ko": "기울기는 조금 움직였을 때 얼마나 변하는지입니다.",
+          "objective_ids": ["F-M1-O1"],
+          "hint_ids": []
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "F-M1-Q1",
+          "unit_id": "F-M1",
+          "type": "choice",
+          "prompt_ko": "h를 더 작게 하면 기울기 값은 어떻게 될까요?",
+          "choices": ["6에 더 가까워진다", "0이 된다", "커진다"],
+          "answer_index": 0,
+          "auto_grade": {"type": "choice"},
+          "answer_ko": "h가 작을수록 정확한 기울기 6에 가까워집니다.",
+          "rubric": [{"point": 1, "criterion_ko": "첫 번째 보기를 고름"}],
+          "max_points": 1,
+          "objective_ids": ["F-M1-O1"],
+          "hint_ids": []
+        }
+      ],
+      "hints": []
+    }
+  ],
+  "diagnostic": {
+    "questions": [
+      {
+        "question_id": "F-D1",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "`price = 10` 다음 `price = price * 3`을 실행하면 price는?",
+        "choices": ["10", "30", "13", "모르겠어요"],
+        "answer_index": 1,
+        "auto_grade": {"type": "choice"},
+        "answer_ko": "10에 3을 곱해 30입니다.",
+        "rubric": [{"point": 1, "criterion_ko": "30을 고름"}],
+        "recommend_units_if_wrong": ["F-P1"],
+        "max_points": 1,
+        "hint_ids": []
+      },
+      {
+        "question_id": "F-D2",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "`[4, 5, 6]`에서 맨 앞 숫자를 꺼내는 번호는?",
+        "choices": ["0", "1", "4", "모르겠어요"],
+        "answer_index": 0,
+        "auto_grade": {"type": "choice"},
+        "answer_ko": "파이썬은 0부터 셉니다.",
+        "rubric": [{"point": 1, "criterion_ko": "0을 고름"}],
+        "recommend_units_if_wrong": ["F-P1"],
+        "max_points": 1,
+        "hint_ids": []
+      },
+      {
+        "question_id": "F-D3",
+        "unit_id": "F-DIAG",
+        "type": "predict",
+        "prompt_ko": "`print(2 * 3 + 1)`을 실행하면 찍히는 숫자는?",
+        "answer_ko": "곱하기를 먼저 해서 7입니다.",
+        "auto_grade": {"type": "exact", "value": "7"},
+        "rubric": [{"point": 1, "criterion_ko": "7이라고 답함"}],
+        "recommend_units_if_wrong": ["F-P1"],
+        "max_points": 1,
+        "hint_ids": []
+      },
+      {
+        "question_id": "F-D4",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "x가 아주 조금 늘 때 y가 그 두 배만큼 늘면, 기울기는?",
+        "choices": ["1", "2", "0.5", "모르겠어요"],
+        "answer_index": 1,
+        "auto_grade": {"type": "choice"},
+        "answer_ko": "변화량의 비율이 2입니다.",
+        "rubric": [{"point": 1, "criterion_ko": "2를 고름"}],
+        "recommend_units_if_wrong": ["F-M1"],
+        "max_points": 1,
+        "hint_ids": []
+      },
+      {
+        "question_id": "F-D5",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "`def double(v): return v * 2` 다음 `double(5)`의 값은?",
+        "choices": ["5", "7", "10", "모르겠어요"],
+        "answer_index": 2,
+        "auto_grade": {"type": "choice"},
+        "answer_ko": "5를 두 배 해서 10입니다.",
+        "rubric": [{"point": 1, "criterion_ko": "10을 고름"}],
+        "recommend_units_if_wrong": ["F-P1", "F-M1"],
+        "max_points": 1,
+        "hint_ids": []
+      }
+    ]
+  }
+}

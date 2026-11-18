@@ -1,0 +1,148 @@
+{
+  "_meta": {
+    "fixture": "bad_F",
+    "note_ko": "일부러 틀리게 지은 기초 파일 예시입니다."
+  },
+  "units": [
+    {
+      "unit_id": "F-P1",
+      "title_ko": "줄표 \u2014 들어간 단위 제목",
+      "order": 1,
+      "steps": [
+        {
+          "step_id": "F-P1-S01",
+          "unit_id": "F-P1",
+          "order": 1,
+          "title_ko": "출력이 다른 단계",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 2,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "두 줄을 칩니다.",
+          "code": "k = 2\nprint(k * 2)",
+          "code_line_notes_ko": ["풀이가 한 줄뿐"],
+          "expected_ko": "5라고 잘못 적음",
+          "expected_check": {"type": "output_match", "expected": "5"},
+          "meaning_ko": "출력 불일치, 줄별 풀이 불일치",
+          "objective_ids": [],
+          "hint_ids": []
+        },
+        {
+          "step_id": "F-P1-S02",
+          "unit_id": "F-P1",
+          "order": 2,
+          "title_ko": "예상 밖 에러가 나는 단계",
+          "video_segments": [],
+          "long_step": false,
+          "new_code_lines": 1,
+          "prepared_code": null,
+          "kind": "code",
+          "input_ko": "한 줄을 칩니다.",
+          "code": "print(k / 0)",
+          "code_line_notes_ko": ["0으로 나눕니다"],
+          "expected_ko": "없음",
+          "expected_check": {"type": "manual"},
+          "meaning_ko": "예상 밖 에러",
+          "objective_ids": [],
+          "hint_ids": []
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "F-P1-X1",
+          "unit_id": "F-P1",
+          "type": "explain",
+          "prompt_ko": "아이디가 틀리고 채점 기준이 없는 문제",
+          "answer_ko": "없음",
+          "auto_grade": {"type": "manual"},
+          "max_points": 1,
+          "hint_ids": []
+        },
+        {
+          "question_id": "F-M3-Q1",
+          "unit_id": "F-M3",
+          "type": "explain",
+          "prompt_ko": "없는 단위를 가리키는 문제",
+          "answer_ko": "없음",
+          "auto_grade": {"type": "manual"},
+          "rubric": [{"point": 1, "criterion_ko": "없음"}],
+          "max_points": 1,
+          "hint_ids": []
+        }
+      ]
+    },
+    {
+      "unit_id": "F-P1",
+      "title_ko": "아이디가 겹치는 단위",
+      "order": 2,
+      "steps": []
+    },
+    {
+      "unit_id": "F-P12",
+      "title_ko": "번호 범위를 넘는 단위",
+      "order": 3,
+      "steps": []
+    }
+  ],
+  "diagnostic": {
+    "questions": [
+      {
+        "question_id": "F-D1",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "정답이 모르겠어요로 잘못 적힌 문항",
+        "choices": ["1", "2", "모르겠어요"],
+        "answer_index": 2,
+        "auto_grade": {"type": "choice"},
+        "recommend_units_if_wrong": ["F-M5"],
+        "max_points": 1,
+        "hint_ids": []
+      },
+      {
+        "question_id": "F-D2",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "힌트가 붙은 진단 문항",
+        "choices": ["1", "2", "모르겠어요"],
+        "answer_index": 0,
+        "auto_grade": {"type": "choice"},
+        "recommend_units_if_wrong": ["F-P1"],
+        "max_points": 1,
+        "hint_ids": ["F-D2-H1"]
+      },
+      {
+        "question_id": "F-D3",
+        "unit_id": "F-DIAG",
+        "type": "predict",
+        "prompt_ko": "단답 문항",
+        "auto_grade": {"type": "exact", "value": "1"},
+        "recommend_units_if_wrong": ["F-P1"],
+        "max_points": 1,
+        "hint_ids": []
+      },
+      {
+        "question_id": "F-D4",
+        "unit_id": "F-DIAG",
+        "type": "choice",
+        "prompt_ko": "네 번째 문항(다섯 번째가 없음)",
+        "choices": ["1", "2", "모르겠어요"],
+        "answer_index": 1,
+        "auto_grade": {"type": "choice"},
+        "recommend_units_if_wrong": ["F-P1"],
+        "max_points": 1,
+        "hint_ids": []
+      }
+    ],
+    "hints": [
+      {
+        "hint_id": "F-D2-H1",
+        "target_id": "F-D2",
+        "level": 1,
+        "text_ko": "진단 문항에는 힌트가 없어야 합니다",
+        "code_with_blanks": null,
+        "unlock": {"after_attempts": 1, "after_minutes": null}
+      }
+    ]
+  }
+}

@@ -1,0 +1,490 @@
+{
+  "_meta": {
+    "fixture": "ok",
+    "note_ko": "검사 도구 자체 확인용 예시입니다. 내용은 도구 담당이 지어낸 것이고 실제 강의 내용이 아닙니다."
+  },
+  "lecture": {
+    "lecture_id": "L01",
+    "title_ko": "연습용 편: 숫자 상자 만들기",
+    "video_url": "https://www.youtube.com/watch?v=abcDEF12345",
+    "youtube_video_id": "abcDEF12345",
+    "video_seconds": 600,
+    "video_minutes": 10,
+    "source_repos": ["example/practice-box"],
+    "env": ["cpu"],
+    "objectives": [
+      {"objective_id": "L01-O1", "text_ko": "숫자 하나를 담는 상자 클래스를 만들 수 있다"},
+      {"objective_id": "L01-O2", "text_ko": "상자 두 개를 더하는 규칙을 붙일 수 있다"}
+    ],
+    "prereq_units": ["F-P1"],
+    "prereq_lectures": [],
+    "mastery_rule_id": "default",
+    "research_status": "pending"
+  },
+  "steps": [
+    {
+      "step_id": "L01-S01",
+      "lecture_id": "L01",
+      "order": 1,
+      "title_ko": "오늘 만들 것 둘러보기",
+      "video_segments": [{"start_s": 0, "end_s": 45}],
+      "long_step": false,
+      "new_code_lines": 0,
+      "prepared_code": null,
+      "kind": "read",
+      "input_ko": "입력할 것은 없습니다. 영상만 봅니다.",
+      "code": "",
+      "code_line_notes_ko": [],
+      "expected_ko": "화면에 바뀌는 것은 없습니다.",
+      "expected_check": {"type": "manual"},
+      "meaning_ko": "숫자를 담는 상자를 만들 준비를 합니다.",
+      "objective_ids": ["L01-O1"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S02",
+      "lecture_id": "L01",
+      "order": 2,
+      "title_ko": "상자 클래스 만들기 (긴 단계)",
+      "video_segments": [{"start_s": 45, "end_s": 200}],
+      "long_step": true,
+      "new_code_lines": 6,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "새 셀에 아래 여섯 줄을 칩니다.",
+      "code": "class Box:\n    def __init__(self, n):\n        self.n = n\n    def __repr__(self):\n        return f\"Box({self.n})\"\nBox(4)",
+      "code_line_notes_ko": [
+        "Box라는 이름의 틀을 만듭니다",
+        "상자를 만들 때 숫자 n을 받습니다",
+        "받은 숫자를 상자 안에 넣어 둡니다",
+        "상자를 화면에 보여 줄 때 쓰는 규칙입니다",
+        "Box(숫자) 모양으로 보여 줍니다",
+        "4를 담은 상자를 하나 만들어 봅니다"
+      ],
+      "expected_ko": "Box(4)가 보입니다.",
+      "expected_check": {"type": "output_match", "expected": "Box(4)"},
+      "meaning_ko": "숫자 하나를 기억하는 상자가 생겼습니다.",
+      "objective_ids": ["L01-O1"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S03",
+      "lecture_id": "L01",
+      "order": 3,
+      "title_ko": "상자끼리 더하기",
+      "video_segments": [{"start_s": 200, "end_s": 330}],
+      "long_step": false,
+      "new_code_lines": 4,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "앞 셀의 self.n = n 줄 아래에 두 줄을 넣고, 새 셀에 두 줄을 칩니다.",
+      "code": "    def __add__(self, other):\n        return Box(self.n + other.n)\ntotal = Box(2) + Box(3)\nprint(total.n)",
+      "code_line_notes_ko": [
+        "+ 기호를 만났을 때 할 일을 정합니다",
+        "두 상자의 숫자를 더해 새 상자에 담습니다",
+        "2 상자와 3 상자를 더합니다",
+        "더한 상자 안의 숫자를 찍습니다"
+      ],
+      "edits": [
+        {
+          "target_step": "L01-S02",
+          "where_ko": "self.n = n 줄 바로 아래",
+          "action": "insert",
+          "anchor_line": "        self.n = n",
+          "line_count": 2
+        }
+      ],
+      "rerun_first": [],
+      "expected_ko": "5가 찍힙니다.",
+      "expected_check": {"type": "output_match", "expected": "5"},
+      "meaning_ko": "상자끼리도 + 기호로 더할 수 있게 되었습니다.",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": ["L01-S03-H1", "L01-S03-H2", "L01-S03-H3", "L01-S03-H4"]
+    },
+    {
+      "step_id": "L01-S04",
+      "lecture_id": "L01",
+      "order": 4,
+      "title_ko": "상자 보여 주는 모양 바꾸기",
+      "video_segments": [{"start_s": 330, "end_s": 400}],
+      "long_step": false,
+      "new_code_lines": 1,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "__repr__ 안의 return 줄을 바꾸고, 그 셀과 앞 단계 셀을 다시 실행한 뒤 새 셀에 total을 칩니다.",
+      "code": "        return f\"상자({self.n})\"\ntotal",
+      "code_line_notes_ko": [
+        "보여 주는 모양을 상자(숫자)로 바꿉니다",
+        "total 상자를 화면에 보여 달라고 합니다"
+      ],
+      "edits": [
+        {
+          "target_step": "L01-S02",
+          "where_ko": "__repr__ 안의 return 줄",
+          "action": "replace",
+          "anchor_line": "        return f\"Box({self.n})\"",
+          "line_count": 1
+        }
+      ],
+      "rerun_first": ["L01-S03"],
+      "expected_ko": "상자(5)가 보입니다.",
+      "expected_check": {"type": "output_match", "expected": "상자(5)"},
+      "meaning_ko": "클래스를 고치면 상자를 다시 만들어야 새 모양이 적용됩니다.",
+      "objective_ids": ["L01-O1"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S05",
+      "lecture_id": "L01",
+      "order": 5,
+      "title_ko": "무작위 숫자의 평균",
+      "video_segments": [],
+      "long_step": false,
+      "new_code_lines": 4,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "새 셀에 네 줄을 칩니다.",
+      "code": "import random\npicks = [random.random() for _ in range(200)]\navg = sum(picks) / len(picks)\nprint(round(avg, 2))",
+      "code_line_notes_ko": [
+        "무작위 숫자 도구를 불러옵니다",
+        "0과 1 사이 숫자를 200개 뽑습니다",
+        "200개의 평균을 구합니다",
+        "평균을 소수 둘째 자리까지 찍습니다"
+      ],
+      "expected_ko": "0.5 근처 숫자가 찍힙니다. 매번 조금씩 다릅니다.",
+      "expected_check": {"type": "value_range", "expr": "avg", "min": 0.3, "max": 0.7},
+      "meaning_ko": "무작위 결과는 정확한 값 대신 범위로 확인합니다.",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S06",
+      "lecture_id": "L01",
+      "order": 6,
+      "title_ko": "상자와 맨 숫자를 더하면",
+      "video_segments": [],
+      "long_step": false,
+      "new_code_lines": 1,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "새 셀에 한 줄을 칩니다. 에러가 나는 것이 정상입니다.",
+      "code": "Box(1) + 5",
+      "code_line_notes_ko": ["상자에 맨 숫자 5를 더해 봅니다"],
+      "expected_ko": "AttributeError 에러가 납니다.",
+      "expected_check": {"type": "manual"},
+      "expected_error": "AttributeError",
+      "meaning_ko": "맨 숫자에는 n이 없어서 더하기 규칙이 깨집니다.",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S07",
+      "lecture_id": "L01",
+      "order": 7,
+      "title_ko": "준비 코드로 상자 찍기",
+      "video_segments": [],
+      "long_step": false,
+      "new_code_lines": 1,
+      "prepared_code": "def show(b):\n    print(\"[\", b.n, \"]\")",
+      "prepared_code_line_notes_ko": [
+        "상자를 받아 찍는 도우미 함수입니다",
+        "대괄호 사이에 숫자를 찍습니다"
+      ],
+      "prepared_code_source_ko": "도구 담당이 지은 도우미 함수입니다(원본 저장소 없음).",
+      "kind": "code",
+      "input_ko": "준비 코드를 붙여 넣고 실행한 뒤 새 셀에 한 줄을 칩니다.",
+      "code": "show(Box(7))",
+      "code_line_notes_ko": ["7 상자를 도우미 함수로 찍습니다"],
+      "expected_ko": "[ 7 ]이 찍힙니다.",
+      "expected_check": {"type": "output_match", "expected": "[ 7 ]", "match": "exact"},
+      "meaning_ko": "준비 코드는 붙여 넣기만 해도 됩니다.",
+      "objective_ids": ["L01-O1"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S08",
+      "lecture_id": "L01",
+      "order": 8,
+      "title_ko": "그래프 하나 그리기",
+      "video_segments": [{"start_s": 400, "end_s": 470}],
+      "long_step": false,
+      "new_code_lines": 3,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "새 셀에 세 줄을 칩니다.",
+      "code": "import matplotlib.pyplot as plt\nplt.plot([1, 2, 3], [2, 4, 8])\nplt.show()",
+      "code_line_notes_ko": [
+        "그림 도구를 불러옵니다",
+        "점 세 개를 이은 선을 그립니다",
+        "그림을 화면에 보여 줍니다"
+      ],
+      "expected_ko": "오른쪽 위로 올라가는 선이 보입니다.",
+      "expected_check": {"type": "manual"},
+      "meaning_ko": "숫자의 변화를 그림으로 볼 수 있습니다.",
+      "objective_ids": ["L01-O1"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S09",
+      "lecture_id": "L01",
+      "order": 9,
+      "title_ko": "화살표 그림(선택)",
+      "video_segments": [{"start_s": 470, "end_s": 600}],
+      "long_step": false,
+      "new_code_lines": 4,
+      "prepared_code": null,
+      "kind": "optional",
+      "input_ko": "원하면 새 셀에 네 줄을 칩니다.",
+      "code": "import graphviz\ng = graphviz.Digraph()\ng.edge(\"a\", \"b\")\ng",
+      "code_line_notes_ko": [
+        "화살표 그림 도구를 불러옵니다",
+        "빈 그림판을 만듭니다",
+        "a에서 b로 가는 화살표를 넣습니다",
+        "그림을 화면에 보여 줍니다"
+      ],
+      "expected_ko": "a에서 b로 가는 화살표 그림이 보입니다.",
+      "expected_check": {"type": "manual"},
+      "meaning_ko": "계산의 흐름을 화살표로 그릴 수 있습니다.",
+      "objective_ids": ["L01-O1"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S10",
+      "lecture_id": "L01",
+      "order": 10,
+      "title_ko": "괄호 먼저 계산하기",
+      "video_segments": [],
+      "long_step": false,
+      "new_code_lines": 1,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "새 셀에 한 줄을 칩니다.",
+      "code": "(2 + 3) * 4",
+      "code_line_notes_ko": ["괄호 안을 먼저 더하고 4를 곱합니다"],
+      "expected_ko": "20이 보입니다.",
+      "expected_check": {"type": "exact", "value": "20"},
+      "meaning_ko": "괄호가 계산 순서를 정합니다.",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S11",
+      "lecture_id": "L01",
+      "order": 11,
+      "title_ko": "상자 숫자 모으는 셀",
+      "video_segments": [],
+      "long_step": false,
+      "new_code_lines": 4,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "새 셀에 네 줄을 칩니다.",
+      "code": "count = 0\nfor b in [Box(1), Box(2)]:\n    count = count + b.n\nprint(count)",
+      "code_line_notes_ko": [
+        "모은 숫자를 0에서 시작합니다",
+        "상자 두 개를 하나씩 꺼냅니다",
+        "꺼낸 상자의 숫자를 더해 갑니다",
+        "모은 숫자를 찍습니다"
+      ],
+      "expected_ko": "3이 찍힙니다.",
+      "expected_check": {"type": "output_match", "expected": "3"},
+      "meaning_ko": "반복하며 숫자를 모읍니다.",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    },
+    {
+      "step_id": "L01-S12",
+      "lecture_id": "L01",
+      "order": 12,
+      "title_ko": "모으는 셀 고쳐 다시 돌리기",
+      "video_segments": [],
+      "long_step": false,
+      "new_code_lines": 1,
+      "prepared_code": null,
+      "kind": "code",
+      "input_ko": "앞 셀의 for 줄 아래에 한 줄을 넣고, 괄호 계산 셀을 다시 실행한 뒤 고친 셀을 다시 실행합니다.",
+      "code": "    b = b + Box(10)",
+      "code_line_notes_ko": ["꺼낸 상자에 10 상자를 더해 바꿔 끼웁니다"],
+      "edits": [
+        {
+          "target_step": "L01-S11",
+          "where_ko": "for 줄 바로 아래",
+          "action": "insert",
+          "anchor_line": "for b in [Box(1), Box(2)]:",
+          "line_count": 1
+        }
+      ],
+      "rerun_first": ["L01-S10"],
+      "expected_ko": "23이 찍힙니다.",
+      "expected_check": {"type": "output_match", "expected": "23", "match": "exact"},
+      "meaning_ko": "고친 셀을 다시 돌린 결과가 이 단계의 결과입니다.",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    }
+  ],
+  "questions": [
+    {
+      "question_id": "L01-Q01",
+      "lecture_id": "L01",
+      "type": "choice",
+      "prompt_ko": "Box(2) + Box(3)으로 만든 상자의 n은 무엇일까요?",
+      "choices": ["23", "5", "6"],
+      "answer_index": 1,
+      "auto_grade": {"type": "choice"},
+      "answer_ko": "두 숫자를 더하므로 5입니다.",
+      "rubric": [{"point": 1, "criterion_ko": "5를 고름"}],
+      "max_points": 1,
+      "must_pass": false,
+      "alternate_of": null,
+      "objective_ids": ["L01-O2"],
+      "hint_ids": [],
+      "after_step": "L01-S03"
+    },
+    {
+      "question_id": "L01-Q01-ALT",
+      "lecture_id": "L01",
+      "type": "choice",
+      "prompt_ko": "Box(10) + Box(1)으로 만든 상자의 n은 무엇일까요?",
+      "choices": ["101", "11", "9"],
+      "answer_index": 1,
+      "auto_grade": {"type": "choice"},
+      "answer_ko": "두 숫자를 더하므로 11입니다.",
+      "rubric": [{"point": 1, "criterion_ko": "11을 고름"}],
+      "max_points": 1,
+      "must_pass": false,
+      "alternate_of": "L01-Q01",
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    },
+    {
+      "question_id": "L01-Q02",
+      "lecture_id": "L01",
+      "type": "predict",
+      "prompt_ko": "아래 코드를 실행하면 무엇이 찍힐까요?",
+      "code": "print(Box(1) + Box(1))",
+      "answer_ko": "모양을 바꾼 뒤이므로 상자(2)가 찍힙니다.",
+      "auto_grade": {"type": "exact", "value": "상자(2)"},
+      "rubric": [{"point": 1, "criterion_ko": "상자(2)라고 답함"}],
+      "max_points": 1,
+      "must_pass": false,
+      "alternate_of": null,
+      "objective_ids": ["L01-O1", "L01-O2"],
+      "hint_ids": [],
+      "after_step": "L01-S04"
+    },
+    {
+      "question_id": "L01-Q03",
+      "lecture_id": "L01",
+      "type": "explain",
+      "prompt_ko": "__add__가 하는 일을 내 말로 설명해 보세요.",
+      "code": null,
+      "answer_ko": "+ 기호를 쓸 때 두 상자의 n을 더해 새 상자를 돌려줍니다.",
+      "auto_grade": {"type": "keywords", "keywords": ["더", "n"]},
+      "rubric": [
+        {"point": 0.5, "criterion_ko": "더한다는 말이 있음"},
+        {"point": 0.5, "criterion_ko": "새 상자를 돌려준다는 말이 있음"}
+      ],
+      "max_points": 1,
+      "must_pass": true,
+      "alternate_of": null,
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    },
+    {
+      "question_id": "L01-Q04",
+      "lecture_id": "L01",
+      "type": "fix_bug",
+      "prompt_ko": "아래 코드는 total을 부르면 에러가 납니다. 고쳐 보세요.",
+      "code": "class Pair:\n    def __init__(self, a):\n        self.a = a\n    def total(self):\n        return self.a + self.b",
+      "answer_ko": "b를 받아 저장하는 줄을 __init__에 넣습니다.",
+      "auto_grade": {"type": "manual"},
+      "rubric": [{"point": 1, "criterion_ko": "self.b를 만드는 줄을 넣음"}],
+      "max_points": 1,
+      "must_pass": false,
+      "alternate_of": null,
+      "objective_ids": ["L01-O1"],
+      "hint_ids": ["L01-Q04-H1"]
+    },
+    {
+      "question_id": "L01-Q05",
+      "lecture_id": "L01",
+      "type": "apply",
+      "prompt_ko": "Box(4)와 Box(6)을 더한 상자의 n을 직접 구해 보세요.",
+      "code": null,
+      "answer_ko": "10입니다.",
+      "auto_grade": {"type": "numeric_range", "min": 9.5, "max": 10.5},
+      "rubric": [{"point": 1, "criterion_ko": "10을 구함"}],
+      "max_points": 1,
+      "must_pass": false,
+      "alternate_of": null,
+      "objective_ids": ["L01-O2"],
+      "hint_ids": []
+    }
+  ],
+  "rebuild_tasks": [
+    {
+      "rebuild_id": "L01-R1",
+      "lecture_id": "L01",
+      "title_ko": "빈 셀에서 더하기 되는 상자 다시 만들기",
+      "check": {"type": "output_match", "reference": "이 예시의 L01-S03 출력"},
+      "max_hint_level_for_pass": 2
+    }
+  ],
+  "mastery_rule": {
+    "mastery_rule_id": "default",
+    "steps_complete_ratio": 1.0,
+    "question_score_ratio": 0.8,
+    "rebuild_max_hint_level": 2,
+    "extra_checks": []
+  },
+  "hints": [
+    {
+      "hint_id": "L01-S03-H1",
+      "target_id": "L01-S03",
+      "level": 1,
+      "text_ko": "+ 기호를 쓰면 파이썬은 어떤 이름의 함수를 찾을까요?",
+      "code_with_blanks": null,
+      "unlock": {"after_attempts": 1, "after_minutes": null}
+    },
+    {
+      "hint_id": "L01-S03-H2",
+      "target_id": "L01-S03",
+      "level": 2,
+      "text_ko": "기초 단위 F-P1에서 본 것처럼, 특수한 이름의 함수가 기호의 뜻을 정합니다.",
+      "code_with_blanks": null,
+      "unlock": {"after_attempts": 2, "after_minutes": null}
+    },
+    {
+      "hint_id": "L01-S03-H3",
+      "target_id": "L01-S03",
+      "level": 3,
+      "text_ko": "빈칸을 채워 보세요.",
+      "code_with_blanks": "    def __add__(self, other):\n        return Box(____)",
+      "unlock": {"after_attempts": 3, "after_minutes": null}
+    },
+    {
+      "hint_id": "L01-S03-H4",
+      "target_id": "L01-S03",
+      "level": 4,
+      "text_ko": "풀이를 펼쳐 한 줄씩 따라 칩니다.",
+      "code_with_blanks": null,
+      "show_solution": true,
+      "unlock": {"after_attempts": 4, "after_minutes": 10}
+    },
+    {
+      "hint_id": "L01-Q04-H1",
+      "target_id": "L01-Q04",
+      "level": 1,
+      "text_ko": "self.b는 어디에서 만들어지나요?",
+      "code_with_blanks": null,
+      "unlock": {"after_attempts": 1, "after_minutes": null}
+    },
+    {
+      "hint_id": "L01-R1-H2",
+      "target_id": "L01-R1",
+      "level": 2,
+      "text_ko": "먼저 __init__과 __add__ 두 함수만 떠올려 보세요.",
+      "code_with_blanks": null,
+      "unlock": {"after_attempts": 1, "after_minutes": null}
+    }
+  ]
+}

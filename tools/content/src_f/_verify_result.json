@@ -1,0 +1,14 @@
+{
+ "tool": "cc/src_f/verify_f.py (IPython 셀 실행 흉내, 작성자가 만든 검사)",
+ "ran_at": "2026-11-17T15:35:08+09:00",
+ "python": "3.12.13",
+ "torch": "2.15.0",
+ "summary": {
+  "steps": "50/50",
+  "questions": "45/45",
+  "hints": "58/58",
+  "rebuild": "15/15"
+ },
+ "failed": [],
+ "seconds": 3.9
+}
