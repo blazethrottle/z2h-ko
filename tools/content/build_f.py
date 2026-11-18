@@ -335,7 +335,8 @@ def assemble():
         "note_ko": "기초 단위마다 따로 판정한다. 실습(쪼갠 단계 포함)을 모두 실행하고 단위 문제 3개의 점수 비율(힌트 반영)이 0.8 이상이면 mastered. 익힘 과제는 권장이며 판정에 넣지 않는다. 기초 단위는 강의를 잠그지 않는다(설계서 2-1).",
     }
 
-    meta = load("meta.py").META
+    meta_mod = load("meta.py")
+    meta = meta_mod.META
     vr = os.path.join(SRC, "_verify_result.json")
     if os.path.exists(vr):
         with open(vr, encoding="utf-8") as f:
@@ -348,6 +349,7 @@ def assemble():
         "rebuild_tasks": len(rebuild_out),
         "hints": len(hints_out),
     }
+    meta.update(meta_mod.CHANGELOG)
 
     doc = {
         "_meta": meta,

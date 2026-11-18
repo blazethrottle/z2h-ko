@@ -212,7 +212,7 @@ STEPS = [
       obj=["L01-O6"],
       hints=[
           "ModuleNotFoundError: No module named 'torch'가 나오나요? Colab이 아닌 곳에서 실행 중인가요?",
-          "Colab에는 PyTorch가 기본으로 들어 있는 것으로 알려져 있습니다(이번에 직접 확인하지는 않음). 맥미니 Jupyter는 저장소 가상환경에 깔려 있어야 합니다. 없으면 직접 설치하지 말고 담당자에게 알리세요(환경 문제라 HELP로 표시). 텐서는 기초 F-P9(텐서 첫걸음)에서 더 자세히 봅니다.",
+          "Colab에는 PyTorch가 기본으로 들어 있는 것으로 알려져 있습니다(이번에 직접 확인하지는 않음). 텐서는 기초 F-P9(텐서 첫걸음)에서 더 자세히 봅니다.",
           ("빈칸을 채워 보세요.", ["requires_grad=True", "x1*w1 + x2*w2 + b", "torch.tanh(n)"]),
           "풀이: 위 9줄 그대로입니다. 다섯 텐서 모두 dtype=torch.double, requires_grad=True를 줍니다.",
       ]),

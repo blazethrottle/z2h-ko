@@ -40,7 +40,7 @@ print(area(3, 4))
         },
         {
             "title_ko": "if로 갈림길 만들기",
-            "input_ko": "새 셀에 여섯 줄을 칩니다. 셋째 줄은 if 안이라 한 번 더 들여 씁니다(콜론 뒤 Enter를 치면 Colab과 Jupyter가 알아서 들여 써 줍니다). 넷째 줄은 Backspace로 한 칸 덜 들여 써서 if와 같은 높이로 맞춥니다.",
+            "input_ko": "새 셀에 여섯 줄을 칩니다. 셋째 줄은 if 안이라 한 번 더 들여 씁니다(콜론 뒤 Enter를 치면 알아서 들여 써 줍니다). 넷째 줄은 Backspace로 한 칸 덜 들여 써서 if와 같은 높이로 맞춥니다.",
             "code": r'''
 def grade(score):
     if score >= 80:

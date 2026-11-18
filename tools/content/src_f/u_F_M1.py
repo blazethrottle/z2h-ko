@@ -65,7 +65,7 @@ print((f(0 + h) - f(0)) / h)
         },
         {
             "title_ko": "그래프로 가파름 보기",
-            "input_ko": "새 셀에 다섯 줄을 칩니다. matplotlib는 그림 그리는 도구입니다. Colab에는 이미 깔려 있고, 맥미니 Jupyter는 준비된 환경에 깔려 있다는 전제입니다.",
+            "input_ko": "새 셀에 다섯 줄을 칩니다. matplotlib는 그림 그리는 도구입니다. Colab에는 이미 깔려 있다는 전제입니다.",
             "code": r'''
 import matplotlib.pyplot as plt
 xs = [i / 10 for i in range(-30, 31)]

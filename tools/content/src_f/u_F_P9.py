@@ -28,7 +28,7 @@ print(t.shape, t.dtype)
 print(t[1, 2])
 ''',
             "notes": [
-                "신경망 도구 torch를 불러옵니다(Colab에는 이미 깔려 있고, 맥미니 Jupyter는 준비된 환경 전제).",
+                "신경망 도구 torch를 불러옵니다.",
                 "두 줄짜리 리스트로 2행 3열 텐서를 만듭니다. 안쪽 대괄호 하나가 행 하나입니다.",
                 "텐서를 표 모양으로 보여 줍니다.",
                 "모양과 숫자 종류를 보여 줍니다.",
@@ -38,7 +38,7 @@ print(t[1, 2])
             "expected_output": "tensor([[1, 2, 3],\n        [4, 5, 6]])\ntorch.Size([2, 3]) torch.int64\ntensor(6)",
             "meaning_ko": "모양(shape)은 텐서를 읽는 첫 단서입니다. 3편부터 '보여야 하는 것'에 모양을 늘 적는 이유입니다. 꺼낸 값도 tensor(6)처럼 텐서로 나옵니다.",
             "hints": [
-                h1("ModuleNotFoundError: No module named 'torch' 가 나오나요? 코드가 아니라 환경 문제입니다. 맥미니 Jupyter라면 torch가 깔린 환경(커널)을 골랐는지 보세요."),
+                h1("ModuleNotFoundError: No module named 'torch' 가 나오나요? 코드가 아니라 환경 문제입니다."),
                 h2("직접 설치하지 말고 HELP 메모로 남기세요. 환경 문제는 점수에서 빠집니다(F-P8 설명 카드 8번째 문장). 모양 읽기는 이 단위 설명 카드 2번째 문장입니다.", unit="F-P9", card=2),
             ],
         },

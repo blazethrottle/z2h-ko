@@ -54,7 +54,7 @@ def chapter_cover(steps):
 
 
 def meta(steps, questions, rebuilds, hints):
-    from meta_text import META_TEXT
+    from meta_text import CHANGELOG, META_TEXT
     m = dict(META_TEXT)
     m["counts"] = {
         "steps": len(steps),
@@ -76,4 +76,5 @@ def meta(steps, questions, rebuilds, hints):
         "video": video, "practice": practice, "total": video + practice,
         "formula_ko": "영상 146분 x 1.2 + 코드 단계 x 4분 + 새 코드 줄 x 1분 + 읽기 x 5분 + 정리 x 8분 + 문제 x 4분 + 재구성 x 25분(설계서 3-4, 추정)",
     }
+    m.update(CHANGELOG)
     return m

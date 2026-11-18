@@ -101,7 +101,7 @@ REBUILDS = [
         "rebuild_id": "L01-R1",
         "lecture_id": "L01",
         "title_ko": "+, *, tanh와 각 _backward(+= 누적)가 있는 Value",
-        "task_ko": "Colab이나 맥미니 Jupyter에서 빈 노트북을 하나 엽니다. 앞 단계를 보지 않고, 새 셀에 Value 설계도를 다시 만듭니다. "
+        "task_ko": "Colab에서 빈 노트북을 하나 엽니다. 앞 단계를 보지 않고, 새 셀에 Value 설계도를 다시 만듭니다. "
                    "들어가야 하는 것: __init__(data, _children, _op, label, grad, _backward), __repr__, __add__, __mul__, tanh. "
                    "세 연산 모두 _backward를 갖고, 기울기는 +=로 쌓아야 합니다. 맨 위에 import math를 잊지 마세요. "
                    "다 만들면 확인 셀(check_code)을 붙여 넣어 실행합니다. backward()는 R2에서 만들므로 여기서는 없어도 됩니다.",

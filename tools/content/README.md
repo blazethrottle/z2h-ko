@@ -42,7 +42,7 @@
 
 - F.json은 앱이 바로 읽는다(기초는 노트북·기준값을 만들지 않는다).
 - 앱은 빌드 때 `npm run check:content`(`app/scripts/validate-content.mjs`)로 두 정본을 다시 검사한다(5절).
-- 맛보기 정본 `taster.json`은 이 도구가 만들지 않는다(`notebooks/taster/build_notebook.py`가 그 정본에서 노트북을 만든다).
+- 맛보기 정본 `taster.json`은 조각 원본이 없는 교사 정본이라 이 도구가 만들지 않는다(`notebooks/taster/build_notebook.py`가 그 정본에서 노트북을 만든다. 문구 정리는 6절).
 
 ## 4. 폴더 구조
 
@@ -74,16 +74,35 @@ tools/content/
 - 앱 검사에만 있는 것: 원본 코드 출처 규칙, 맛보기 검사, 앱 화면용 칸 분류(`app/src/lib/content/fields.mjs`와 그 테스트).
 - 지금은 둘 다 둔다. 하나로 합칠지는 남은 일이다.
 
-## 6. 후처리 자리 (POSTPROCESS)
+## 6. 2026-11-18 문구 정리(P9)와 후처리 자리
+
+### 문구 정리는 조각에 들어 있다
+
+- P9가 정본 3개의 문구(맥미니·Jupyter·MPS·전체 시간)를 `app/scripts/canon-colab-time.mjs`의 표(교사 문구 2곳, 나머지는 구절 빼기)로 정리했다. 그중 F.json·L01.json 몫은 조각 원본에 그대로 옮겼다(F 30칸, L01 5칸, 조각 15개 파일). 글자는 main 정본의 글자 그대로이고 새로 쓴 글은 없다.
+- 변경 내역 줄 `_meta.changes_2026_11_18`은 `src_f/meta.py`·`src_l01/meta_text.py`의 `CHANGELOG`에 있고, 합치기가 `_meta` 맨 끝(계산 칸 `counts`, `time_estimate_min` 뒤)에 붙인다. 그래서 조각에서 만든 결과가 그대로 정본이다(후처리 없음).
+- 표는 한 곳(P9 스크립트)에만 있다. 표의 F·L01 항목에는 `generatedFrom`(조각 폴더)이 붙어 있고, c8e0ec6 → cfc179e(P9)에서 무엇을 바꿨는지의 기록일 뿐 정본을 만드는 경로가 아니다. 스크립트를 돌려도 그 두 파일은 고치지 않는다(실제로 고치는 표는 `EDITABLE_EDITS`, 지금은 taster.json 하나).
+- `taster.json`은 조각 원본이 없는 교사 정본이라 이 도구가 만들지 않는다. 그 문구 정리는 계속 P9 표가 맡는다.
+- 표의 KEPT처럼 일부러 남긴 맥미니·Jupyter 글(`_meta`의 결정·미확인 기록, L01-S02 준비 코드와 그 출력 설명 등)은 조각에서도 그대로다.
+
+### 누가 무엇을 확인하나
+
+| 약속 | F.json·L01.json | taster.json |
+|---|---|---|
+| 정본 = 만든 것(손 편집 없음) | `tests/test_content_tools.py`: 조각에서 만든 것과 지금 정본이 바이트까지 같음 | `canonCopy.test.mjs`: c8e0ec6 판 + 표 = 지금 정본 |
+| P9가 표의 칸만, 빼기만 바꿨고 수치·판 이름은 그대로 | `canonCopy.test.mjs`: c8e0ec6 판과 P9 판(cfc179e)을 git 기록에서 꺼내 비교 | 같은 테스트: c8e0ec6 판과 지금 정본 비교 |
+| 문구 정리가 되돌아가지 않음 | `canonCopy.test.mjs`: 표의 후 글이 지금 정본의 어느 칸에 있고 전 글은 어느 칸에도 없음(칸 위치가 아니라 글로 찾음) | 위 비교에 들어 있음 |
+| 실행 장소 낱말·전체 시간이 남은 칸 = KEPT, KEPT는 원문 그대로 | `canonCopy.test.mjs`: 지금 정본과 P9 판 둘 다 | 같은 테스트: 지금 정본 |
+
+- 이렇게 나눈 까닭: F·L01의 지금 정본을 "c8e0ec6 판 + 표"에 묶으면 조각을 고칠 때마다(새 진단 문항 등) 테스트가 깨진다. P9가 한 일은 바뀌지 않는 두 판(git 기록)으로 확인하고, 지금 정본에는 앞으로도 지켜야 할 것만 건다.
+- 조각을 고쳐 정본이 바뀌면 함께 할 일: `build_canon.py`로 다시 만들기, 3절 순서의 생성물, 앱 테스트용 사본(`app/tests/fixtures/basics/F.json`, `app/tests/fixtures/pedagogy/content/L01.json`은 정본과 같아야 함). 표가 다룬 칸이나 KEPT 칸을 고치면 canonCopy 테스트가 실패하므로, 그때는 그 고침이 문구 정리를 되돌리는 것이 아닌지 보고 표나 KEPT를 함께 고친다.
+
+### 후처리 자리 (POSTPROCESS)
 
 `build_canon.py`의 흐름은 `build()` → `serialize()` → `POSTPROCESS`(차례로) → 비교 또는 쓰기다. `--check`와 다시 만들기가 같은 글을 쓰므로, 후처리를 넣으면 둘 다 그 결과를 정본으로 본다.
 
 - 모양: 함수 `(정본 이름, 글) -> 글`. 해당하지 않는 정본이면 글을 그대로 돌려준다.
-- 지금은 비어 있다(`POSTPROCESS = ()`).
-- 들어올 것: P9의 `app/scripts/canon-colab-time.mjs`가 정본 F.json·L01.json·taster.json의 문구(맥미니·Jupyter·전체 시간)를 치환 표로 고친다. P9는 이 도구를 만든 기준(main c8e0ec6) 뒤에 main(cfc179e)으로 들어갔다. 그 main과 합치면 "조각에서 생성"만으로는 정본과 달라져 `--check`와 재현 테스트가 실패한다. 맞추는 길은 둘이다.
-  - (가) 후처리 한 단계로 그 치환 표를 적용한다. 표의 `applyCanonEdits(글, 표)`는 칸의 JSON 글자를 정확히 한 번 찾아 바꾸고 이미 바뀐 칸은 건너뛰므로(두 번 돌려도 같음), 생성한 글에 그대로 적용할 수 있다. 시험(2026-11-18, 저장소 밖 임시 사본): 조각에서 만든 F.json·L01.json에 main cfc179e의 표를 적용하면 main의 정본과 바이트까지 같았다(F 30칸, L01 5칸, 두 번 적용해도 같음).
-  - (나) 조각 원본 자체에 그 문구 정리를 반영한다. 그러면 후처리가 필요 없고 정본의 근원이 조각 하나로 남는다.
-- 권장: (나). (가)는 (나)를 하기 전까지의 다리로만 쓴다.
+- 지금은 비어 있다(`POSTPROCESS = ()`). 정본을 조각 밖의 표로 고쳐야 할 때를 위한 자리다.
+- 2026-11-18 문구 정리는 후처리 대신 조각에 넣었다. 정본의 근원이 조각 하나로 남고, 파이썬 생성 도구가 node에 기대지 않으며, 조각을 고치는 사람이 화면에 나가는 글을 그대로 본다. (후처리로 표를 적용해도 main 정본과 바이트까지 같다는 것은 2026-11-18 저장소 밖 사본으로 확인했지만 쓰지 않았다.)
 
 ## 7. 새 정본 더하기 (예: F_intro.json, courses.json)
 
@@ -119,3 +138,12 @@ tools/content/
 - `src_l01/part01`~`part09`에는 karpathy/micrograd(engine.py, nn.py)와 karpathy/nn-zero-to-hero(lectures/micrograd 강의 노트북)를 따른 코드 글이 들어 있다. 둘 다 MIT License다. 각 파일 첫 줄에 출처를 적었고, LICENSE 전문은 `third_party/licenses/micrograd-LICENSE.txt`, `nn-zero-to-hero-LICENSE.txt`, 쓴 위치 표는 루트 `NOTICE.md`에 있다.
 - `src_f/`(기초)는 원본 저장소 파일의 코드를 옮긴 것으로 보지 않았다(정본 `_meta.data_sources`: 모든 값은 코드 안에 적은 작은 예시). 다만 F-P3의 `zip(w, w[1:])`, F-P7의 `sorted(set("".join(words)))` 같은 몇 줄은 makemore 강의 노트북과 같은 꼴이다. 출처 표기가 필요한지는 미확인이다.
 - `fixtures/`는 도구 담당이 지어낸 예시다(원본 코드 없음).
+
+## 10. 남은 일
+
+- 맛보기 문구: taster.json은 아직 "c8e0ec6 판 + 표 = 지금 정본"으로 묶여 있다. 맛보기 문구를 고치는 PR은 그 테스트(`app/tests/unit/canonCopy.test.mjs`)의 taster 부분을 F·L01처럼 "P9 판으로 P9 약속 확인 + 지금 정본은 되돌아가지 않음·KEPT"로 바꾸거나, 새 고침을 표에 더해야 한다.
+- 칸 위치로 찾는 곳: KEPT의 `path`(예: `_meta.unverified` 2번째)와 e2e `app/tests/e2e/guided-colab.spec.ts`(표의 `path`로 지금 정본 값을 읽음)는 배열 번호를 쓴다. 진단 문항처럼 배열 앞쪽에 항목이 끼면 가리키는 칸이 달라진다. 그런 PR에서는 함께 확인한다.
+- 정본 `_meta`의 옛 `cc/` 경로 글(8절)은 조각의 meta를 고쳐 다시 만들 때 함께 바꾼다.
+- `src_f/`의 makemore 관용구 몇 줄에 출처 표기가 필요한지 미확인(9절).
+- 형식 검사가 data-spec의 새 절을 모른다(5절). 앱 빌드 검사와 겹치는 검사를 하나로 합칠지 정한다.
+- F_intro.json, courses.json을 더할 때 형식 검사·실행 대조가 그 정본을 알게 넓힌다(7절).
