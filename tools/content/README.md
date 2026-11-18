@@ -14,8 +14,8 @@
 
 | 하는 일 | 명령 | 종료 코드 |
 |---|---|---|
-| 정본 다시 만들기(전부) | `.venv/bin/python tools/content/build_canon.py` | 0 다 씀(내용이 같으면 파일을 건드리지 않음), 2 조각 형식 오류 |
-| 확인만(파일을 쓰지 않음) | `.venv/bin/python tools/content/build_canon.py --check` | 0 같음, 1 다르거나 없음, 2 조각 형식 오류 |
+| 정본 다시 만들기(전부) | `.venv/bin/python tools/content/build_canon.py` | 0 다 씀(내용이 같으면 파일을 건드리지 않음), 2 조각 형식 오류, 3 조각 코드가 에러로 멈춤(NameError 등) |
+| 확인만(파일을 쓰지 않음) | `.venv/bin/python tools/content/build_canon.py --check` | 0 같음, 1 다르거나 없음, 2 조각 형식 오류, 3 조각 코드가 에러로 멈춤 |
 | 정본 하나만 | `.venv/bin/python tools/content/build_canon.py L01` (`--check`와 함께 써도 됨) | 위와 같음. 모르는 이름은 2 |
 | 다른 폴더에 만들어 보기 | `.venv/bin/python tools/content/build_canon.py --out-dir 폴더` | 정본 폴더 대신 그 폴더의 `F.json`, `L01.json`에 쓰거나(`--check`면) 비교 |
 | 형식 검사(기초) | `.venv/bin/python tools/content/check_format.py inputs/pedagogy/content/F.json` | 0 통과, 1 오류(`--strict`면 경고도), 2 파일 없음, 3 도구 버그 |
@@ -24,9 +24,10 @@
 | 작성자 실행 확인(기초) | `.venv/bin/python tools/content/verify_f.py` | 0 모두 맞음, 1 틀린 곳 있음. 아래 `--record` 주의 |
 | 작성자 실행 확인(1편) | `.venv/bin/python tools/content/verify_l01.py` | 0 모두 맞음, 1 틀린 곳 있음 |
 | 도구 자체 확인 | `.venv/bin/python tools/content/selftest_tools.py` | 0 형식 검사·실행 대조가 `fixtures/` 예시에서 통과와 실패를 제대로 가름 |
-| 위 전부를 테스트로 | `.venv/bin/python -m pytest tests/test_content_tools.py -q` | 정본의 코드를 돌리는 느린 검사 5개는 `content_run` 표식이며 기본 실행에 들어간다. 빼려면 `-m "not content_run"` |
+| 위 전부를 테스트로 | `.venv/bin/python -m pytest tests/test_content_tools.py -q` | 정본의 코드를 돌리는 느린 검사 6개(실행 대조 F·L01, 자체 확인, 작성자 실행 확인 F·L01, 남는 파일 확인)는 `content_run` 표식이며 기본 실행에 들어간다. 빼려면 `-m "not content_run"` |
 
 - 실행 대조와 작성자 실행 확인은 정본 안의 학습 코드를 그대로 실행한다. 우리가 쓴 정본에만 쓴다. 실행은 임시 폴더에서 하고 끝나면 지운다.
+- `verify_f.py`는 IPython 셸을 기록 없이(`HistoryManager.enabled = False`), 위치 없는 프로필로 띄워 집 폴더의 `~/.ipython`(기록 파일 `history.sqlite` 포함)을 만들거나 쓰지 않는다. 테스트가 HOME·IPYTHONDIR·띄운 폴더를 빈 임시 폴더로 두고 다섯 도구 실행 뒤 그 폴더들이 비어 있는지 본다(matplotlib 글꼴 캐시는 matplotlib 몫이라 원래 캐시 폴더를 쓴다).
 - `verify_f.py --record`는 결과를 `src_f/_verify_result.json`에 적는다. 그 파일이 기초 정본의 `_meta.verification`이 되므로, 적고 나서 다시 만들면 F.json이 바뀐다(실행 시각 등). 확인 기록을 새로 남길 때만 쓴다. `--record` 없이는 아무 파일도 쓰지 않는다.
 - 실행 대조와 실행 확인의 칸 읽는 법(`output_match`의 `match`, `value_range`의 `expr`, `expected_error`, `restart_first`, `edits` 해석)은 각 파일 머리말에 있다. data-spec이 정하지 않은 칸이라 형식 검사가 경고(UNKNOWN-FIELD, CHECK-TYPE)를 내지만 실패는 아니다.
 
@@ -147,3 +148,5 @@ tools/content/
 - `src_f/`의 makemore 관용구 몇 줄에 출처 표기가 필요한지 미확인(9절).
 - 형식 검사가 data-spec의 새 절을 모른다(5절). 앱 빌드 검사와 겹치는 검사를 하나로 합칠지 정한다.
 - F_intro.json, courses.json을 더할 때 형식 검사·실행 대조가 그 정본을 알게 넓힌다(7절).
+- 낱말 없는 빼기 구절 4개('두 ', '같이 ', '메뉴 이름은 둘 다 적고, ', '두 길의 ')가 다른 문장으로 다시 들어오는 것은 지금 검사가 못 잡는다(6절 "되돌아가지 않음"은 전 글 전체와 후 글로만 본다).
+- 도구는 한국어를 그대로 출력한다. 글자 설정이 UTF-8이 아닌 곳(예: Latin-1 로캘)에서는 출력하다 에러가 날 수 있다(검수 지적, 이번에 고치지 않음).

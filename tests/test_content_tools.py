@@ -55,17 +55,27 @@ def verify_record_before():
     return read_bytes(VERIFY_RECORD)
 
 
+WATCHED_DIRS = ("cwd", "home", "ipython")  # 도구가 아무것도 남기면 안 되는 곳: 띄운 폴더, 집 폴더(HOME), IPython 폴더(IPYTHONDIR)
+
+
 @pytest.fixture(scope="module")
 def run_dirs(tmp_path_factory):
-    """도구마다 빈 폴더에서 띄운다. 학습 코드가 만드는 파일(names.txt 등)이 그 폴더에 남는지 보려고."""
-    return {key: tmp_path_factory.mktemp("cwd") for key in SLOW_RUNS}
+    """도구마다 빈 폴더를 준다. 실행 뒤 WATCHED_DIRS 가 비어 있는지 본다(실제 집 폴더에도 쓰지 않게 된다)."""
+    return {key: {name: tmp_path_factory.mktemp(name) for name in WATCHED_DIRS} for key in SLOW_RUNS}
 
 
 @pytest.fixture(scope="module")
-def slow_runs(verify_record_before, run_dirs, tmp_path_factory):
-    env_extra = {"IPYTHONDIR": str(tmp_path_factory.mktemp("ipython"))}
+def slow_runs(verify_record_before, run_dirs):
+    import matplotlib
+    # matplotlib 글꼴 캐시는 우리 도구가 아니라 matplotlib 가 쓰는 것이라, HOME 을 바꿔도 원래 캐시 폴더를 읽게 한다(빈 캐시면 몇 초씩 다시 만듦)
+    mpl_dir = matplotlib.get_configdir()
+
+    def run(key, args):
+        d = run_dirs[key]
+        env_extra = {"HOME": str(d["home"]), "IPYTHONDIR": str(d["ipython"]), "MPLCONFIGDIR": mpl_dir}
+        return tool(*args, env_extra=env_extra, cwd=d["cwd"])
     with ThreadPoolExecutor(max_workers=len(SLOW_RUNS)) as pool:
-        futures = {key: pool.submit(tool, *args, env_extra=env_extra, cwd=run_dirs[key]) for key, args in SLOW_RUNS.items()}
+        futures = {key: pool.submit(run, key, args) for key, args in SLOW_RUNS.items()}
         return {key: future.result() for key, future in futures.items()}
 
 
@@ -121,6 +131,14 @@ def test_check_one_canon_by_name(tmp_path):
     proc = tool("build_canon.py", "--check", "--out-dir", str(tmp_path), "L01")
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert tool("build_canon.py", "--check", "NOPE").returncode == 2
+
+
+def test_error_inside_fragment_code_exits_3_not_like_a_stale_canon(monkeypatch, capsys):
+    def broken(canon, postprocess=None):
+        raise NameError("조각 안의 오타")
+    monkeypatch.setattr(build_canon, "render", broken)
+    assert build_canon.main(["--check"]) == 3
+    assert "NameError" in capsys.readouterr().err
 
 
 def test_postprocess_steps_run_after_serialize_in_order():
@@ -198,9 +216,10 @@ def test_verify_l01_passes(slow_runs):
 
 
 @pytest.mark.content_run
-def test_running_content_code_leaves_no_files_where_the_tool_started(slow_runs, run_dirs):
-    left = {key: sorted(os.listdir(run_dirs[key])) for key in SLOW_RUNS}
-    assert left == {key: [] for key in SLOW_RUNS}
+def test_running_content_code_leaves_no_files_in_start_home_or_ipython_dir(slow_runs, run_dirs):
+    left = {(key, name): sorted(str(p.relative_to(run_dirs[key][name])) for p in run_dirs[key][name].rglob("*"))
+            for key in SLOW_RUNS for name in WATCHED_DIRS}
+    assert {k: v for k, v in left.items() if v} == {}
 
 
 # ---- 공개 저장소 위생과 출처 ---------------------------------------------------

@@ -7,9 +7,11 @@ import pytest
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 CONTENT_TOOLS = os.path.join(ROOT, "tools", "content")  # 정본 생성 도구(build_canon 등)를 테스트에서 바로 부른다
-for _p in (ROOT, HERE, CONTENT_TOOLS):
+for _p in (ROOT, HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
+if CONTENT_TOOLS not in sys.path:
+    sys.path.append(CONTENT_TOOLS)  # 맨 뒤: 도구 파일 이름이 표준·기존 모듈과 겹쳐도 그쪽이 먼저 잡힌다
 
 
 def pytest_configure(config):

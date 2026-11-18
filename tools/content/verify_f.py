@@ -22,7 +22,13 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from IPython.core.interactiveshell import InteractiveShell
+from IPython.core.profiledir import ProfileDir
 from IPython.utils.capture import capture_output
+from traitlets.config import Config
+
+# 학습 코드를 집 폴더의 IPython 기록(history.sqlite)에 남기지 않게 기록을 끈다(실행 번호와 Out 은 메모리에만)
+SHELL_CONFIG = Config()
+SHELL_CONFIG.HistoryManager.enabled = False
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOC = os.path.join(os.path.dirname(os.path.dirname(HERE)), "inputs", "pedagogy", "content", "F.json")
@@ -35,8 +41,9 @@ OUT_RE = re.compile(r"^Out\[\d+\]: ?\n?", re.M)
 
 
 def new_shell():
+    """새 노트북 하나. 위치 없는 ProfileDir 와 지금 폴더(verify_all 의 임시 폴더)를 주어 IPython 이 ~/.ipython 을 만들지 않게 한다."""
     InteractiveShell.clear_instance()
-    sh = InteractiveShell.instance()
+    sh = InteractiveShell.instance(config=SHELL_CONFIG, ipython_dir=os.getcwd(), profile_dir=ProfileDir())
     sh.showtraceback = lambda *a, **k: None
     sh.showsyntaxerror = lambda *a, **k: None
     sh.run_cell("import matplotlib\nmatplotlib.use('Agg')", store_history=False)
