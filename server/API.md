@@ -136,7 +136,7 @@
 | `mastery_state` | `target_id` | `state` 고르기(locked/open/in_progress/almost/mastered/revisit); `steps_done_ratio` 숫자(0~1); `question_score_ratio` 숫자(0~1); `must_pass_ok` true/false; `rebuild_ok` true/false; `extra_checks_ok` true/false; `mastered_at` 시각; `content_version` 글자 |
 | `review_card` | `card_id` | `source_id` 아이디; `kind` 고르기(concept/predict/hands_on); `interval_days` 정수(0~); `due_at` 날짜(YYYY-MM-DD) 또는 시각; `last_result` 고르기(pass/shaky/miss); `history` JSON 배열(DB `history_json`); `content_version` 글자 |
 | `grade_result` | `check_id` | `passed`* true/false; `message_ko` 긴 글; `source`* 고르기(notebook/result_code); `at` 시각; `content_version` 글자 |
-| `user_pref` | `pref_key`: `run_place` · `resume` · `practice_week:{주 시작일 YYYY-MM-DD}` · `legacy_progress:{편 L01}:{옛 판 1.2}` 만 | `value` JSON(DB `value_json`). `practice_week:*` 값은 `{"edited_seconds": 정수 또는 null, "edited_at": 시각}`, `null` 이면 자동 기록으로 되돌아감. `legacy_progress:*` 는 옛 판 진도 보관본(앱 `src/lib/migrate`, 옛 행 JSON 그대로·`applied_at`). `run_place` 는 앱이 2026-11-18(Colab 고정)부터 쓰지 않지만 옛 값을 받는다; `content_version` 글자 |
+| `user_pref` | `pref_key`: `run_place` · `resume` · `practice_week:{주 시작일 YYYY-MM-DD}` · `legacy_progress:{편 L01}:{옛 판 1.2}` · `course` · `course_intro_done` · `guided_mode` · `test_out:{기초 단위 F-P1·F-M6·F-B1 꼴}` 만 | `value` JSON(DB `value_json`). 열쇠별 값 모양은 아래 「`user_pref` 값」 표. `legacy_progress:*` 는 옛 판 진도 보관본(앱 `src/lib/migrate`, 옛 행 JSON 그대로·`applied_at`). `run_place` 는 앱이 2026-11-18(Colab 고정)부터 쓰지 않지만 옛 값을 받는다; `content_version` 글자 |
 | `checkpoint_attempt` | `checkpoint_id`, `attempt_id` | `attempt_no` 서버가 매김(읽기 전용); `path_id`* 고르기(full/office_worker/investor)=기본 full; `covers` JSON 배열(DB `covers_json`); `score_ratio` 숫자(0~1); `passed` true/false; `max_hint_level_allowed` 정수(0~5)(DB `max_hint_level`); `hand_task_self_check` JSON(DB `hand_task_self_check_json`); `started_at` 시각; `at` 시각; `content_version` 글자 |
 | `diagnostic_result` | `attempt_id` | `attempt_no` 서버가 매김(읽기 전용); `answers` JSON(DB `answers_json`); `recommended_units` JSON(DB `recommended_units_json`); `at` 시각; `content_version` 글자 |
 | `taster_result` | `attempt_no`(기기가 정함, 1부터), `step_id`(T-S01 같은 맛보기 단계) | `self_reported` 고르기(similar/different) = "비슷해요/달라요"; `pasted_names_text` 긴 글; `pasted_loss_start` 숫자; `pasted_loss_end` 숫자; `share_card_id` 아이디; `at` 시각; `content_version` 글자. 붙여넣은 값은 검증하지 않은 값 |
@@ -149,6 +149,19 @@
 - 동기화로 쓸 수 없는 표: `users`, `auth_identity`, `sessions`, `badge_def`, `sync_conflicts`, `applied_ops`, `sync_counter`.
 - 맛보기 기록은 `taster_result` 하나다. 예전 `taste_result` 표는 스키마 `0002` 에서 지웠다(앱이 쓴 적 없음). 그 이름으로 보내면 다른 모르는 표와 똑같이 그 줄만 `rejected`(`reason_ko`: `모르는 표입니다: taste_result`)이고 나머지 줄은 반영된다.
 - 지우기 요청은 없다(프로토타입).
+
+### `user_pref` 값
+
+열쇠의 `:` 앞 갈래마다 값을 검사한다(`sync.PREF_VALUE_RULES`). 객체 값은 칸 이름이 아래와 **정확히** 같아야 한다(빠진 칸도, 더한 칸도 거절. `practice_week:*` 만 두 칸 중 일부만 와도 됨). 시각 칸은 `+09:00` 시각으로 바꿔 저장한다. 모양이 틀리면 그 줄만 `rejected`(`reason_ko` 에 이유).
+
+| 열쇠 | 값(`value`) | `null` 로 비우기 |
+|---|---|---|
+| `run_place`, `resume`, `legacy_progress:*` | JSON 이면 그대로 받음(모양 검사 없음) | 받음 |
+| `practice_week:*` | `{"edited_seconds": 0 이상 정수 또는 null, "edited_at": 시각 또는 null}` | 받음(자동 기록으로 되돌아감) |
+| `course` | `{"course_id": "intro" 또는 "main", "source": "diagnostic"·"skip_link"·"switch" 중 하나, "diagnostic_attempt_id": 아이디 또는 null, "at": 시각, "history": 목록}`. `history` 는 20개까지, 항목마다 `{"course_id", "source", "at"}` 같은 규칙 | 받음(코스 없음 = 진단 전) |
+| `course_intro_done` | `{"at": 시각}` | 받음 |
+| `guided_mode` | `"on"` 또는 `"off"` | 받음 |
+| `test_out:F-…` | `{"attempt_id": 아이디, "passed": true/false(정수 아님), "answers": 목록, "at": 시각, "content_version": 64자까지 글자 또는 null}`. `answers` 는 10개까지, 항목마다 `{"question_id": 아이디, "is_correct": true/false}` | **거절**. `value` 없이 보내도 거절(한 단위에 한 번 보는 시험 기록이라 비우지 않는다) |
 
 ### 충돌 규칙 (DESIGN.md 12.5)
 

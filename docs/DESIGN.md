@@ -310,7 +310,7 @@ inputs/               팀 입력 자료(읽기 전용)
 - API: `GET /api/health`, `GET /api/state?since={server_seq}`, `POST /api/sync`, `POST /api/result-code`, `POST /api/grade`, `GET /api/export`, `GET·POST /api/me`, `/api/dev-auth/{accounts,login,logout}`. 요청·응답 모양의 정본은 `server/API.md`(문서와 코드가 어긋나면 테스트 실패).
 - 동기화: 모든 기록 표에 `updated_at`(기기 시각), `content_version`, `server_seq`(서버가 반영할 때마다 1씩 올리는 번호). 이어 받기는 기기 시각이 아니라 `server_seq`로 비교한다. 같은 행은 `updated_at`이 늦은 쪽이 이기고 진 값은 `sync_conflicts`에 남긴다(같은 기기의 연속 수정과 `base_updated_at`이 서버 값과 같은 수정은 충돌로 남기지 않음). `step_progress`는 진도가 뒤로 가지 않게 status는 done 우선, `max_hint_level`·`active_seconds_auto`·`attempts`는 큰 값.
 - 쌓이는 기록(`question_attempt`, `rebuild_attempt`, `checkpoint_attempt`, `diagnostic_result`)의 열쇠는 기기가 만든 `attempt_id`, 번호(`attempt_no`)는 서버가 도착 순서로 매긴다. 기기가 번호를 매기면 두 기기가 오프라인에서 같은 문제를 풀 때 하나가 사라지기 때문이다.
-- `user_pref` 키: `run_place`(실행 장소), `resume`(이어서 하기 위치), `practice_week:{주 시작일}`(홈에서 고친 실습 시간 `{edited_seconds, edited_at}`, 비우면 자동 기록으로 되돌아감). 말하기 질문 자가 표시는 `mastery_state.extra_checks_ok`.
+- `user_pref` 키: `run_place`(옛 실행 장소, P9부터 앱이 쓰지 않음), `resume`(이어서 하기 위치), `practice_week:{주 시작일}`(홈에서 고친 실습 시간 `{edited_seconds, edited_at}`, 비우면 자동 기록으로 되돌아감), `legacy_progress:L01:1.2`(옛 1편 진도 보관본), `course`(코스와 바뀐 이력 20개까지), `course_intro_done`(입문 코스 마침), `guided_mode`(안내형 길 on/off), `test_out:{기초 단위}`("이미 알아요" 시험 기록, 비울 수 없음). 값 모양은 `server/API.md`의 「user_pref 값」. 말하기 질문 자가 표시는 `mastery_state.extra_checks_ok`.
 - 요약 경로(CP 점수 기준, gate)와 단계 배지 계산은 스키마·자리만 있고 계산 코드는 없다. 서버는 동기화로 온 `user_badge` 행을 그대로 받는다(badge_id를 검증하지 않음). 단계 배지를 누가 계산하고 검증할지는 누적 점검을 만들 때 정한다.
 
 5절과 다르게 둔 곳(확인 대기)

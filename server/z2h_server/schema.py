@@ -64,9 +64,18 @@ SESSION_SOURCE = ("auto", "manual")
 # 공개 공유 주소는 공개 배포 승인 뒤. 지금은 private 만 받는다.
 SHARE_VISIBILITY = ("private",)
 HINT_MAX = 5  # 1~4 힌트, 5 = HELP
-# user_pref 키(12.5절 P1): 실행 장소(앱은 2026-11-18부터 쓰지 않지만 옛 값을 받는다), 이어서 하기 위치, 주 단위로 고친 실습 시간,
-# 옛 판 진도 보관본 legacy_progress:{편}:{옛 판}(앱 src/lib/migrate, 값은 옛 행 JSON 그대로). 검사 규칙일 뿐 DB 칸은 바뀌지 않는다
-PREF_KEY_PATTERN = r"^(run_place|resume|practice_week:\d{4}-\d{2}-\d{2}|legacy_progress:L\d{2}:[0-9A-Za-z][0-9A-Za-z.]*)$"
+# user_pref 키 꼴(12.5절). 검사 규칙일 뿐 DB 칸은 바뀌지 않는다. 값 모양은 sync.PREF_VALUE_RULES
+PREF_KEY_FORMS = (
+    "run_place",  # 실행 장소. 앱은 2026-11-18(Colab 고정)부터 쓰지 않지만 옛 값을 받는다
+    "resume",  # 이어서 하기 위치
+    r"practice_week:\d{4}-\d{2}-\d{2}",  # 주 단위로 고친 실습 시간
+    r"legacy_progress:L\d{2}:[0-9A-Za-z][0-9A-Za-z.]*",  # 옛 판 진도 보관본(앱 src/lib/migrate, 옛 행 JSON 그대로)
+    "course",  # 진단·건너뛰기·설정이 정한 코스와 바뀐 이력
+    "course_intro_done",  # 입문 코스 마침
+    "guided_mode",  # 안내형 길 켜기·끄기
+    r"test_out:F-[PMB]\d+",  # 기초 단위 하나의 "이미 알아요" 시험 기록
+)
+PREF_KEY_PATTERN = "^(" + "|".join(PREF_KEY_FORMS) + ")$"
 
 
 # ---- 칼럼 만들기 도우미 (info 에 검사 규칙) ----

@@ -176,25 +176,69 @@ def test_practice_week_pref_saved_and_reverted_to_auto(adapter, user):
     assert adapter.get_row(user, "user_pref", key)["value"] is None
 
 
-def test_pref_keys_are_limited_to_the_p1_list(adapter, user):
+# 코스·입문 마침·"이미 알아요" 시험 기록의 바른 값(API.md user_pref 줄)
+COURSE_CHOICE = {"course_id": "intro", "source": "diagnostic", "at": t("20:00:00")}
+COURSE = {
+    "course_id": "intro",
+    "source": "diagnostic",
+    "diagnostic_attempt_id": "5f0c2a9e-1b7d-4c3e-8a6f-2d9b4e7c1a03",
+    "at": t("20:00:00"),
+    "history": [COURSE_CHOICE],
+}
+TEST_OUT = {
+    "attempt_id": "0e6b1d4a-7c2f-4a9e-b3d5-8f1c6a2e9b47",
+    "passed": True,
+    "answers": [{"question_id": "F-P2-Q1", "is_correct": True}, {"question_id": "F-P2-Q2", "is_correct": True}],
+    "at": t("20:10:00"),
+    "content_version": "auto-6256adb2ec11",
+}
+
+
+def _rejected_values(adapter, user, prefix, pref_key, values):
+    """한 열쇠에 값들을 차례로 보내고 거절된 값의 번호를 돌려준다. 열쇠가 같으므로 거절은 값 검사 때문이다."""
+    ops = [op(f"{prefix}{i}", "user_pref", {"pref_key": pref_key}, {"value": v}, t("20:00:00")) for i, v in enumerate(values)]
+    return [int(r["op_id"][len(prefix):]) for r in adapter.apply_ops(user, "pc", ops).rejected]
+
+
+def test_pref_keys_are_limited_to_the_list(adapter, user):
+    """user_pref 열쇠는 API.md 목록에 있는 꼴만 받는다. 비슷하게 생긴 열쇠도 거절."""
     ok = adapter.apply_ops(
         user,
         "pc",
         [
             op("k1", "user_pref", {"pref_key": "run_place"}, {"value": "colab"}, t("20:00:00")),
             op("k2", "user_pref", {"pref_key": "resume"}, {"value": {"step_id": "L01-S04", "part": "follow"}}, t("20:00:00")),
+            op("k3", "user_pref", {"pref_key": "course"}, {"value": COURSE}, t("20:00:00")),
+            op("k4", "user_pref", {"pref_key": "course_intro_done"}, {"value": {"at": t("20:00:00")}}, t("20:00:00")),
+            op("k5", "user_pref", {"pref_key": "guided_mode"}, {"value": "on"}, t("20:00:00")),
+            op("k6", "user_pref", {"pref_key": "test_out:F-P2"}, {"value": TEST_OUT}, t("20:00:00")),
+            op("k7", "user_pref", {"pref_key": "test_out:F-M6"}, {"value": TEST_OUT}, t("20:00:00")),
+            op("k8", "user_pref", {"pref_key": "test_out:F-B1"}, {"value": TEST_OUT}, t("20:00:00")),
         ],
     )
-    assert ok.applied == ["k1", "k2"]
+    assert ok.applied == ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8"]
+    look_alikes = [
+        "practice_time_user:2026-11-16",
+        "courses",
+        "course:intro",
+        "course_intro",
+        "Course",
+        "guided_mode:on",
+        "test_out",
+        "test_out:",
+        "test_out:F-P",
+        "test_out:F-X1",
+        "test_out:f-p2",
+        "test_out:L01",
+        "test_out:F-P2:extra",
+    ]
     bad = adapter.apply_ops(
         user,
         "pc",
-        [
-            op("k3", "user_pref", {"pref_key": "practice_time_user:2026-11-16"}, {"value": 1}, t("20:00:00")),
-            op("k4", "user_pref", {"pref_key": "practice_week:2026-11-16"}, {"value": {"active_seconds_user": 1}}, t("20:00:00")),
-        ],
+        [op(f"b{i}", "user_pref", {"pref_key": k}, {"value": 1}, t("20:00:00")) for i, k in enumerate(look_alikes)]
+        + [op("b-week", "user_pref", {"pref_key": "practice_week:2026-11-16"}, {"value": {"active_seconds_user": 1}}, t("20:00:00"))],
     )
-    assert [r["op_id"] for r in bad.rejected] == ["k3", "k4"]
+    assert [r["op_id"] for r in bad.rejected] == [f"b{i}" for i in range(len(look_alikes))] + ["b-week"]
 
 
 def test_legacy_progress_archive_pref_is_kept_as_is(adapter, user):
@@ -232,9 +276,12 @@ def test_keys_with_trailing_newline_are_rejected(adapter, user):
             op("n1", "user_pref", {"pref_key": "resume\n"}, {"value": 1}, t("20:00:00")),
             op("n2", "user_pref", {"pref_key": "legacy_progress:L01:1.2\n"}, {"value": 1}, t("20:00:00")),
             op("n3", "step_progress", {"step_id": "L01-S01\n"}, {"status": "done"}, t("20:00:00")),
+            op("n4", "user_pref", {"pref_key": "course\n"}, {"value": COURSE}, t("20:00:00")),
+            op("n5", "user_pref", {"pref_key": "test_out:F-P2\n"}, {"value": TEST_OUT}, t("20:00:00")),
+            op("n6", "user_pref", {"pref_key": "guided_mode\n"}, {"value": "on"}, t("20:00:00")),
         ],
     )
-    assert [r["op_id"] for r in bad.rejected] == ["n1", "n2", "n3"]
+    assert [r["op_id"] for r in bad.rejected] == ["n1", "n2", "n3", "n4", "n5", "n6"]
     ok = adapter.apply_ops(
         user,
         "pc",
@@ -246,6 +293,144 @@ def test_keys_with_trailing_newline_are_rejected(adapter, user):
         ],
     )
     assert ok.applied == ["o1", "o2", "o3", "o4"]
+
+
+def test_course_and_test_out_records_reach_the_other_device(adapter, user):
+    """폰에서 정한 코스·입문 마침·시험 기록·안내형 길 설정이 컴퓨터로 내려간다. 시각은 +09:00 으로 맞춘다."""
+    seen = adapter.get_state(user)  # 컴퓨터가 여기까지 받아 감
+    course = {**COURSE, "at": "2026-11-20T11:00:00Z", "history": [{**COURSE_CHOICE, "at": "2026-11-20T11:00:00Z"}]}
+    res = adapter.apply_ops(user, "phone", [
+        op("p1", "user_pref", {"pref_key": "course"}, {"value": course}, t("20:00:00")),
+        op("p2", "user_pref", {"pref_key": "course_intro_done"}, {"value": {"at": t("21:00:00")}}, t("21:00:00")),
+        op("p3", "user_pref", {"pref_key": "test_out:F-P2"}, {"value": TEST_OUT}, t("20:10:00")),
+        op("p4", "user_pref", {"pref_key": "test_out:F-B1"}, {"value": {**TEST_OUT, "passed": False, "content_version": None}}, t("20:20:00")),
+        op("p5", "user_pref", {"pref_key": "guided_mode"}, {"value": "off"}, t("20:30:00")),
+    ])
+    assert res.applied == ["p1", "p2", "p3", "p4", "p5"] and res.rejected == []
+    pulled = {r["pref_key"]: r["value"] for r in adapter.get_state(user, since=seen["server_seq"])["tables"]["user_pref"]}
+    assert pulled == {
+        "course": {**COURSE, "at": t("20:00:00"), "history": [{**COURSE_CHOICE, "at": t("20:00:00")}]},
+        "course_intro_done": {"at": t("21:00:00")},
+        "test_out:F-P2": TEST_OUT,
+        "test_out:F-B1": {**TEST_OUT, "passed": False, "content_version": None},
+        "guided_mode": "off",
+    }
+
+
+def test_course_value_shape_is_checked(adapter, user):
+    """course = {course_id, source, diagnostic_attempt_id, at, history}. 바뀐 이력은 20개까지. 비우면(null) 진단 전으로."""
+    good = [
+        COURSE,
+        {**COURSE, "course_id": "main", "source": "skip_link", "diagnostic_attempt_id": None, "history": []},
+        {**COURSE, "source": "switch", "history": [{**COURSE_CHOICE, "source": s} for s in ("diagnostic", "skip_link", "switch")] * 6 + [COURSE_CHOICE] * 2},
+        None,
+    ]
+    assert _rejected_values(adapter, user, "g", "course", good) == []
+    assert adapter.get_row(user, "user_pref", {"pref_key": "course"})["value"] is None
+    without_history = {k: v for k, v in COURSE.items() if k != "history"}
+    bad = [
+        "intro",
+        [COURSE],
+        {},
+        without_history,
+        {**COURSE, "track_id": "intro"},
+        {**COURSE, "course_id": "advanced"},
+        {**COURSE, "course_id": None},
+        {**COURSE, "source": "manual"},
+        {**COURSE, "diagnostic_attempt_id": 7},
+        {**COURSE, "diagnostic_attempt_id": "띄어 쓴 id"},
+        {**COURSE, "diagnostic_attempt_id": "a" * 65},
+        {**COURSE, "at": "어제"},
+        {**COURSE, "at": "2026-11-20T20:00:00"},
+        {**COURSE, "at": None},
+        {**COURSE, "history": None},
+        {**COURSE, "history": COURSE_CHOICE},
+        {**COURSE, "history": [COURSE_CHOICE] * 21},
+        {**COURSE, "history": [{**COURSE_CHOICE, "diagnostic_attempt_id": None}]},
+        {**COURSE, "history": [{"course_id": "intro", "source": "diagnostic"}]},
+        {**COURSE, "history": [{**COURSE_CHOICE, "course_id": "advanced"}]},
+        {**COURSE, "history": [{**COURSE_CHOICE, "source": "manual"}]},
+        {**COURSE, "history": [{**COURSE_CHOICE, "at": "어제"}]},
+        {**COURSE, "history": ["intro"]},
+    ]
+    assert _rejected_values(adapter, user, "b", "course", bad) == list(range(len(bad)))
+
+
+def test_course_intro_done_value_is_one_time(adapter, user):
+    """course_intro_done = {at}. 비우면(null) 입문 마침 전으로."""
+    assert _rejected_values(adapter, user, "g", "course_intro_done", [{"at": "2026-11-20T12:00:00Z"}, None]) == []
+    bad = [{}, {"at": None}, {"at": "어제"}, {"at": t("20:00:00"), "course_id": "intro"}, t("20:00:00"), True]
+    assert _rejected_values(adapter, user, "b", "course_intro_done", bad) == list(range(len(bad)))
+
+
+def test_test_out_value_shape_is_checked(adapter, user):
+    """test_out:{단위} = {attempt_id, passed, answers, at, content_version}. passed 는 참거짓(정수 아님), 답은 10개까지."""
+    good = [
+        TEST_OUT,
+        {**TEST_OUT, "passed": False, "answers": [], "content_version": None},
+        {**TEST_OUT, "answers": [{"question_id": f"F-P2-Q{i}", "is_correct": i % 2 == 0} for i in range(10)]},
+    ]
+    assert _rejected_values(adapter, user, "g", "test_out:F-P2", good) == []
+    without_at = {k: v for k, v in TEST_OUT.items() if k != "at"}
+    bad = [
+        "passed",
+        [TEST_OUT],
+        {},
+        without_at,
+        {**TEST_OUT, "score": 2},
+        {**TEST_OUT, "attempt_id": None},
+        {**TEST_OUT, "attempt_id": "띄어 쓴 id"},
+        {**TEST_OUT, "passed": 1},
+        {**TEST_OUT, "passed": "true"},
+        {**TEST_OUT, "passed": None},
+        {**TEST_OUT, "answers": None},
+        {**TEST_OUT, "answers": {"question_id": "F-P2-Q1", "is_correct": True}},
+        {**TEST_OUT, "answers": [{"question_id": "F-P2-Q1", "is_correct": True}] * 11},
+        {**TEST_OUT, "answers": [{"question_id": "F-P2-Q1"}]},
+        {**TEST_OUT, "answers": [{"question_id": "F-P2-Q1", "is_correct": True, "answer_text": "2"}]},
+        {**TEST_OUT, "answers": [{"question_id": "F-P2-Q1", "is_correct": 1}]},
+        {**TEST_OUT, "answers": [{"question_id": None, "is_correct": True}]},
+        {**TEST_OUT, "answers": [{"question_id": "F P2 Q1", "is_correct": True}]},
+        {**TEST_OUT, "answers": ["F-P2-Q1"]},
+        {**TEST_OUT, "at": "어제"},
+        {**TEST_OUT, "content_version": 3},
+        {**TEST_OUT, "content_version": "v" * 65},
+    ]
+    assert _rejected_values(adapter, user, "b", "test_out:F-P2", bad) == list(range(len(bad)))
+
+
+def test_test_out_record_cannot_be_cleared(adapter, user):
+    """'이미 알아요' 시험은 한 단위에 한 번이라 기록을 비울(null) 수 없다. 값 없이 빈 행을 만들 수도 없다."""
+    key = {"pref_key": "test_out:F-P2"}
+    assert adapter.apply_ops(user, "pc", [op("a", "user_pref", key, {"value": TEST_OUT}, t("20:00:00"))]).applied == ["a"]
+    res = adapter.apply_ops(user, "pc", [
+        op("b", "user_pref", key, {"value": None}, t("20:05:00")),
+        op("c", "user_pref", key, {"value_json": "null"}, t("20:06:00")),
+        op("d", "user_pref", {"pref_key": "test_out:F-P3"}, {}, t("20:07:00")),
+        op("e", "user_pref", {"pref_key": "test_out:F-P4"}, {"content_version": "auto-6256adb2ec11"}, t("20:08:00")),
+    ])
+    assert [r["op_id"] for r in res.rejected] == ["b", "c", "d", "e"]
+    assert "비울 수 없" in res.rejected[0]["reason_ko"]
+    assert adapter.get_row(user, "user_pref", key)["value"] == TEST_OUT
+    assert adapter.get_row(user, "user_pref", {"pref_key": "test_out:F-P3"}) is None
+
+
+def test_guided_mode_is_on_or_off(adapter, user):
+    assert _rejected_values(adapter, user, "g", "guided_mode", ["on", "off", None]) == []
+    bad = ["", "ON", "auto", True, 1, ["on"], {"mode": "on"}]
+    assert _rejected_values(adapter, user, "b", "guided_mode", bad) == list(range(len(bad)))
+
+
+def test_existing_pref_values_keep_their_rules(adapter, user):
+    """새 열쇠를 더해도 지금 열쇠의 값 규칙은 그대로: practice_week 는 두 칸 중 일부만 와도 되고, 나머지 열쇠는 JSON 이면 받는다."""
+    week = "practice_week:2026-11-16"
+    good_week = [{}, {"edited_seconds": None}, {"edited_at": None}, {"edited_seconds": 0, "edited_at": t("20:00:00")}, None]
+    assert _rejected_values(adapter, user, "gw", week, good_week) == []
+    bad_week = [1, [], {"edited_seconds": -1}, {"edited_seconds": True}, {"edited_seconds": 1.5}, {"edited_at": "어제"}, {"x": 1}]
+    assert _rejected_values(adapter, user, "bw", week, bad_week) == list(range(len(bad_week)))
+    anything = ["colab", 3, [1, 2], {"step_id": "L01-S04"}, None, {"course_id": "advanced"}]
+    for pref_key in ("run_place", "resume", "legacy_progress:L01:1.2"):
+        assert _rejected_values(adapter, user, f"{pref_key}-", pref_key, anything) == [], pref_key
 
 
 def test_times_are_normalized_to_kst(adapter, user):

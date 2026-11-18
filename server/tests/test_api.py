@@ -249,3 +249,16 @@ def test_api_md_lists_every_sync_table_key_and_field():
             assert "`attempt_no`" in data_cell, f"{name}: 서버가 매기는 attempt_no 설명 없음"
         for fr in rule.fields.values():
             assert f"`{fr.api}`" in data_cell, f"{name}.{fr.api} 가 API.md 에 없음"
+
+
+def test_api_md_lists_every_user_pref_key():
+    """서버가 받는 user_pref 열쇠 꼴(schema.PREF_KEY_FORMS)이 API.md user_pref 줄의 열쇠 칸에 모두 있어야 한다."""
+    from z2h_server import schema
+
+    text = (Path(__file__).resolve().parents[1] / "API.md").read_text(encoding="utf-8")
+    (line,) = [ln for ln in text.splitlines() if ln.startswith("| `user_pref` |")]
+    key_cell = line.split("|")[2]
+    for form in schema.PREF_KEY_FORMS:
+        name = form.split(":", 1)[0]
+        shown = f"`{name}`" if name == form else f"`{name}:"
+        assert shown in key_cell, f"API.md user_pref 열쇠 칸에 {form} 이 없음"

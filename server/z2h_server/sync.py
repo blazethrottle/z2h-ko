@@ -220,20 +220,112 @@ def _time(name: str, value: Any) -> str:
 # ---- 표별 추가 검사 ----
 
 
-def _check_user_pref(key: dict[str, Any], data: dict[str, Any]) -> None:
-    """practice_week:{주 시작일} 값은 {edited_seconds, edited_at}. null 이면 자동 기록으로 되돌아감."""
-    if not key["pref_key"].startswith("practice_week:") or "value_json" not in data:
-        return
-    value = data["value_json"]
+@dataclass(frozen=True)
+class ObjectRule:
+    """JSON 객체 값. 칸 이름이 fields 와 정확히 같아야 한다(partial 이면 일부만 와도 됨)."""
+
+    fields: dict[str, ValueRule]
+    nullable: bool
+    partial: bool = False
+
+
+@dataclass(frozen=True)
+class ListRule:
+    item: ObjectRule
+    max_items: int
+
+
+ValueRule = FieldRule | ObjectRule | ListRule
+
+
+def check_value(name: str, rule: ValueRule, value: Any) -> Any:
+    """JSON 값을 규칙대로 검사하고, 시각은 +09:00 으로 맞춘 값을 돌려준다."""
+    if isinstance(rule, FieldRule):
+        return coerce(rule, value)
+    if isinstance(rule, ListRule):
+        if not isinstance(value, list) or len(value) > rule.max_items:
+            raise OpRejected(f"{name}: {rule.max_items}개 이하의 목록이어야 합니다")
+        return [check_value(f"{name} 항목", rule.item, item) for item in value]
     if value is None:
+        if not rule.nullable:
+            raise OpRejected(f"{name}: 비울 수 없는 기록입니다")
+        return None
+    names = set(rule.fields)
+    if not isinstance(value, dict) or set(value) - names or (not rule.partial and set(value) != names):
+        raise OpRejected(f"{name} 값은 {{{', '.join(rule.fields)}}} 모양이어야 합니다")
+    return {k: check_value(k, rule.fields[k], v) for k, v in value.items()}
+
+
+def _value(
+    api: str, kind: str, *, nullable: bool = False, values: tuple[str, ...] | None = None, min: float | None = None
+) -> FieldRule:
+    """칼럼이 아닌 JSON 값 안의 칸 하나. coerce 가 칼럼과 같은 규칙으로 검사한다."""
+    return FieldRule(column=api, api=api, kind=kind, nullable=nullable, values=values, min=min)
+
+
+COURSE_IDS = ("intro", "main")
+COURSE_SOURCES = ("diagnostic", "skip_link", "switch")
+COURSE_HISTORY_MAX = 20
+TEST_OUT_ANSWERS_MAX = 10
+GUIDED_MODES = ("on", "off")
+
+_AT = _value("at", "time")
+_COURSE_ID = _value("course_id", "enum", values=COURSE_IDS)
+_COURSE_SOURCE = _value("source", "enum", values=COURSE_SOURCES)
+
+# user_pref 열쇠 갈래(':' 앞, schema.PREF_KEY_FORMS) → value 규칙. 여기 없는 갈래는 JSON 이기만 하면 받는다
+PREF_VALUE_RULES: dict[str, FieldRule | ObjectRule] = {
+    # null 이면 자동 기록으로 되돌아감
+    "practice_week": ObjectRule(
+        {
+            "edited_seconds": _value("edited_seconds", "int", nullable=True, min=0),
+            "edited_at": _value("edited_at", "time", nullable=True),
+        },
+        nullable=True,
+        partial=True,
+    ),
+    # null 이면 코스 없음(진단 전)
+    "course": ObjectRule(
+        {
+            "course_id": _COURSE_ID,
+            "source": _COURSE_SOURCE,
+            "diagnostic_attempt_id": _value("diagnostic_attempt_id", "id", nullable=True),
+            "at": _AT,
+            "history": ListRule(
+                ObjectRule({"course_id": _COURSE_ID, "source": _COURSE_SOURCE, "at": _AT}, nullable=False),
+                max_items=COURSE_HISTORY_MAX,
+            ),
+        },
+        nullable=True,
+    ),
+    "course_intro_done": ObjectRule({"at": _AT}, nullable=True),
+    # "이미 알아요" 시험은 한 단위에 한 번이라 기록을 비울 수 없다
+    "test_out": ObjectRule(
+        {
+            "attempt_id": _value("attempt_id", "id"),
+            "passed": _value("passed", "bool"),
+            "answers": ListRule(
+                ObjectRule({"question_id": _value("question_id", "id"), "is_correct": _value("is_correct", "bool")}, nullable=False),
+                max_items=TEST_OUT_ANSWERS_MAX,
+            ),
+            "at": _AT,
+            "content_version": RULES["user_pref"].fields["content_version"],
+        },
+        nullable=False,
+    ),
+    "guided_mode": _value("guided_mode", "enum", nullable=True, values=GUIDED_MODES),
+}
+
+
+def _check_user_pref(key: dict[str, Any], data: dict[str, Any]) -> None:
+    family = key["pref_key"].split(":", 1)[0]
+    rule = PREF_VALUE_RULES.get(family)
+    if rule is None:
         return
-    if not isinstance(value, dict) or set(value) - {"edited_seconds", "edited_at"}:
-        raise OpRejected("practice_week 값은 {edited_seconds, edited_at} 모양이어야 합니다")
-    secs = value.get("edited_seconds")
-    if secs is not None and (isinstance(secs, bool) or not isinstance(secs, int) or secs < 0):
-        raise OpRejected("edited_seconds: 0 이상 정수 또는 null 이어야 합니다")
-    if value.get("edited_at") is not None:
-        value["edited_at"] = _time("edited_at", value["edited_at"])
+    if "value_json" in data:
+        data["value_json"] = check_value(family, rule, data["value_json"])
+    elif not rule.nullable:
+        raise OpRejected(f"{family}: 비울 수 없는 기록이라 value 가 있어야 합니다")
 
 
 TABLE_CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], None]] = {"user_pref": _check_user_pref}
