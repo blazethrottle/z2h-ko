@@ -146,7 +146,7 @@ export const config: AppConfig = {
     },
   },
   checkpointLock: 'recommend',
-  colab: { repo: 'blazethrottle/z2h-ko', commit: 'c8e0ec6a107e473de60b478ca608a96a89d40273' },
+  colab: { repo: 'blazethrottle/z2h-ko', commit: 'cfc179e5dd4928f52a0b99ceca3af8d47c50ef49' },
   numericTolerance: { rel: 1e-4, abs: 0 },
   questionScoreRatio: 0.8,
   retryDelaysMs: [30_000, 60_000, 300_000],

@@ -34,7 +34,7 @@ describe('Colab 바로 열기 주소', () => {
       expect(m?.[3]).toBe(nb);
     }
     expect(colabOpenUrl('notebooks/taster/taster.ipynb')).toBe(
-      'https://colab.research.google.com/github/blazethrottle/z2h-ko/blob/c8e0ec6a107e473de60b478ca608a96a89d40273/notebooks/taster/taster.ipynb',
+      'https://colab.research.google.com/github/blazethrottle/z2h-ko/blob/cfc179e5dd4928f52a0b99ceca3af8d47c50ef49/notebooks/taster/taster.ipynb',
     );
   });
   it('저장소의 notebooks/ 안 .ipynb 가 아니면 주소를 만들지 않는다', () => {
