@@ -18,7 +18,7 @@ META = {
         {"where": "steps[]", "fields": ["expected_output_example"], "why": "v1.2 맛보기 칸을 모든 단계에 씀. 실제 실행 출력(노트북처럼 셀 마지막 줄 값 표시 포함, 에러는 에러 화면 맨 아래 줄만)"},
         {"where": "steps[].expected_check", "fields": ["mode(exact|contains_lines)", "lines", "checks[{expr,min,max}]", "expected", "match", "expr", "min", "max"], "why": "mode/lines/checks는 작성자 검사(verify_f.py)용, expected/match/expr/min/max는 cc-tools run_code.py가 읽는 칸. 셀 순서나 에러 뒤 출력이 있는 단계는 expected를 두지 않음(도구가 셀 하나로만 돌리므로)"},
         {"where": "steps[]", "fields": ["expected_error"], "why": "일부러 에러를 내는 단계에서 나야 하는 에러 종류(cc-tools 칸)"},
-        {"where": "steps[]", "fields": ["restart_first"], "why": "이 단계 전에 다시 시작(Colab 런타임, Jupyter Kernel)으로 기억을 비움(cc-tools 칸). F-P1-S3b"},
+        {"where": "steps[]", "fields": ["restart_first"], "why": "이 단계 전에 다시 시작(Colab 런타임)으로 기억을 비움(cc-tools 칸). F-P1-S3b"},
         {"where": "steps[]", "fields": ["place_before"], "why": "새 셀을 노트북 맨 아래가 아니라 이 단계의 셀 바로 위에 넣음. F-P1-S2b(셀 A를 셀 B 위에)"},
         {"where": "steps[]", "fields": ["self_check_ko"], "why": "그림이 나오는 단계의 자가 점검 목록(설계서 3-1: 그림은 체크 목록으로 스스로 확인)"},
         {"where": "steps[] id", "fields": ["F-P1-S2b, F-P1-S3b, F-P8-S1b, F-P8-S2b, F-P8-S3b"], "why": "data-spec 1절 '쪼갠 단계' 규칙. 에러를 먼저 보는 단계와 고치는 단계를 나눔(검사 도구가 단계 하나를 셀 하나로 실행하므로)"},
@@ -29,7 +29,7 @@ META = {
         {"where": "mastery_rule", "fields": ["applies_to", "rebuild_required", "note_ko"], "why": "기초 단위별 판정(설계서 2-1). 익힘 과제는 판정에 넣지 않음"},
     ],
     "conventions_ko": [
-        "두 실행 길(맥미니 Jupyter, Colab)을 같이 지원한다. 메뉴 이름은 둘 다 적고, 설치 안내는 넣지 않는다(맥미니 환경 준비는 CTO 쪽, 설계서 F-P1 '길 고르기').",
+        "실행 길(Colab)을 지원한다. 설치 안내는 넣지 않는다(설계서 F-P1 '길 고르기').",
         "정답 대조(설계서 3-1): 손 계산으로 정해지는 값(정수, 글자, 리스트, 모양, 딱 떨어지는 소수)은 output_match, 근삿값(기울기 재기, exp, log, torch 소수 계산, 무작위)은 value_range, 그림은 manual + self_check_ko. expected_output_example은 맥에서 실제로 나온 출력 예시로 함께 둔다.",
         "단위마다 새 노트북 하나를 쓴다고 보고 출력을 맞췄다. 같은 단위 안의 단계는 앞 단계의 이름(변수)을 이어 쓴다.",
         "여러 값을 보이는 셀은 줄마다 print를 쓴다. 셀 마지막 줄 값이 저절로 보이는 것은 F-P2-S1에서 한 번 보여 준다.",
@@ -71,5 +71,12 @@ META = {
         "Colab 기본 들여쓰기 칸 수, 에러가 난 셀도 실행 번호를 받는지(F-P1-S2의 [2], [3], [4] 예시)는 미확인.",
         "Colab에 torch, matplotlib이 기본으로 깔려 있다는 안내는 현재 판으로 확인하지 않음.",
         "예상 시간은 모두 공식 추정이며 실측 아님.",
+    ],
+}
+
+# 판을 낸 뒤 고친 내역. build_f.py 가 _meta 맨 끝(계산 칸 counts 뒤)에 붙인다.
+CHANGELOG = {
+    "changes_2026_11_18": [
+        "2026-11-18 교사 지시로 Colab 고정 문구 정리, 전체 시간 표시 안 함(결정): F-P1 제목 \"노트북 다루기(Colab)\"와 F-P1-S1 input_ko 는 교사 문구, 그 밖의 칸은 맥미니·Jupyter·MPS·전체 시간 구절만 뺌(app/scripts/canon-colab-time.mjs 표). 판 이름은 그대로.",
     ],
 }

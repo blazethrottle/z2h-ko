@@ -20,7 +20,7 @@ UNIT = {
     "steps": [
         {
             "title_ko": "파일에 쓰고 읽어 줄로 나누기",
-            "input_ko": "새 노트북의 첫 셀에 다섯 줄을 칩니다. 둘째 줄만 들여 씁니다. 파일은 Colab이면 임시 폴더(연결이 끊기면 지워짐), 맥미니 Jupyter면 노트북 파일이 있는 폴더에 생깁니다.",
+            "input_ko": "새 노트북의 첫 셀에 다섯 줄을 칩니다. 둘째 줄만 들여 씁니다. 파일은 Colab이면 임시 폴더(연결이 끊기면 지워짐)에 생깁니다.",
             "code": r'''
 with open("names.txt", "w") as f:
     f.write("emma\nolivia\nava")
@@ -35,7 +35,7 @@ print("-".join(words))
                 "리스트를 보여 줍니다.",
                 "리스트를 - 로 이어 붙인 한 줄 글을 보여 줍니다.",
             ],
-            "expected_ko": "['emma', 'olivia', 'ava'] 와 emma-olivia-ava 가 나옵니다. Colab은 왼쪽 폴더 그림, Jupyter는 왼쪽 파일 목록에서 names.txt가 보입니다.",
+            "expected_ko": "['emma', 'olivia', 'ava'] 와 emma-olivia-ava 가 나옵니다. Colab은 왼쪽 폴더 그림에서 names.txt가 보입니다.",
             "expected_output": "['emma', 'olivia', 'ava']\nemma-olivia-ava",
             "meaning_ko": "파일 하나를 이름 목록(리스트)으로 바꾸고, 다시 한 줄로 합쳤습니다. 2편은 3만 개가 넘는 이름이 든 names.txt를 이 한 줄로 읽으며 시작합니다.",
             "hints": [

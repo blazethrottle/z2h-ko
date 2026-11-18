@@ -86,3 +86,10 @@ META_TEXT = {
         "dash": "긴 줄표(U+2014) 0개(build_l01.py, check_format.py 둘 다 확인)",
     },
 }
+
+# 판을 낸 뒤 고친 내역. part00_meta.meta() 가 _meta 맨 끝(계산 칸 time_estimate_min 뒤)에 붙인다.
+CHANGELOG = {
+    "changes_2026_11_18": [
+        "2026-11-18 결정(실행 장소 Colab 고정)에 따른 문구 정리: 맥미니 Jupyter 병기 구절만 뺌(app/scripts/canon-colab-time.mjs 표). 코드·출력·id·개수·판 이름은 그대로.",
+    ],
+}

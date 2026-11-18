@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-// 정본 문구 정리 (2026-11-18): 실행 장소 Colab 고정(교사 지시 + 결정), 전체 시간 표시 안 함(결정). 정본 F.json·L01.json·taster.json 을 손으로 고치지 않고 이 표로만 고친다.
+// 정본 문구 정리 (2026-11-18): 실행 장소 Colab 고정(교사 지시 + 결정), 전체 시간 표시 안 함(결정). 정본 F.json·L01.json·taster.json 을 손으로 고치지 않는다.
+// taster.json 은 이 표로 고친다(조각 원본이 없는 교사 정본). F.json·L01.json 은 조각 원본(tools/content/src_f, src_l01)에서 만들고, 이 정리는 조각에 이미 들어 있다(P10).
+//   그래서 표의 F·L01 항목(generatedFrom 이 있는 것)은 c8e0ec6 → cfc179e(P9)에서 무엇을 바꿨는지의 기록이고 정본을 만드는 경로가 아니다.
+//   이 스크립트를 돌려도 그 두 파일은 건드리지 않는다. 조각에서 만든 것 = 정본은 tests/test_content_tools.py 가 본다.
 // 규칙: 교사가 대체 문구를 준 곳(after)은 그 글자 그대로, 나머지는 remove 의 구절을 빼기만 한다(새 문장·새 설명을 넣지 않음).
 //   빼면 문장이 깨지거나 기록이 거짓이 되는 곳, 코드와 그 출력, 앱이 그리지 않는 칸은 고치지 않고 KEPT 에 이유와 함께 남긴다.
 // 표의 한 줄 = 칸 하나. 칸의 지금 값이 before 면 바꾸고, 이미 바뀐 값이면 건너뛴다(두 번 돌려도 같다). 다른 값이면 멈춘다.
@@ -20,10 +23,12 @@ const TABLE = 'app/scripts/canon-colab-time.mjs';
 /**
  * 파일별 표. line: c8e0ec6 판 줄 번호(찾아보기용). why: colab(실행 장소 Colab 고정) | time(전체 시간) | 둘 다.
  * teacher: 교사가 준 대체 문구(after 그대로).
+ * generatedFrom: 그 정본을 만드는 조각 폴더. 있으면 이 표는 기록이고, 실행해도 그 파일을 고치지 않는다.
  */
 export const CANON_EDITS = [
   {
     file: 'inputs/pedagogy/content/F.json',
+    generatedFrom: 'tools/content/src_f',
     changelog: `2026-11-18 교사 지시로 Colab 고정 문구 정리, 전체 시간 표시 안 함(결정): F-P1 제목 "노트북 다루기(Colab)"와 F-P1-S1 input_ko 는 교사 문구, 그 밖의 칸은 맥미니·Jupyter·MPS·전체 시간 구절만 뺌(${TABLE} 표). 판 이름은 그대로.`,
     edits: [
       { id: 'F-meta-restart-first-why', line: 103, why: 'colab', path: ['_meta', 'added_fields', 9, 'why'], before: '이 단계 전에 다시 시작(Colab 런타임, Jupyter Kernel)으로 기억을 비움(cc-tools 칸). F-P1-S3b', remove: [', Jupyter Kernel'] },
@@ -258,6 +263,7 @@ export const CANON_EDITS = [
   },
   {
     file: 'inputs/pedagogy/content/L01.json',
+    generatedFrom: 'tools/content/src_l01',
     changelog: `2026-11-18 결정(실행 장소 Colab 고정)에 따른 문구 정리: 맥미니 Jupyter 병기 구절만 뺌(${TABLE} 표). 코드·출력·id·개수·판 이름은 그대로.`,
     edits: [
       {
@@ -322,6 +328,9 @@ export const CANON_EDITS = [
     ],
   },
 ];
+
+/** 이 스크립트가 실제로 고치는 표(조각에서 만드는 정본은 뺀다) */
+export const EDITABLE_EDITS = CANON_EDITS.filter((s) => !s.generatedFrom);
 
 /**
  * 고치지 않고 남긴 곳(교사 문구 요청·기록용). path 가 가리키는 칸의 지금 글 그대로.
@@ -404,7 +413,8 @@ export function applyCanonEdits(text, spec) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-  for (const spec of CANON_EDITS) {
+  for (const spec of CANON_EDITS.filter((s) => s.generatedFrom)) console.log(`${spec.file}: 조각(${spec.generatedFrom})에서 만드는 정본이라 고치지 않음(이 표는 기록)`);
+  for (const spec of EDITABLE_EDITS) {
     const file = path.join(root, spec.file);
     const r = applyCanonEdits(fs.readFileSync(file, 'utf8'), spec);
     fs.writeFileSync(file, r.text);

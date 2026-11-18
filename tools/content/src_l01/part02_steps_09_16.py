@@ -199,7 +199,6 @@ STEPS = [
           "에러의 마지막 줄에 graphviz나 ExecutableNotFound라는 말이 있나요? 아니면 NameError인가요?",
           "그림 도구 graphviz는 파이썬 부품과 컴퓨터 프로그램(dot) 두 가지가 다 있어야 합니다. "
           "Colab만: ModuleNotFoundError가 나면 새 셀에 `!pip install graphviz`를 실행한 뒤 준비 코드 셀을 다시 실행합니다. "
-          "맥미니 Jupyter: 저장소 가상환경에 파이썬 부품이, 맥에 graphviz 프로그램이 깔려 있어야 합니다. 없으면 직접 설치하지 말고 담당자에게 알리세요(설치는 승인 뒤, 환경 문제라 HELP로 표시). "
           "그동안은 draw_dot(L) 대신 draw_text(L)로 같은 내용을 글자로 볼 수 있습니다. 기초 F-P8(에러 읽기)을 보세요.",
           ("빈칸을 채워 보세요. 그림 도구가 안 되면 두 번째 줄을 쓰세요.", "____(L)\n# 안 될 때: draw_text(L)"),
           "풀이: 준비 코드 셀을 먼저 실행하고, 새 셀에 draw_dot(L)을 실행합니다. 그림이 안 나오면 draw_text(L)로 이름, data, grad를 글자로 확인해도 이 단계는 통과입니다.",
