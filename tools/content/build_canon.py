@@ -6,12 +6,14 @@
     .venv/bin/python tools/content/build_canon.py --out-dir D  # 정본 폴더 대신 폴더 D 의 같은 파일 이름에 쓰거나(--check 면) 비교
 
 흐름: 조각 폴더 src_<이름>/ → 합치기 build_<이름>.build() → 글자로 serialize() → 후처리 POSTPROCESS(지금은 없음) → 정본 파일.
-종료 코드: 0 통과(또는 다 씀), 1 --check 에서 다르거나 없는 정본이 있음, 2 인자 잘못 또는 조각 형식 오류.
+종료 코드: 0 통과(또는 다 씀), 1 --check 에서 다르거나 없는 정본이 있음, 2 인자 잘못 또는 조각 형식 오류,
+3 조각 코드가 에러로 멈춤(NameError 등).
 """
 import argparse
 import importlib
 import os
 import sys
+import traceback
 from typing import Callable, NamedTuple, Optional
 
 from fragments import BuildError
@@ -88,6 +90,10 @@ def main(argv=None) -> int:
             for msg in e.args[0]:
                 print(" -", msg)
             return 2
+        except Exception:  # 조각 코드의 에러(NameError 등)를 --check 의 "다름"(1)과 구분한다
+            print("조각을 읽다가 멈췄습니다(%s). 아래 에러를 조각에서 고치세요." % canon.name, file=sys.stderr)
+            traceback.print_exc()
+            return 3
         made = text.encode("utf-8")
         current = read_bytes(path)
         if current == made:
