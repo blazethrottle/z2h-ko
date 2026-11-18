@@ -17,7 +17,7 @@ import {
 } from './api';
 import { LocalStore } from './sync/store';
 import { SyncManager } from './sync/manager';
-import { holdLocalLegacy, runL01Migration, setCurrentContentVersions } from './migrate/run';
+import { holdLocalLegacy, keepLegacyFromServer, runL01Migration, setCurrentContentVersions, waitsForServerRead } from './migrate/run';
 import { uuid4 } from './time';
 
 export type AccountState = 'ok' | 'offline' | 'none';
@@ -120,6 +120,7 @@ export function getRuntime(): Promise<Runtime> {
       }
       // 옛 1편(1.2판) 진도: 이 빌드의 판 값을 알려 두고, 동기화 전에 이 사본의 옛 행(보내지 못한 옛 변경 포함)을 읽어 둔다(첫 받기 뒤 보관본에)
       setCurrentContentVersions(readContentVersions());
+      store.holdBeforeRead = waitsForServerRead;
       const keepHeldLegacy = await holdLocalLegacy(store);
       let lastRecover = 0;
       const sync: SyncManager = new SyncManager(store, {
@@ -128,6 +129,8 @@ export function getRuntime(): Promise<Runtime> {
         onSynced: () => {
           runL01Migration(store).catch(reportLegacyError);
         },
+        // 이 기기의 못 보낸 새 행에 밀려 사본에 못 들어간 서버의 옛 1편 행은 보관본으로
+        onKeptServerRows: (rows) => keepLegacyFromServer(store, rows),
         onUnauthorized: () => {
           // 세션이 끊겼거나 처음 계정이 없던 경우: 30초에 한 번만 계정을 다시 정해 본다
           if (Date.now() - lastRecover < 30_000) return;

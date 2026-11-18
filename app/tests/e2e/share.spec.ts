@@ -92,7 +92,10 @@ test('이름 카드: 붙여 넣은 이름으로 1200x675 카드, 글은 모델 �
   await expect.poll(() => api.opsFor('share_card').length).toBe(1);
   const sc = api.opsFor('share_card')[0];
   expect(sc.key.share_id).toMatch(/^[0-9a-f]{32}$/);
-  expect(sc.data).toMatchObject({ kind: 'ART-TASTER', visibility: 'private', image_path: null, revoked_at: null });
+  expect(sc.data).toMatchObject({ kind: 'ART-TASTER', visibility: 'private' });
+  // 서버가 모르는 새 행이라 빈 칸(null)은 싣지 않는다: 서버가 새 행의 빈 칸으로 둔다(store.ts unknownRowData, 실서버 확인은 badges-share-real.spec.ts)
+  expect(sc.data).not.toHaveProperty('image_path');
+  expect(sc.data).not.toHaveProperty('revoked_at');
   expect(Object.keys(sc.data.payload)).toEqual([...CARD_INPUT_KEYS['ART-TASTER']]);
   expect(sc.data.payload).toEqual({ kind: 'ART-TASTER', names: NAMES, loss_start: 3.839, loss_end: 2.472, taste_complete: true });
   expect(JSON.stringify(sc.data)).not.toMatch(/홍길동|mail\.example/);

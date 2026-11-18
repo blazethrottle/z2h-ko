@@ -13,6 +13,8 @@ export const DEV_PORT = 4321;
 export const PREVIEW_PORT = 4329;
 /** 실서버 통합 검사(npm run test:real)가 켜는 진도 서버 포트(임시 DB) */
 export const REAL_TEST_PORT = 8797;
+/** 실서버 멈춤 검사(tests/real/sync-stall.spec.ts)가 진도 서버 앞에 켜는 중계기 포트 */
+export const REAL_TEST_PROXY_PORT = 8798;
 /** dev 서버 자기 주소. 이 Origin 에서 온 쓰기 요청만 프록시가 서버 주소로 바꿔 넘긴다 */
 export const DEV_ORIGINS = [`http://127.0.0.1:${DEV_PORT}`, `http://localhost:${DEV_PORT}`];
 

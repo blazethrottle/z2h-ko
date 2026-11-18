@@ -87,16 +87,12 @@ export function errorAuthProvider(e: unknown): AuthProvider | null {
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-async function requestJson<T>(fetchImpl: FetchLike, url: string, init: RequestInit = {}): Promise<T> {
-  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timer = ctrl ? setTimeout(() => ctrl.abort(), config.requestTimeoutMs) : null;
+async function readJson<T>(fetchImpl: FetchLike, url: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetchImpl(url, { ...init, signal: ctrl?.signal, credentials: config.api.credentials });
+    res = await fetchImpl(url, init);
   } catch (e) {
     throw new NetworkError(String((e as Error)?.message ?? e));
-  } finally {
-    if (timer) clearTimeout(timer);
   }
   if (!res.ok) {
     let body: unknown = null;
@@ -114,11 +110,39 @@ async function requestJson<T>(fetchImpl: FetchLike, url: string, init: RequestIn
   }
 }
 
-export function postSync(fetchImpl: FetchLike, body: SyncRequest): Promise<SyncResponse> {
+/**
+ * 시간 한도(config.requestTimeoutMs)는 응답 본문(오류 본문 포함)을 다 읽을 때까지 건다: 머리만 오고 본문이 멈추면 동기화가 끝나지 않는다.
+ * init.signal 이 끊기면(동기화가 그 실행을 버림) 요청을 끊고 바로 NetworkError
+ */
+async function requestJson<T>(fetchImpl: FetchLike, url: string, init: RequestInit = {}): Promise<T> {
+  const outer = init.signal ?? null;
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  let end!: (e: NetworkError) => void;
+  const ended = new Promise<never>((_, reject) => (end = reject));
+  const timer = setTimeout(() => {
+    ctrl?.abort();
+    end(new NetworkError('서버 응답이 늦습니다'));
+  }, config.requestTimeoutMs);
+  const cancel = () => {
+    ctrl?.abort();
+    end(new NetworkError('요청을 그만두었습니다'));
+  };
+  if (outer?.aborted) cancel();
+  else outer?.addEventListener('abort', cancel);
+  try {
+    return await Promise.race([readJson<T>(fetchImpl, url, { ...init, signal: ctrl?.signal, credentials: config.api.credentials }), ended]);
+  } finally {
+    clearTimeout(timer);
+    outer?.removeEventListener('abort', cancel);
+  }
+}
+
+export function postSync(fetchImpl: FetchLike, body: SyncRequest, signal?: AbortSignal): Promise<SyncResponse> {
   return requestJson<SyncResponse>(fetchImpl, API_PATHS.sync, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   }).then((r) => ({
     applied: Array.isArray(r?.applied) ? r.applied : [],
     superseded: Array.isArray(r?.superseded) ? r.superseded : [],
@@ -127,9 +151,9 @@ export function postSync(fetchImpl: FetchLike, body: SyncRequest): Promise<SyncR
   }));
 }
 
-export function getState(fetchImpl: FetchLike, since: number | null): Promise<StateResponse> {
+export function getState(fetchImpl: FetchLike, since: number | null, signal?: AbortSignal): Promise<StateResponse> {
   const url = since != null ? `${API_PATHS.state}?since=${encodeURIComponent(String(since))}` : API_PATHS.state;
-  return requestJson<StateResponse>(fetchImpl, url).then((r) => ({
+  return requestJson<StateResponse>(fetchImpl, url, { signal }).then((r) => ({
     server_time: String(r?.server_time ?? ''),
     server_seq: Number.isInteger(r?.server_seq) ? (r.server_seq as number) : null,
     tables: r && typeof r.tables === 'object' && r.tables ? r.tables : {},

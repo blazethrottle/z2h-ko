@@ -184,29 +184,45 @@ test('실제 서버: 단계 화면의 실습 시간이 자동으로 서버에 �
   const step = [...L.steps].sort((a: any, b: any) => a.order - b.order)[0];
   const flushS = Math.round(config.activityFlushMs / 1000);
 
-  // 가짜 시계: 시간은 그대로 흐르고, runFor 로 앞당기면 1초 타이머가 그만큼 돈다(실제로 기다리지 않는다).
-  // 1분 넘게 앞당겨 홈의 시:분 표시가 0:00 이 아니게 한다
+  // 가짜 시계를 멈춘 채 연다. 1초 타이머는 runFor(ranS) 로 앞당긴 만큼만 돌고, 그 밖에는 화면 그리기·서버 보내기 타이머만
+  // 조금씩 돌린다(합이 1초 아래라 실습 초가 늘지 않는다). 실제로 흐른 시간이 보낸 값에 섞이지 않아 두 값이 정해진 순간에 같다
+  const TRACKER_TICK_MS = 1000; // src/lib/activity.ts 의 1초 타이머
+  const NUDGE_MS = 16;
+  let nudgedMs = 0;
+  const nudgeUntil = (cond: () => Promise<boolean>) =>
+    expect
+      .poll(async () => {
+        if (nudgedMs + NUDGE_MS < TRACKER_TICK_MS) {
+          nudgedMs += NUDGE_MS;
+          await page.clock.runFor(NUDGE_MS);
+        }
+        return cond();
+      })
+      .toBe(true);
   await page.clock.install();
+  await page.clock.pauseAt(Date.now() + 1000);
   await page.goto(`/lectures/${L.lecture_id}/${step.slug}/#practice`);
+  await nudgeUntil(() => syncState(page, 'saved').isVisible());
   await appAccount(page);
-  await page.mouse.move(10, 10);
-  const ranS = Math.ceil(61 / flushS) * flushS + 1;
+  // 단계 행은 실습 시간 타이머를 붙이는 효과(StepApp)가 함께 만든다: 서버에 보이면 타이머가 붙어 있다
+  await nudgeUntil(async () => (await serverState(page)).tables.step_progress.some((r) => r.step_id === step.step_id));
+  // 1분 넘게(홈의 시:분이 0:00 이 아니게), 보내기 간격의 배수만큼 앞당겨 마지막 1초에 보내고 남는 초가 없게 한다
+  const ranS = Math.ceil(61 / flushS) * flushS;
   await page.clock.runFor(ranS * 1000);
 
-  // 자동 값: step_progress.active_seconds_auto 와 study_session(auto) 이 서버에 0 보다 크게 저장.
-  // 시계는 그 뒤에도 흐르므로 같은 값인 순간(한 번 보낸 뒤)을 기다리고, 앞당긴 만큼 이상인지 본다
+  // 자동 값: step_progress.active_seconds_auto 와 study_session(auto) 이 서버에 앞당긴 초와 꼭 같은 값으로 저장된다
   const autoOnServer = async () => {
     const st = await serverState(page);
     const sp = st.tables.step_progress.find((r) => r.step_id === step.step_id);
     const ss = st.tables.study_session.filter((r) => r.target_id === step.step_id && r.source === 'auto');
     return { auto: Number(sp?.active_seconds_auto ?? 0), sessions: ss.length, sessionSeconds: ss.reduce((a, r) => a + Number(r.active_seconds ?? 0), 0) };
   };
-  await expect
-    .poll(async () => {
-      const a = await autoOnServer();
-      return a.sessions === 1 && a.auto === a.sessionSeconds && a.auto >= ranS - 1 - ((ranS - 1) % flushS);
-    })
-    .toBe(true);
+  await nudgeUntil(async () => {
+    const a = await autoOnServer();
+    return a.sessions === 1 && a.auto === ranS && a.sessionSeconds === ranS;
+  });
+  // 홈부터는 시간이 흐르는 시계로 본다
+  await page.clock.resume();
 
   // 홈: 자동 값(이번 주 study_session 합)이 보이고, 고친 값이 서버의 practice_week:{주 시작일} 에 저장
   await page.goto('/home/');
