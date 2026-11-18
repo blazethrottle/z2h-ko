@@ -14,11 +14,13 @@ import { CARD_INPUT_KEYS } from '../../src/lib/share-card';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '../..');
 const REPO = path.resolve(APP, '..');
-const PY = path.join(REPO, '.venv/bin/python');
+// 저장소 .venv 가 없는 작업 폴더(git worktree)에서는 Z2H_PYTHON 으로 그 파이썬을 준다
+const PY = process.env.Z2H_PYTHON || path.join(REPO, '.venv/bin/python');
 const PORT = REAL_TEST_PORT;
 const BASE = `http://${LOCAL_HOST}:${PORT}`;
 const OUT = JSON.parse(fs.readFileSync(path.join(REPO, 'inputs/pedagogy/content/taster_outputs.json'), 'utf8'));
-const AT = '2026-11-16T09:00:00.000+09:00';
+// 지금 판(claude-1.0) 1편 기록이므로 그 판이 생긴 뒤 시각. 그 전 시각의 1편 기록은 옛 1.2판 기록으로 본다(src/lib/migrate)
+const AT = '2026-11-18T01:00:00.000+09:00';
 
 let tmp = '';
 let proc: ChildProcess | null = null;

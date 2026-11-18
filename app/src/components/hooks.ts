@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'preact/hooks';
 import { getRuntime, type Runtime } from '../lib/runtime';
+import { legacyIndex, visibleRows } from '../lib/migrate/run';
 import type { Row } from '../lib/sync/store';
 import type { SyncState } from '../lib/sync/manager';
 import type { AuthProvider } from '../config';
@@ -20,14 +21,15 @@ export function useRuntime(): Runtime | null {
   return rt;
 }
 
-/** 여러 표의 행을 읽고, 바뀌면 다시 읽는다 */
+/** 여러 표의 행을 읽고, 바뀌면 다시 읽는다. 옛 1.2판 1편 행(뜻이 다른 같은 id)은 빼고 준다(lib/migrate) */
 export function useTables(rt: Runtime | null, tables: string[]): Record<string, Row[]> | null {
   const [data, setData] = useState<Record<string, Row[]> | null>(null);
   const key = tables.join(',');
   const load = useCallback(async () => {
     if (!rt) return;
+    const legacy = await legacyIndex(rt.store);
     const out: Record<string, Row[]> = {};
-    for (const t of tables) out[t] = await rt.store.list(t);
+    for (const t of tables) out[t] = visibleRows(t, await rt.store.list(t), legacy);
     setData(out);
   }, [rt, key]);
   useEffect(() => {

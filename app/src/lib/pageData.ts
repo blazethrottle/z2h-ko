@@ -1,6 +1,12 @@
 // 페이지가 공통으로 쓰는 값 계산 (빌드 때만 실행)
 import { loadSite } from './content/build.mjs';
 import { loadBasics } from './content/basics.mjs';
+import { colabOpenUrl } from '../config';
+
+/** 노트북이 저장소에 있을 때만 Colab 바로 열기 주소(커밋 고정, config.colab). 없으면 null(화면은 "노트북 준비 중") */
+export function colabUrlOf(repoPath: string | null | undefined, available: boolean): string | null {
+  return repoPath && available ? colabOpenUrl(repoPath) : null;
+}
 
 export function lectureLabel(lectureId: string, titleKo: string): string {
   const short = String(titleKo).split(':')[0].trim();

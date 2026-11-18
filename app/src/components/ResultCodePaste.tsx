@@ -6,6 +6,7 @@ import type { Row } from '../lib/sync/store';
 import type { Runtime } from '../lib/runtime';
 import type { HintState } from '../lib/hints';
 import { nowKst } from '../lib/time';
+import { keepLegacyBeforeWrite } from '../lib/migrate/run';
 import { IconCheck, IconCross } from './Icons';
 
 /** rebuildIds: 이 편 정본 rebuild_tasks 의 id(결과코드에서 재구성 조각을 알아보는 데 쓴다). grades: 이 계정의 지금 grade_result 행 */
@@ -26,6 +27,8 @@ export default function ResultCodePaste({ rt, lectureId, rebuildIds, grades }: {
     }
     const rows = resultCodeToRows(d.data, nowKst(), (id) => levels[id] ?? 0, rebuildIds);
     const kept = keepPasses(rows.grade, grades);
+    // 같은 칸의 옛 1.2판 결과는 덮기 전에 보관본에(lib/migrate)
+    await keepLegacyBeforeWrite(rt.store, 'grade_result', kept.rows);
     // 변경 시각 = 코드 안의 채점 시각(t). 더 늦게 채점한 결과가 이기게 한다(서버 충돌 규칙)
     for (const g of kept.rows) await rt.store.put('grade_result', g, g.at);
     for (const r of rows.rebuild) await rt.store.put('rebuild_attempt', r, r.at);

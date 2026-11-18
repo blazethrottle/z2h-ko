@@ -203,29 +203,24 @@ test('미리 계산한 결과: 교사 실행 출력만, 손실 그림 데이터 
   expect(T.steps.length).toBeGreaterThan(0);
 });
 
-test('첫 단계: Colab 바로 열기 주소가 없으면 버튼을 숨기고 받기 + 올리기 안내, 미리 계산 화면 링크', async ({ page, api }) => {
+test('첫 단계: Colab 바로 열기(커밋 고정 주소, guided-colab.spec.ts), 받기 + 올리기 안내 없음, 미리 계산 화면 링크', async ({ page, api }) => {
   const T = await taster(page);
   await page.goto(`/taste/${T.steps[0].slug}/`);
   await hydrated(page);
   const nb = page.getByTestId('taste-notebook');
-  expect(config.taste.colabOpenUrl).toBeNull();
-  await expect(nb.getByTestId('taste-colab-open')).toHaveCount(0);
-  await expect(nb).toContainText('colab.research.google.com');
+  expect(T.notebook_available).toBe(true);
+  await expect(nb.getByTestId('taste-colab-open')).toHaveAttribute('href', new RegExp(`/blob/${config.colab.commit}/notebooks/taster/taster\\.ipynb$`));
+  await expect(nb.getByTestId('taste-notebook-download')).toHaveCount(0);
   await expect(nb).toContainText('Colab은 Google 로그인이 필요할 수 있습니다.');
-  // 정본 문구는 그대로 두고 그 아래 앱 문구 한 줄 (P2 검수 권고)
+  // 정본 문구는 그대로, 바로 열기 주소가 없을 때만 붙던 앱 문구는 없다
   const tsteps = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'inputs/pedagogy/content/taster.json'), 'utf8')).steps;
   await expect(page.locator('main header')).toContainText(plain(tsteps[0].input_ko));
-  await expect(page.getByTestId('taste-open-note')).toHaveText('지금은 노트북을 받아 Colab에 올려서 엽니다(아래 안내).');
+  await expect(page.getByTestId('taste-open-note')).toHaveCount(0);
   await expect(nb.getByTestId('taste-precomputed-link')).toHaveAttribute('href', '/taste/precomputed/');
-  if (T.notebook_available) {
-    const href = await nb.getByTestId('taste-notebook-download').getAttribute('href');
-    expect(href).toBe('/notebooks/taster/taster.ipynb');
-    const r = await page.request.get(href!);
-    expect(r.status()).toBe(200);
-    expect(JSON.parse(await r.text())).toHaveProperty('cells');
-  } else {
-    await expect(nb.getByTestId('taste-notebook-pending')).toHaveText('노트북 준비 중');
-  }
+  // 노트북 파일은 빌드에 그대로 있다(바로 열기를 못 쓰는 경우 대비)
+  const r = await page.request.get('/notebooks/taster/taster.ipynb');
+  expect(r.status()).toBe(200);
+  expect(JSON.parse(await r.text())).toHaveProperty('cells');
 });
 
 test('긴 셀은 앞부분을 접고 펼칠 수 있다, 줄별 풀이는 펼친 채, 복사는 셀 전체', async ({ page, api }) => {

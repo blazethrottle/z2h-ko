@@ -17,6 +17,7 @@ import {
 } from './api';
 import { LocalStore } from './sync/store';
 import { SyncManager } from './sync/manager';
+import { holdLocalLegacy, runL01Migration, setCurrentContentVersions } from './migrate/run';
 import { uuid4 } from './time';
 
 export type AccountState = 'ok' | 'offline' | 'none';
@@ -94,6 +95,16 @@ function clientId(): string {
 
 let rt: Promise<Runtime> | null = null;
 
+/** 이 빌드의 강의 content_version (Base.astro 의 meta z2h-content-versions, 빈칸으로 나눔) */
+function readContentVersions(): string[] {
+  return (globalThis.document?.querySelector('meta[name="z2h-content-versions"]')?.getAttribute('content') ?? '').split(' ').filter(Boolean);
+}
+
+/** 옛 진도 보관·옮기기가 실패해도 학습은 계속한다. 실패는 콘솔에 남긴다(자동 검사가 콘솔 오류를 실패로 본다) */
+function reportLegacyError(e: unknown): void {
+  console.error('옛 1편 진도 보관·옮기기 실패', e);
+}
+
 export function getRuntime(): Promise<Runtime> {
   if (!rt) {
     rt = (async () => {
@@ -107,9 +118,16 @@ export function getRuntime(): Promise<Runtime> {
         const pending = await LocalStore.open(PENDING_DB, null);
         await store.importFrom(pending);
       }
+      // 옛 1편(1.2판) 진도: 이 빌드의 판 값을 알려 두고, 동기화 전에 이 사본의 옛 행(보내지 못한 옛 변경 포함)을 읽어 둔다(첫 받기 뒤 보관본에)
+      setCurrentContentVersions(readContentVersions());
+      const keepHeldLegacy = await holdLocalLegacy(store);
       let lastRecover = 0;
       const sync: SyncManager = new SyncManager(store, {
         clientId: clientId(),
+        // 옛 1편 진도 옮기기: 서버 기록을 받은 뒤에 돌아야 그 기기에 처음 온 옛 행도 보관·변환한다(두 번 돌려도 같다)
+        onSynced: () => {
+          runL01Migration(store).catch(reportLegacyError);
+        },
         onUnauthorized: () => {
           // 세션이 끊겼거나 처음 계정이 없던 경우: 30초에 한 번만 계정을 다시 정해 본다
           if (Date.now() - lastRecover < 30_000) return;
@@ -123,6 +141,7 @@ export function getRuntime(): Promise<Runtime> {
         },
       });
       sync.start();
+      keepHeldLegacy().catch(reportLegacyError);
       return { store, sync, account, accountState: res.account ? 'ok' : res.state, authProvider: res.authProvider ?? null };
     })();
   }

@@ -64,7 +64,8 @@ export interface LectureList {
     title_ko: string;
     objectives: { objective_id: string; text_ko: string }[];
     plan: { steps: number; total_minutes: number };
-    bridge?: { bridge_ko: string; card_ids: string[] };
+    env_ko?: string;
+    bridge?: { jump_ko: string; bridge_ko: string; card_ids: string[] };
   }[];
   bridge_cards: { card_id: string; summary_ko: string }[];
   checkpoints: { checkpoint_id: string; covers: string[]; after_lecture: string; items_ko: string; question_count: number }[];

@@ -1,12 +1,13 @@
 // 낡은 표기 막기(P7 검수 권고 4): 기초 F.json·1편 L01.json 은 이제 "교사 정본"이 아니라 "정본"이다(클로드 버전).
 // 앱 소스에서 "교사"는 맛보기(taster.json·금칙어·교사 실행 출력) 이야기에만 쓴다. 맛보기 전용 파일(경로에 taste·taster·name-filter)은 통째로 뺀다.
+// 화면 금지어 목록 파일(*-banned.mjs)은 막을 말을 적어 두는 곳이라, scripts/canon-colab-time.mjs 는 정본 책임자(교사)의 지시를 그대로 기록하는 정본 고치기 표라 뺀다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { APP_DIR } from '../../src/lib/content/load.mjs';
 import { formatReport } from '../../src/lib/content/validate.mjs';
 
-const TASTER_FILE = /taste|taster|name-filter/i;
+const TASTER_FILE = /taste|taster|name-filter|-banned\.mjs$|scripts\/canon-colab-time\.mjs$/i;
 const TASTER_LINE = /맛보기|taster|금칙어|blocklist/i;
 
 function* files(dir) {

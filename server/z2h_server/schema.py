@@ -64,8 +64,9 @@ SESSION_SOURCE = ("auto", "manual")
 # 공개 공유 주소는 공개 배포 승인 뒤. 지금은 private 만 받는다.
 SHARE_VISIBILITY = ("private",)
 HINT_MAX = 5  # 1~4 힌트, 5 = HELP
-# user_pref 키(12.5절 P1): 실행 장소, 이어서 하기 위치, 주 단위로 고친 실습 시간
-PREF_KEY_PATTERN = r"^(run_place|resume|practice_week:\d{4}-\d{2}-\d{2})$"
+# user_pref 키(12.5절 P1): 실행 장소(앱은 2026-11-18부터 쓰지 않지만 옛 값을 받는다), 이어서 하기 위치, 주 단위로 고친 실습 시간,
+# 옛 판 진도 보관본 legacy_progress:{편}:{옛 판}(앱 src/lib/migrate, 값은 옛 행 JSON 그대로). 검사 규칙일 뿐 DB 칸은 바뀌지 않는다
+PREF_KEY_PATTERN = r"^(run_place|resume|practice_week:\d{4}-\d{2}-\d{2}|legacy_progress:L\d{2}:[0-9A-Za-z][0-9A-Za-z.]*)$"
 
 
 # ---- 칼럼 만들기 도우미 (info 에 검사 규칙) ----

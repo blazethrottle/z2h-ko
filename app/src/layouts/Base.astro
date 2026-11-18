@@ -22,6 +22,10 @@ const { title, nav = null, back = null, wide = false, tabs = true, bar = 'app', 
 const site = loadSite();
 const firstLecture = site.lectures.find((l: { lecture_id: string; available: boolean }) => l.available)?.lecture_id ?? 'L01';
 const lecturesHref = `/lectures/${firstLecture}/`;
+// 이 빌드의 강의 content_version: 기기의 옛 1.2판 기록 가르기(lib/migrate)가 "이 빌드가 쓴 기록"을 시계와 상관없이 지금 판으로 본다
+const contentVersions = Object.values(site.details)
+  .map((d) => d.lecture.content_version)
+  .join(' ');
 const items = [
   { id: 'home', href: '/home/', label: '홈' },
   { id: 'lectures', href: lecturesHref, label: '강의' },
@@ -36,6 +40,7 @@ const fonts = ['Pretendard-Regular', 'Pretendard-Medium', 'Pretendard-SemiBold',
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="z2h-content-versions" content={contentVersions} />
     <title>{title} · Z2H 제로 투 히어로 실습</title>
     {description && <meta name="description" content={description} />}
     {fonts.map((f) => <link rel="preload" href={`/fonts/${f}.woff2`} as="font" type="font/woff2" crossorigin="anonymous" />)}

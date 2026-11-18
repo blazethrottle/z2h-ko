@@ -51,8 +51,11 @@ export interface AppConfig {
   auth: { fallback: AuthProvider; screens: Record<AuthProvider, AuthScreen> };
   /** C5 누적 점검: lock(통과해야 다음 편) | recommend(권고만, 기본: 얼큰이 결정 "잠금 없음, 추천만", P7). 앱은 어느 쪽이든 잠그지 않고 홈 안내 글만 바뀐다 */
   checkpointLock: CheckpointLock;
-  /** Colab 바로 열기 주소. null이면 "Colab에서 열기" 버튼을 숨기고 "노트북 받기 + Colab에 올리기" 안내만 */
-  colabOpenUrl: string | null;
+  /**
+   * Colab 바로 열기(2026-11-18 결정: 실행 장소 Colab 고정): 공개 저장소의 커밋 하나에 고정한 노트북을 연다.
+   * 브랜치 이름(main)을 가리키면 학습 중인 노트북이 예고 없이 바뀌므로 커밋을 쓴다. 노트북을 고쳐 내보낼 때 이 커밋을 새 커밋으로 바꾼다
+   */
+  colab: { repo: string; commit: string };
   /** 붙여넣기 비교의 숫자 허용 오차. 단계의 tolerance가 우선 */
   numericTolerance: { rel: number; abs: number };
   /** 익힘 판정 문제 점수 문턱. 콘텐츠 mastery_rule.question_score_ratio 가 있으면 그것이 우선 */
@@ -87,8 +90,6 @@ export interface AppConfig {
 }
 
 export interface TasteConfig {
-  /** 맛보기 노트북 Colab 바로 열기 주소. null이면 버튼을 숨기고 "노트북 받기 + Colab에 올리기" 안내 (비공개 저장소 기간) */
-  colabOpenUrl: string | null;
   /** 이 기기가 처음 정하는 시도 번호(taster_result.attempt_no, 1부터) */
   firstAttemptNo: number;
   /** 셀이 이 줄 수보다 길면 앞부분을 접는다("앞부분 10줄 보기") */
@@ -145,7 +146,7 @@ export const config: AppConfig = {
     },
   },
   checkpointLock: 'recommend',
-  colabOpenUrl: null,
+  colab: { repo: 'blazethrottle/z2h-ko', commit: 'c8e0ec6a107e473de60b478ca608a96a89d40273' },
   numericTolerance: { rel: 1e-4, abs: 0 },
   questionScoreRatio: 0.8,
   retryDelaysMs: [30_000, 60_000, 300_000],
@@ -159,7 +160,6 @@ export const config: AppConfig = {
   gateTimeoutMs: 10_000,
   devAccountName: '개발용 계정',
   taste: {
-    colabOpenUrl: null,
     firstAttemptNo: 1,
     longCellLines: 12,
     foldHeadLines: 10,
@@ -169,6 +169,13 @@ export const config: AppConfig = {
     maxNameChars: 20,
   },
 };
+
+/** 저장소 노트북(예 notebooks/taster/taster.ipynb)을 config.colab 커밋에 고정해 Colab 에서 여는 주소. 저장소 notebooks/ 안 .ipynb 만 */
+export function colabOpenUrl(notebookPath: string): string {
+  if (!/^notebooks\/(?:[\w-][\w.-]*\/)*[\w-][\w.-]*\.ipynb$/.test(notebookPath) || notebookPath.split('/').includes('..'))
+    throw new Error(`Colab 으로 열 수 있는 노트북 경로가 아닙니다: ${notebookPath}`);
+  return `https://colab.research.google.com/github/${config.colab.repo}/blob/${config.colab.commit}/${notebookPath}`;
+}
 
 /** 로그인 길 → 화면 행. 모르는 값·null 은 fallback 행 */
 export function authScreen(provider: AuthProvider | null | undefined): AuthScreen {

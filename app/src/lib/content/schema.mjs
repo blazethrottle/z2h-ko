@@ -233,8 +233,12 @@ const planSchema = z.looseObject({
   total_minutes: z.number().int().min(1),
 });
 
+/** 화면 칸에서 뺀 설계서 원문(화면에 내지 않음): { 화면 칸 이름: 원문 } */
+const designSource = opt(z.record(z.string(), str));
+
 export const lectureListItemSchema = z.looseObject({
   lecture_id: z.string().regex(ID.lecture),
+  design_source: designSource,
   title_ko: str,
   youtube_video_id: opt(z.string()),
   video_seconds: opt(z.number().int().positive()),
@@ -244,10 +248,12 @@ export const lectureListItemSchema = z.looseObject({
   prereq_lectures_note_ko: opt(str),
   objectives: opt(z.array(z.looseObject({ objective_id: z.string().regex(ID.objective), text_ko: str }))),
   plan: opt(planSchema),
-  bridge: opt(z.looseObject({ from_lecture: z.string().regex(ID.lecture), jump_ko: str, new_ko: str, bridge_ko: str, card_ids: z.array(z.string().regex(/^B\d{2}-\d+$/)) })),
+  bridge: opt(
+    z.looseObject({ from_lecture: z.string().regex(ID.lecture), jump_ko: str, new_ko: str, bridge_ko: str, card_ids: z.array(z.string().regex(/^B\d{2}-\d+$/)), design_source: designSource }),
+  ),
 });
 
-export const bridgeCardSchema = z.looseObject({ card_id: z.string().regex(/^B\d{2}-\d+$/), lecture_id: z.string().regex(ID.lecture), summary_ko: str });
+export const bridgeCardSchema = z.looseObject({ card_id: z.string().regex(/^B\d{2}-\d+$/), lecture_id: z.string().regex(ID.lecture), summary_ko: str, design_source: designSource });
 
 export const checkpointListItemSchema = z.looseObject({
   checkpoint_id: z.string().regex(/^CP\d$/),

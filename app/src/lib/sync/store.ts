@@ -38,6 +38,9 @@ export class LocalStore {
   /** 지금 서버로 보내는 중인 op_id (합치기 대상에서 뺀다) */
   readonly inflight = new Set<string>();
   private listeners = new Set<(e: StoreEvent) => void>();
+  /** 서버 기록을 처음 받았거나(또는 받지 못해 이 사본으로 계속하기로 했거나) 풀리는 약속. 동기화를 붙이지 않은 사본은 처음부터 풀려 있다 */
+  private firstPull: Promise<void> = Promise.resolve();
+  private releaseFirstPull: (() => void) | null = null;
 
   private constructor(
     private db: IDBPDatabase,
@@ -57,6 +60,19 @@ export class LocalStore {
       },
     });
     return new LocalStore(db, userId);
+  }
+
+  /** 동기화 관리자가 붙을 때: 첫 받기가 끝날 때까지 whenPulled 를 기다리게 한다 */
+  expectFirstPull(): void {
+    this.firstPull = new Promise((resolve) => (this.releaseFirstPull = resolve));
+  }
+  markPulled(): void {
+    this.releaseFirstPull?.();
+    this.releaseFirstPull = null;
+  }
+  /** 서버에 같은 열쇠의 행이 있을 수 있는 표(단계 행)를 처음 쓰기 전에 기다린다: 서버 행을 모른 채 새 행을 쓰면 서버 합치기가 옛 값을 되살린다 */
+  whenPulled(): Promise<void> {
+    return this.firstPull;
   }
 
   subscribe(fn: (e: StoreEvent) => void): () => void {
@@ -104,9 +120,19 @@ export class LocalStore {
     return this.put(table, { ...prev, ...keyFields, ...changes });
   }
 
+  private async rec(table: string, keyFields: Row): Promise<RowRec | undefined> {
+    return (await this.db.get('rows', keyString(table, keyOf(table, keyFields)))) as RowRec | undefined;
+  }
+
   async get(table: string, keyFields: Row): Promise<Row | undefined> {
-    const rec = (await this.db.get('rows', keyString(table, keyOf(table, keyFields)))) as RowRec | undefined;
-    return rec?.data;
+    return (await this.rec(table, keyFields))?.data;
+  }
+
+  /** 서버가 이 행의 지금 값을 가진 것을 이 기기가 아는가: 서버에서 받았거나 보낸 변경을 서버가 받았고, 그 뒤 아직 보내지 않은 변경이 없다 */
+  async serverHas(table: string, keyFields: Row): Promise<boolean> {
+    const ks = keyString(table, keyOf(table, keyFields));
+    if (!(await this.rec(table, keyFields))?.base_at) return false;
+    return (await this.db.countFromIndex('queue', 'keyStr', IDBKeyRange.only(ks))) === 0;
   }
 
   async list(table: string): Promise<Row[]> {

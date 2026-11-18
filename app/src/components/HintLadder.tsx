@@ -81,7 +81,6 @@ interface Props {
   onOpened: (level: number) => void;
   emphasize?: boolean;
   lastOutput?: string;
-  runLocation?: string;
   /** 내용이 준비된 기초 단위 id. H2가 가리키는 단위가 여기 있으면 그 단위 화면으로, 없으면 기초 목록으로 잇는다(D24) */
   basicsReady?: string[];
   /** ctx rebuild: 머리 아래 안내 한 줄(통과 한도) */
@@ -216,7 +215,7 @@ export default function HintLadder(p: Props) {
                   <Inline text={h.why_ko} />
                 </p>
               )}
-              {lv === 5 && <HelpMemo rt={p.rt} targetId={p.targetId} title={p.targetTitle} seen={[1, 2, 3, 4]} lastOutput={p.lastOutput} runLocation={p.runLocation} />}
+              {lv === 5 && <HelpMemo rt={p.rt} targetId={p.targetId} title={p.targetTitle} seen={[1, 2, 3, 4]} lastOutput={p.lastOutput} />}
             </div>
           );
         })}
@@ -250,7 +249,10 @@ export default function HintLadder(p: Props) {
   );
 }
 
-export function HelpMemo(p: { rt: Runtime | null; targetId: string; title: string; seen: number[]; lastOutput?: string; runLocation?: string }) {
+/** 도움 메모의 환경 칸: 실행 장소는 Colab 하나(2026-11-18 결정) */
+const HELP_PLACE = { id: 'colab', label: 'Google Colab' };
+
+export function HelpMemo(p: { rt: Runtime | null; targetId: string; title: string; seen: number[]; lastOutput?: string }) {
   const [cell, setCell] = useState('');
   const [errLine, setErrLine] = useState(() => {
     const lines = String(p.lastOutput ?? '')
@@ -261,7 +263,6 @@ export function HelpMemo(p: { rt: Runtime | null; targetId: string; title: strin
   });
   const [torch, setTorch] = useState('');
   const [memo, setMemo] = useState<string | null>(null);
-  const place = p.runLocation === 'jupyter' ? '맥미니 Jupyter' : 'Google Colab';
 
   const make = async () => {
     const text = [
@@ -269,7 +270,7 @@ export function HelpMemo(p: { rt: Runtime | null; targetId: string; title: strin
       `하려던 것: ${p.title}`,
       `내 셀 코드:\n${cell || '(비어 있음)'}`,
       `에러 마지막 줄 또는 보인 것: ${errLine || '(비어 있음)'}`,
-      `환경: ${place}${torch ? `, torch ${torch}` : ''}`,
+      `환경: ${HELP_PLACE.label}${torch ? `, torch ${torch}` : ''}`,
       `이미 본 힌트 단계: ${p.seen.join(', ')}`,
     ].join('\n');
     setMemo(text);
@@ -279,7 +280,7 @@ export function HelpMemo(p: { rt: Runtime | null; targetId: string; title: strin
       goal_ko: p.title,
       last_cell_code: cell,
       error_last_line: errLine,
-      env: { place: p.runLocation ?? 'colab', torch_version: torch || null },
+      env: { place: HELP_PLACE.id, torch_version: torch || null },
       hints_seen: p.seen,
       created_at: nowKst(),
     });

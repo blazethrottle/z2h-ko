@@ -15,7 +15,8 @@ import { answerQuestion } from '../e2e/helpers';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '../..');
 const REPO = path.resolve(APP, '..');
-const PY = path.join(REPO, '.venv/bin/python');
+// 저장소 .venv 가 없는 작업 폴더(git worktree)에서는 Z2H_PYTHON 으로 그 파이썬을 준다
+const PY = process.env.Z2H_PYTHON || path.join(REPO, '.venv/bin/python');
 const PORT = REAL_TEST_PORT;
 const BASE = `http://${LOCAL_HOST}:${PORT}`;
 

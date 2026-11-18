@@ -100,7 +100,7 @@
     "fields": [
      "restart_first"
     ],
-    "why": "이 단계 전에 다시 시작(Colab 런타임, Jupyter Kernel)으로 기억을 비움(cc-tools 칸). F-P1-S3b"
+    "why": "이 단계 전에 다시 시작(Colab 런타임)으로 기억을 비움(cc-tools 칸). F-P1-S3b"
    },
    {
     "where": "steps[]",
@@ -183,7 +183,7 @@
    }
   ],
   "conventions_ko": [
-   "두 실행 길(맥미니 Jupyter, Colab)을 같이 지원한다. 메뉴 이름은 둘 다 적고, 설치 안내는 넣지 않는다(맥미니 환경 준비는 CTO 쪽, 설계서 F-P1 '길 고르기').",
+   "실행 길(Colab)을 지원한다. 설치 안내는 넣지 않는다(설계서 F-P1 '길 고르기').",
    "정답 대조(설계서 3-1): 손 계산으로 정해지는 값(정수, 글자, 리스트, 모양, 딱 떨어지는 소수)은 output_match, 근삿값(기울기 재기, exp, log, torch 소수 계산, 무작위)은 value_range, 그림은 manual + self_check_ko. expected_output_example은 맥에서 실제로 나온 출력 예시로 함께 둔다.",
    "단위마다 새 노트북 하나를 쓴다고 보고 출력을 맞췄다. 같은 단위 안의 단계는 앞 단계의 이름(변수)을 이어 쓴다.",
    "여러 값을 보이는 셀은 줄마다 print를 쓴다. 셀 마지막 줄 값이 저절로 보이는 것은 F-P2-S1에서 한 번 보여 준다.",
@@ -247,7 +247,10 @@
    "questions_diagnostic": 5,
    "rebuild_tasks": 15,
    "hints": 340
-  }
+  },
+  "changes_2026_11_18": [
+   "2026-11-18 교사 지시로 Colab 고정 문구 정리, 전체 시간 표시 안 함(결정): F-P1 제목 \"노트북 다루기(Colab)\"와 F-P1-S1 input_ko 는 교사 문구, 그 밖의 칸은 맥미니·Jupyter·MPS·전체 시간 구절만 뺌(app/scripts/canon-colab-time.mjs 표). 판 이름은 그대로."
+  ]
  },
  "lecture": {
   "lecture_id": "F",
@@ -264,7 +267,7 @@
    {
     "objective_id": "F-P1-O1",
     "unit_id": "F-P1",
-    "text_ko": "노트북(코드 칸과 결과가 한 화면에 쌓이는 문서)을 맥미니 로컬 Jupyter나 Colab에서 열고, 셀에 코드를 쳐서 실행하고, 셀 왼쪽 번호로 실행 순서를 읽고, 꼬이면 다시 시작해 위에서부터 다시 돌릴 수 있다."
+    "text_ko": "노트북(코드 칸과 결과가 한 화면에 쌓이는 문서)을 Colab에서 열고, 셀에 코드를 쳐서 실행하고, 셀 왼쪽 번호로 실행 순서를 읽고, 꼬이면 다시 시작해 위에서부터 다시 돌릴 수 있다."
    },
    {
     "objective_id": "F-P2-O1",
@@ -342,29 +345,29 @@
   "mastery_rule_id": "foundation_unit",
   "research_status": "merged",
   "intro_ko": [
-   "사전 기초는 강의를 따라가는 데 필요한 파이썬과 수학을 15개의 작은 단위로 나눈 것입니다. 단위 하나는 40~60분쯤 걸립니다(추정, 실측 아님). 15단위를 모두 하면 약 13시간입니다.",
+   "사전 기초는 강의를 따라가는 데 필요한 파이썬과 수학을 15개의 작은 단위로 나눈 것입니다. 단위 하나는 40~60분쯤 걸립니다(추정, 실측 아님).",
    "먼저 진단 5문제를 풀어 보세요. 결과는 '먼저 보면 좋은 단위'를 추천할 뿐이고, 아무것도 잠그지 않습니다. 모르는 문제는 '모르겠어요'를 고르면 됩니다. 감점이 없습니다.",
-   "단위마다 설명 카드를 읽고, 실습을 맥미니 Jupyter나 Colab(구글이 주는 무료 파이썬 실행 화면) 중 내가 고른 길에서 직접 쳐서 돌리고, 확인 문제 3개를 풉니다. 마지막 익힘 과제는 빈 셀에서 혼자 다시 만들어 보는 연습입니다.",
+   "단위마다 설명 카드를 읽고, 실습을 Colab(구글이 주는 무료 파이썬 실행 화면)에서 직접 쳐서 돌리고, 확인 문제 3개를 풉니다. 마지막 익힘 과제는 빈 셀에서 혼자 다시 만들어 보는 연습입니다.",
    "단위마다 새 노트북을 하나 만드는 것을 권합니다. 앞 단위에서 만든 값이 섞이지 않아 결과가 이 화면과 똑같이 나옵니다.",
    "코드는 눈으로 보지 말고 직접 치세요. 복사해 붙이면 빠르지만, 손으로 쳐 봐야 오타와 에러를 만나고 고치는 힘이 생깁니다.",
-   "처음이라면 F-P1(노트북 다루기, 내가 고른 길로)과 F-P8(에러 읽기)부터 보세요. 실습과 문제만 하면 1시간 반쯤, 익힘 과제까지 하면 2시간쯤입니다(추정)."
+   "처음이라면 F-P1(노트북 다루기)과 F-P8(에러 읽기)부터 보세요."
   ],
   "units": [
    {
     "unit_id": "F-P1",
     "kind": "python",
-    "title_ko": "노트북 다루기(맥미니 Jupyter, Colab)",
-    "goal_ko": "노트북(코드 칸과 결과가 한 화면에 쌓이는 문서)을 맥미니 로컬 Jupyter나 Colab에서 열고, 셀에 코드를 쳐서 실행하고, 셀 왼쪽 번호로 실행 순서를 읽고, 꼬이면 다시 시작해 위에서부터 다시 돌릴 수 있다.",
+    "title_ko": "노트북 다루기(Colab)",
+    "goal_ko": "노트북(코드 칸과 결과가 한 화면에 쌓이는 문서)을 Colab에서 열고, 셀에 코드를 쳐서 실행하고, 셀 왼쪽 번호로 실행 순서를 읽고, 꼬이면 다시 시작해 위에서부터 다시 돌릴 수 있다.",
     "analogy_ko": "셀은 계산기 한 줄입니다. 위에서 계산한 값은 계산기 기억에 남고, 다시 시작하면 그 기억이 모두 지워집니다.",
     "card_ko": [
      "노트북은 셀(코드를 적는 칸)과 그 결과가 위아래로 쌓이는 문서입니다. 맥미니의 Jupyter(내 컴퓨터에서 노트북을 여는 프로그램)나 구글의 Colab(인터넷 창에서 쓰는 무료 서비스, 구글 로그인 필요) 중 한 길을 골라 엽니다. 같은 노트북이 두 길에서 똑같이 돕니다.",
      "셀에 코드를 적고 Shift+Enter(Shift를 누른 채 Enter)를 누르면 그 셀이 실행되고, 결과가 셀 바로 아래에 나옵니다.",
-     "실행한 셀에서 만든 값은 컴퓨터 기억에 남아서 다른 셀에서도 쓸 수 있습니다. 이 기억을 Colab은 런타임, Jupyter는 커널(Kernel)이라고 부릅니다.",
+     "실행한 셀에서 만든 값은 컴퓨터 기억에 남아서 다른 셀에서도 쓸 수 있습니다. 이 기억을 Colab은 런타임이라고 부릅니다.",
      "셀 왼쪽의 [1], [2] 같은 숫자는 그 셀을 몇 번째로 실행했는지입니다. 화면 위치 순서가 아닙니다.",
      "셀은 위에서부터 차례로 실행해야 합니다. 아래 셀을 먼저 돌리면 아직 없는 값을 찾다가 에러가 납니다.",
-     "꼬였다 싶으면 '다시 시작'으로 기억을 비우고 '모두 실행'으로 위에서부터 다시 돌립니다. Colab은 런타임 > 런타임 다시 시작(화면에 따라 '세션 다시 시작')과 런타임 > 모두 실행, Jupyter는 Kernel > Restart Kernel(Kernel 다시 시작)과 Run > Run All Cells(모두 실행)입니다.",
+     "꼬였다 싶으면 '다시 시작'으로 기억을 비우고 '모두 실행'으로 위에서부터 다시 돌립니다. Colab은 런타임 > 런타임 다시 시작(화면에 따라 '세션 다시 시작')과 런타임 > 모두 실행입니다.",
      "셀 마지막 줄에 값만 적어도 그 값이 보이지만, 여러 값을 보려면 줄마다 print(화면에 보여 달라는 명령)를 씁니다.",
-     "맥미니 길이라면 torch.backends.mps.is_available()가 True일 때 맥미니 GPU(MPS)를 쓸 수 있습니다. 기초 단위는 모두 GPU 없이 돕니다."
+     "기초 단위는 모두 GPU 없이 돕니다."
     ],
     "needed_by_lectures": [
      "L01",
@@ -656,7 +659,7 @@
      "TypeError는 종류가 안 맞는 계산입니다. 예를 들어 글자 \"3\"과 숫자 4는 바로 더할 수 없습니다. int(\"3\")은 글자를 숫자로, str(4)는 숫자를 글자로 바꿉니다.",
      "IndexError는 리스트에 없는 번호를 썼다는 뜻이고, KeyError는 사전에 없는 키를 썼다는 뜻입니다.",
      "모양 에러(예: mat1 and mat2 shapes cannot be multiplied (2x3 and 2x3))는 괄호 속 두 모양을 비교하면 됩니다. 행렬곱은 앞 모양의 뒤 숫자와 뒤 모양의 앞 숫자가 같아야 합니다(F-M6).",
-     "에러를 고쳤는데도 이상하면 셀 순서를 의심합니다. 다시 시작(Colab 런타임, Jupyter Kernel) 뒤 모두 실행이 가장 확실합니다(F-P1).",
+     "에러를 고쳤는데도 이상하면 셀 순서를 의심합니다. 다시 시작(Colab 런타임) 뒤 모두 실행이 가장 확실합니다(F-P1).",
      "그래도 막히면 HELP 메모에 세 가지를 적습니다. 하려던 일(목표), 마지막에 실행한 셀의 코드, 에러 맨 아래 줄입니다."
     ],
     "needed_by_lectures": [
@@ -997,7 +1000,7 @@
      "F-P8"
     ],
     "label_ko": "처음이면 먼저",
-    "when_ko": "진단 결과와 상관없이 늘 표시합니다. F-P1은 내가 고른 길(맥미니 Jupyter 또는 Colab)로 합니다."
+    "when_ko": "진단 결과와 상관없이 늘 표시합니다."
    },
    {
     "rule_id": "diagnostic",
@@ -1080,7 +1083,7 @@
    "lecture_id": "F",
    "unit_id": "F-P1",
    "order": 1,
-   "title_ko": "내가 고른 길로 노트북 열고 첫 셀 실행하기",
+   "title_ko": "노트북 열고 첫 셀 실행하기",
    "video_segments": [],
    "long_step": false,
    "new_code_lines": 1,
@@ -1091,7 +1094,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "앱의 'Colab에서 열기' 또는 '맥미니용 파일 받기' 단추로 이 단위의 노트북을 내가 고른 길에서 엽니다. 단추가 없으면 Colab은 colab.research.google.com 에서 '새 노트북', 맥미니 Jupyter는 File > New > Notebook 으로 새 노트북을 만듭니다(맥미니 Jupyter는 이미 준비돼 있다는 전제입니다). 첫 셀에 아래 한 줄을 그대로 치고 Shift+Enter를 누릅니다. 따옴표와 괄호는 영어 입력 상태로 칩니다.",
+   "input_ko": "앱의 'Colab에서 열기' 단추로 이 단위의 노트북을 엽니다. 단추가 없으면 colab.research.google.com 에서 '새 노트북'을 만듭니다. 첫 셀에 아래 한 줄을 그대로 치고 Shift+Enter를 누릅니다. 따옴표와 괄호는 영어 입력 상태로 칩니다.",
    "code": "print(\"안녕하세요\")",
    "code_line_notes_ko": [
     "print(...)는 괄호 안의 것을 화면에 보여 달라는 명령입니다. 큰따옴표로 감싼 글은 '글자 그대로'라는 뜻입니다."
@@ -1176,7 +1179,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "셀 B 바로 위에 새 셀(셀 A)을 넣습니다. Colab은 셀 B 위쪽 가장자리에 마우스를 올리면 나오는 '+ 코드', Jupyter는 셀 B를 고른 뒤 Esc 다음 A 키입니다. 셀 A에 x = 10 을 쳐서 실행하고, 그다음 셀 B를 다시 실행합니다(셀 B는 고치지 않음).",
+   "input_ko": "셀 B 바로 위에 새 셀(셀 A)을 넣습니다. Colab은 셀 B 위쪽 가장자리에 마우스를 올리면 나오는 '+ 코드'입니다. 셀 A에 x = 10 을 쳐서 실행하고, 그다음 셀 B를 다시 실행합니다(셀 B는 고치지 않음).",
    "code": "x = 10",
    "code_line_notes_ko": [
     "셀 A. x라는 이름표에 10을 넣습니다. 넣기만 하므로 화면에는 아무것도 나오지 않습니다."
@@ -1275,7 +1278,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "먼저 다시 시작합니다(Colab: 런타임 > 런타임 다시 시작 또는 세션 다시 시작, Jupyter: Kernel > Restart Kernel). 확인 창이 나오면 '예'를 누릅니다. 그다음 셀 C 아래에 새 셀을 만들어 print(x) 한 줄을 치고 실행해 봅니다. 마지막으로 모두 실행합니다(Colab: 런타임 > 모두 실행, Jupyter: Run > Run All Cells).",
+   "input_ko": "먼저 다시 시작합니다(Colab: 런타임 > 런타임 다시 시작 또는 세션 다시 시작). 확인 창이 나오면 '예'를 누릅니다. 그다음 셀 C 아래에 새 셀을 만들어 print(x) 한 줄을 치고 실행해 봅니다. 마지막으로 모두 실행합니다(Colab: 런타임 > 모두 실행).",
    "code": "print(x)",
    "code_line_notes_ko": [
     "새 셀. 지금 x를 보여 달라고 합니다. 다시 시작한 직후라 x가 없습니다."
@@ -1499,7 +1502,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "새 셀에 여섯 줄을 칩니다. 콜론(:)으로 끝나는 줄 다음에 Enter를 치면 Colab과 Jupyter 모두 알아서 들여 써 줍니다(빈칸 2개나 4개. 설정에 따라 다르지만, 한 셀 안에서 같은 높이끼리 똑같기만 하면 됩니다). 반복이 끝나고 다음 for를 칠 때는 Backspace로 들여쓰기를 지웁니다.",
+   "input_ko": "새 셀에 여섯 줄을 칩니다. 콜론(:)으로 끝나는 줄 다음에 Enter를 치면 알아서 들여 써 줍니다(빈칸 2개나 4개. 설정에 따라 다르지만, 한 셀 안에서 같은 높이끼리 똑같기만 하면 됩니다). 반복이 끝나고 다음 for를 칠 때는 Backspace로 들여쓰기를 지웁니다.",
    "code": "for f in fruits:\n    print(f)\nfor i in range(3):\n    print(i)\nfor i, f in enumerate(fruits):\n    print(i, f)",
    "code_line_notes_ko": [
     "fruits에서 값을 하나씩 꺼내 f라고 부르고, 아래 들여 쓴 줄을 반복합니다. 줄 끝 콜론을 꼭 칩니다.",
@@ -1636,7 +1639,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "새 셀에 여섯 줄을 칩니다. 셋째 줄은 if 안이라 한 번 더 들여 씁니다(콜론 뒤 Enter를 치면 Colab과 Jupyter가 알아서 들여 써 줍니다). 넷째 줄은 Backspace로 한 칸 덜 들여 써서 if와 같은 높이로 맞춥니다.",
+   "input_ko": "새 셀에 여섯 줄을 칩니다. 셋째 줄은 if 안이라 한 번 더 들여 씁니다(콜론 뒤 Enter를 치면 알아서 들여 써 줍니다). 넷째 줄은 Backspace로 한 칸 덜 들여 써서 if와 같은 높이로 맞춥니다.",
    "code": "def grade(score):\n    if score >= 80:\n        return \"통과\"\n    return \"다시\"\nprint(grade(85))\nprint(grade(70))",
    "code_line_notes_ko": [
     "점수 하나를 받는 grade 함수를 만듭니다.",
@@ -2026,7 +2029,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "새 노트북의 첫 셀에 다섯 줄을 칩니다. 둘째 줄만 들여 씁니다. 파일은 Colab이면 임시 폴더(연결이 끊기면 지워짐), 맥미니 Jupyter면 노트북 파일이 있는 폴더에 생깁니다.",
+   "input_ko": "새 노트북의 첫 셀에 다섯 줄을 칩니다. 둘째 줄만 들여 씁니다. 파일은 Colab이면 임시 폴더(연결이 끊기면 지워짐)에 생깁니다.",
    "code": "with open(\"names.txt\", \"w\") as f:\n    f.write(\"emma\\nolivia\\nava\")\nwords = open(\"names.txt\").read().splitlines()\nprint(words)\nprint(\"-\".join(words))",
    "code_line_notes_ko": [
     "names.txt라는 파일을 쓰기(\"w\") 모드로 열어 f라고 부릅니다. 들여 쓴 줄이 끝나면 파일이 알아서 닫힙니다.",
@@ -2039,7 +2042,7 @@
     5
    ],
    "run_plan": null,
-   "expected_ko": "['emma', 'olivia', 'ava'] 와 emma-olivia-ava 가 나옵니다. Colab은 왼쪽 폴더 그림, Jupyter는 왼쪽 파일 목록에서 names.txt가 보입니다.",
+   "expected_ko": "['emma', 'olivia', 'ava'] 와 emma-olivia-ava 가 나옵니다. Colab은 왼쪽 폴더 그림에서 names.txt가 보입니다.",
    "expected_output_example": "['emma', 'olivia', 'ava']\nemma-olivia-ava",
    "expected_check": {
     "type": "output_match",
@@ -2335,7 +2338,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "새 셀에 세 줄을 치고 실행합니다. torch는 신경망 도구입니다. Colab에는 이미 깔려 있고, 맥미니 Jupyter는 torch가 깔린 환경이 준비돼 있다는 전제입니다(직접 설치하지 않음).",
+   "input_ko": "새 셀에 세 줄을 치고 실행합니다. torch는 신경망 도구입니다. Colab에는 이미 깔려 있다는 전제입니다(직접 설치하지 않음).",
    "code": "import torch\nA = torch.ones(2, 3)\nprint(A @ A)",
    "code_line_notes_ko": [
     "신경망 도구 torch를 불러옵니다.",
@@ -2429,7 +2432,7 @@
    "input_ko": "새 노트북의 첫 셀에 다섯 줄을 칩니다. 대괄호가 두 겹([[...], [...]])이라 짝을 잘 맞춥니다.",
    "code": "import torch\nt = torch.tensor([[1, 2, 3], [4, 5, 6]])\nprint(t)\nprint(t.shape, t.dtype)\nprint(t[1, 2])",
    "code_line_notes_ko": [
-    "신경망 도구 torch를 불러옵니다(Colab에는 이미 깔려 있고, 맥미니 Jupyter는 준비된 환경 전제).",
+    "신경망 도구 torch를 불러옵니다.",
     "두 줄짜리 리스트로 2행 3열 텐서를 만듭니다. 안쪽 대괄호 하나가 행 하나입니다.",
     "텐서를 표 모양으로 보여 줍니다.",
     "모양과 숫자 종류를 보여 줍니다.",
@@ -2703,7 +2706,7 @@
    "rerun_first": [],
    "moved_code_lines": 0,
    "kind": "code",
-   "input_ko": "새 셀에 다섯 줄을 칩니다. matplotlib는 그림 그리는 도구입니다. Colab에는 이미 깔려 있고, 맥미니 Jupyter는 준비된 환경에 깔려 있다는 전제입니다.",
+   "input_ko": "새 셀에 다섯 줄을 칩니다. matplotlib는 그림 그리는 도구입니다. Colab에는 이미 깔려 있다는 전제입니다.",
    "code": "import matplotlib.pyplot as plt\nxs = [i / 10 for i in range(-30, 31)]\nys = [f(x) for x in xs]\nplt.plot(xs, ys)\nplt.show()",
    "code_line_notes_ko": [
     "그림 도구를 plt라는 짧은 이름으로 불러옵니다.",
@@ -3881,7 +3884,7 @@
    "lecture_id": "F",
    "unit_id": "F-P1",
    "type": "fix_bug",
-   "prompt_ko": "다시 시작(Colab 런타임, Jupyter Kernel)한 직후입니다. 노트북 위쪽에는 x = 10 이 적힌 셀 A가 있고, 아래 셀 B를 실행했더니 NameError: name 'x' is not defined 가 났습니다. (1) 무엇을 먼저 해야 하는지 한 문장으로 쓰고 (2) 그렇게 한 뒤 셀 B를 다시 돌리면 나오는 값을 쓰세요.",
+   "prompt_ko": "다시 시작(Colab 런타임)한 직후입니다. 노트북 위쪽에는 x = 10 이 적힌 셀 A가 있고, 아래 셀 B를 실행했더니 NameError: name 'x' is not defined 가 났습니다. (1) 무엇을 먼저 해야 하는지 한 문장으로 쓰고 (2) 그렇게 한 뒤 셀 B를 다시 돌리면 나오는 값을 쓰세요.",
    "code": "print(x * 2)",
    "auto_grade": {
     "type": "manual"
@@ -4724,7 +4727,7 @@
    "lecture_id": "F",
    "unit_id": "F-P8",
    "type": "apply",
-   "prompt_ko": "노트북에 아래 세 셀이 위에서부터 있습니다(첫 줄이 셀 1, 둘째 줄이 셀 2, 셋째 줄이 셀 3). 다시 시작(Colab 런타임, Jupyter Kernel)한 뒤 셀 3만 실행했더니 NameError: name 'P' is not defined 가 났습니다. 셀 3이 제대로 돌려면 어떤 셀들을 어떤 순서로 실행해야 할까요? 셀 번호를 실행 순서대로 쉼표로 쓰세요(예: 3, 2).",
+   "prompt_ko": "노트북에 아래 세 셀이 위에서부터 있습니다(첫 줄이 셀 1, 둘째 줄이 셀 2, 셋째 줄이 셀 3). 다시 시작(Colab 런타임)한 뒤 셀 3만 실행했더니 NameError: name 'P' is not defined 가 났습니다. 셀 3이 제대로 돌려면 어떤 셀들을 어떤 순서로 실행해야 할까요? 셀 번호를 실행 순서대로 쉼표로 쓰세요(예: 3, 2).",
    "code": "counts = [6, 3, 1]\nP = [c / sum(counts) for c in counts]\nprint(P[0])",
    "auto_grade": {
     "type": "exact",
@@ -6153,7 +6156,7 @@
    "hint_id": "F-P1-S1-H1",
    "target_id": "F-P1-S1",
    "level": 1,
-   "text_ko": "아무것도 안 나오나요? 셀 왼쪽이 [*](Jupyter)이거나 돌아가는 단추(Colab)인 채로 멈춰 있지 않은지, 셀 아래에 빨간 글이 있는지 보세요.",
+   "text_ko": "아무것도 안 나오나요? 셀 왼쪽이 돌아가는 단추(Colab)인 채로 멈춰 있지 않은지, 셀 아래에 빨간 글이 있는지 보세요.",
    "code_with_blanks": null,
    "unlock": {
     "after_attempts": 0,
@@ -6259,7 +6262,7 @@
    "hint_id": "F-P1-S3b-H2",
    "target_id": "F-P1-S3b",
    "level": 2,
-   "text_ko": "다시 시작은 기억(만든 이름표)을 모두 지웁니다. 모두 실행은 맨 위 셀부터 차례로 돌려 줍니다. 두 길의 메뉴 이름은 설명 카드 6번째 문장에 있습니다.",
+   "text_ko": "다시 시작은 기억(만든 이름표)을 모두 지웁니다. 모두 실행은 맨 위 셀부터 차례로 돌려 줍니다. 메뉴 이름은 설명 카드 6번째 문장에 있습니다.",
    "code_with_blanks": null,
    "unlock": {
     "after_attempts": 1,
@@ -8440,7 +8443,7 @@
    "hint_id": "F-P8-Q3-H4",
    "target_id": "F-P8-Q3",
    "level": 4,
-   "text_ko": "정답은 1, 2, 3 입니다. 모두 실행(Colab 런타임 > 모두 실행, Jupyter Run > Run All Cells)을 눌러도 같은 순서로 돕니다.",
+   "text_ko": "정답은 1, 2, 3 입니다. 모두 실행(Colab 런타임 > 모두 실행)을 눌러도 같은 순서로 돕니다.",
    "code_with_blanks": null,
    "unlock": {
     "after_attempts": 3,
@@ -8503,7 +8506,7 @@
    "hint_id": "F-P9-S1-H1",
    "target_id": "F-P9-S1",
    "level": 1,
-   "text_ko": "ModuleNotFoundError: No module named 'torch' 가 나오나요? 코드가 아니라 환경 문제입니다. 맥미니 Jupyter라면 torch가 깔린 환경(커널)을 골랐는지 보세요.",
+   "text_ko": "ModuleNotFoundError: No module named 'torch' 가 나오나요? 코드가 아니라 환경 문제입니다.",
    "code_with_blanks": null,
    "unlock": {
     "after_attempts": 0,

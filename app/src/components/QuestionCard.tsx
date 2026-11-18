@@ -130,7 +130,6 @@ export default function QuestionCard({
   lectureId,
   q,
   attempts,
-  runLocation,
   basicsReady,
   allowRetry = false,
 }: {
@@ -138,7 +137,6 @@ export default function QuestionCard({
   lectureId: string;
   q: PublicQuestion;
   attempts: Row[];
-  runLocation?: string;
   /** 힌트 H2의 기초 단위 링크용(준비된 단위 id) */
   basicsReady?: string[];
   /** 풀이가 열린 뒤에도 맞힌 기록이 없으면 "다시 풀기"를 보인다(사전 기초: 단위 완료가 "전부 정답"이라서) */
@@ -439,7 +437,6 @@ export default function QuestionCard({
           setState={setHint}
           onOpened={() => {}}
           emphasize={shownGrade != null && shownGrade.verdict !== 'correct'}
-          runLocation={runLocation}
           basicsReady={basicsReady}
         />
       )}

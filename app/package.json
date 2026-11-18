@@ -14,7 +14,8 @@
     "test": "npm run check:debt && vitest run",
     "test:e2e": "playwright test",
     "test:real": "playwright test -c playwright.real.config.ts",
-    "shots:p7": "playwright test -c playwright.shots.config.ts",
+    "shots:p7": "playwright test -c playwright.shots.config.ts p7",
+    "shots:p9": "playwright test -c playwright.shots.config.ts p9",
     "check:copy": "node scripts/check-copy.mjs",
     "check:debt": "node scripts/check-debt.mjs",
     "check:types": "ASTRO_TELEMETRY_DISABLED=1 astro check"

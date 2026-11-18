@@ -29,8 +29,8 @@ test('결과코드: 맞는 코드는 반영, 글자가 바뀐 코드는 안내',
   const L = m.lectures[0];
   const checkId = L.steps.find((s: any) => s.check_id)?.check_id ?? `${L.lecture_id}-S01`;
   const rebuildId = L.rebuild_ids[0];
-  // z2h_check.finish() 와 같은 모양 (server/API.md 4절)
-  const code = encodeResultCodeForTest({ v: 1, l: L.lecture_id, p: [checkId, rebuildId], f: [], t: '2026-11-16T21:00:00+09:00' });
+  // z2h_check.finish() 와 같은 모양 (server/API.md 4절). 지금 판이 생긴 뒤 시각(그 전 시각의 1편 결과는 옛 1.2판 기록으로 본다, src/lib/migrate)
+  const code = encodeResultCodeForTest({ v: 1, l: L.lecture_id, p: [checkId, rebuildId], f: [], t: '2026-11-18T01:00:00+09:00' });
   const crc = code.split('.')[2];
   await page.goto(`/lectures/${L.lecture_id}/`);
   const box = page.getByTestId('result-code');
@@ -46,17 +46,20 @@ test('결과코드: 맞는 코드는 반영, 글자가 바뀐 코드는 안내',
   await expect(page.getByText('노트북 통과').first()).toBeVisible();
 });
 
-test('설정: 실행 장소 선택과 JSON 백업 내려받기', async ({ page, api }) => {
+test('설정: JSON 백업 내려받기에 이 기기 기록(이어서 하기 위치)이 들어 있다', async ({ page, api }) => {
+  const m = await manifest(page);
+  const L = m.lectures[0];
+  const s = L.steps.find((x: any) => x.kind === 'code');
+  await page.goto(`/lectures/${L.lecture_id}/${s.slug}/`);
+  await page.getByTestId('start-practice').click();
+  await expect.poll(() => api.opsFor('user_pref').some((o) => o.key.pref_key === 'resume')).toBe(true);
   await page.goto('/settings/');
-  await page.getByRole('button', { name: /맥미니 Jupyter/ }).click();
-  await expect(page.getByRole('button', { name: /맥미니 Jupyter/ })).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(() => api.opsFor('user_pref').some((o) => o.key.pref_key === 'run_place' && o.data.value === 'jupyter')).toBe(true);
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-local').click()]);
   expect(dl.suggestedFilename()).toMatch(/^z2h-backup-\d{8}\.json$/);
   const path = await dl.path();
   const data = JSON.parse(fs.readFileSync(path, 'utf8'));
   expect(data.user_id).toBe(api.current);
-  expect(data.tables.user_pref.some((r: any) => r.pref_key === 'run_place')).toBe(true);
+  expect(data.tables.user_pref.find((r: any) => r.pref_key === 'resume')?.value).toEqual({ step_id: s.step_id, phase: 'practice' });
 });
 
 test('이어서 하기: 마지막으로 멈춘 단계와 칸으로 간다 (user_pref resume)', async ({ page, api }) => {
@@ -70,14 +73,14 @@ test('이어서 하기: 마지막으로 멈춘 단계와 칸으로 간다 (user_
   await expect(page.getByTestId('continue-link')).toHaveAttribute('href', `/lectures/${L.lecture_id}/${s.slug}/#practice`);
 });
 
-test('Colab 바로 열기 주소가 비어 있으면 "Colab에서 열기" 버튼이 없고 받기 + 올리기 안내가 보인다', async ({ page }) => {
+test('Colab 바로 열기 주소가 있으면 개요·단계 화면은 "Colab에서 노트북 열기" 버튼 하나, 받기 + 올리기 안내는 없다', async ({ page }) => {
   const m = await manifest(page);
   const L = m.lectures[0];
   await page.goto(`/lectures/${L.lecture_id}/`);
-  await expect(page.getByRole('link', { name: /Colab에서 노트북 열기/ })).toHaveCount(0);
-  await expect(page.locator('#notebook')).toContainText('노트북 업로드');
+  await expect(page.locator('#notebook').getByRole('link', { name: /Colab에서 노트북 열기/ })).toHaveCount(1);
+  await expect(page.locator('#notebook')).not.toContainText('노트북 업로드');
   const code = L.steps.find((x: any) => x.kind === 'code');
   await page.goto(`/lectures/${L.lecture_id}/${code.slug}/#practice`);
-  await expect(page.getByRole('link', { name: /Colab에서 노트북 열기/ })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: '노트북 받기와 Colab 안내' })).toBeVisible();
+  await expect(page.getByTestId('run-place').getByRole('link', { name: /Colab에서 노트북 열기/ })).toHaveCount(1);
+  await expect(page.getByRole('link', { name: '노트북 받기와 Colab 안내' })).toHaveCount(0);
 });

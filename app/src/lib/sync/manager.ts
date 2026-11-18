@@ -35,6 +35,8 @@ export interface SyncOptions {
   batchSize?: number;
   /** 서버가 401(계정 없음)을 돌려줄 때 */
   onUnauthorized?: () => void;
+  /** 보내기(와 받기)가 끝나 "저장됨"이 될 때마다. 기다리지 않는다 */
+  onSynced?: () => void;
 }
 
 export class SyncManager {
@@ -54,6 +56,7 @@ export class SyncManager {
     private store: LocalStore,
     private opts: SyncOptions,
   ) {
+    store.expectFirstPull();
     this.fetchImpl = opts.fetch ?? ((u, i) => fetch(u, i));
     this.timers = opts.timers ?? {
       setTimeout: (fn, ms) => setTimeout(fn, ms),
@@ -202,10 +205,16 @@ export class SyncManager {
         if (res.superseded.length) needPull = true;
         if (!done.length) break; // 서버가 아무것도 받지 않았으면 같은 묶음을 계속 보내지 않는다
       }
-      if (needPull) await this.pull();
+      if (needPull) {
+        await this.pull();
+        this.store.markPulled();
+      }
       this.retryIdx = 0;
       this.set({ display: 'saved', lastError: null, nextRetryInMs: null, pending: await this.store.queueSize() });
+      this.opts.onSynced?.();
     } catch (e) {
+      // 받지 못했으면(오프라인·계정 없음) 이 기기 사본으로 계속한다
+      this.store.markPulled();
       if (e instanceof NetworkError && e.status === 401) {
         this.set({
           display: 'account',

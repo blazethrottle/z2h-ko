@@ -3,7 +3,7 @@
 // 확인 문제는 기초처럼 "다시 풀기"를 켠다: 예측·고르기는 한 번 내면 풀이가 열려 힌트 사다리가 닫히므로, 다시 풀어야 잠금 글대로 다음 힌트를 열 수 있다(DESIGN 12.12-8과 같은 근거)
 import Base from '../../../layouts/Base.astro';
 import StepApp from '../../../components/StepApp.tsx';
-import { codeCredit, fileNameOf, lectureLabel, loadSite } from '../../../lib/pageData';
+import { codeCredit, colabUrlOf, fileNameOf, lectureLabel, loadSite } from '../../../lib/pageData';
 import CodeCredit from '../../../components/CodeCredit.astro';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 
@@ -32,6 +32,7 @@ const basicsReady: string[] = (loadBasics() as any).readyIds;
     videoUrl={d.lecture.video_url}
     contentVersion={d.lecture.content_version}
     notebookName={nb}
+    colabUrl={colabUrlOf(d.lecture.notebook?.student, !!d.lecture.notebook?.student_available)}
     step={step}
     steps={steps}
     questions={questions}

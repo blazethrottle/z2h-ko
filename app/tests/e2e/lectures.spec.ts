@@ -151,11 +151,12 @@ test('결과코드: 이미 통과한 칸은 나중 결과코드의 다시(f)로 
   const L = (await readManifest(page)).lectures[0];
   const graded = L.steps.filter((s) => s.kind === 'code');
   const [a, b] = [graded[0].step_id, graded[1].step_id];
-  const AT = '2026-11-17T10:00:00+09:00';
+  // 지금 판(claude-1.0) 기록이므로 그 판이 생긴 뒤 시각(그 전 시각의 1편 기록은 옛 1.2판 기록으로 본다, src/lib/migrate)
+  const AT = '2026-11-18T01:00:00+09:00';
   api.serverTables = { grade_result: [{ check_id: a, passed: true, message_ko: '', source: 'result_code', at: AT, updated_at: AT, server_seq: 1 }] };
   await page.goto(`/lectures/${L.lecture_id}/`);
   await hydrated(page);
-  const code = encodeResultCodeForTest({ v: 1, l: L.lecture_id, p: [b, L.rebuild_ids[0]], f: [a], t: '2026-11-17T11:00:00+09:00' });
+  const code = encodeResultCodeForTest({ v: 1, l: L.lecture_id, p: [b, L.rebuild_ids[0]], f: [a], t: '2026-11-18T02:00:00+09:00' });
   await page.getByTestId('result-code').locator('textarea').fill(code);
   await page.getByTestId('apply-result-code').click();
   await expect(page.getByTestId('result-code-status')).toContainText(`${a}: 다시(전에 통과해서 통과로 둠)`);

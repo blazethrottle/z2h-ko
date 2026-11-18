@@ -4,7 +4,6 @@
 // 공유 결과물(정본 rewards.artifact)이 있으면 열리는 단계를 마친 뒤 "학습 기록 카드 만들기" 링크를 보인다(클로드 버전 L01 에는 없다).
 // 익힘의 "단계 완료"는 선택(optional) 단계를 뺀다(docs/CURRICULUM.md 3-3, content-config MASTERY_EXCLUDED_KINDS).
 import { useEffect } from 'preact/hooks';
-import { config } from '../config';
 import { MASTERY_EXCLUDED_KINDS } from '../content-config.mjs';
 import { unitMastery, type BasicsRule, type UnitMasteryRef } from '../lib/basics';
 import { recordAttempt, type UnlockRule } from '../lib/hints';
@@ -63,7 +62,8 @@ interface Props {
   basics: { units: { unit_id: string; ready: boolean; mastery: UnitMasteryRef }[]; rule: BasicsRule };
   /** 실행 환경(정본 lecture.env, 예 cpu) */
   env: string[];
-  notebook: { name: string | null; url: string | null };
+  /** colabUrl: Colab 바로 열기(커밋 고정 주소). 실행 장소는 Colab 하나(2026-11-18 결정) */
+  notebook: { name: string | null; url: string | null; colabUrl: string | null };
   rule: { steps_complete_ratio: number; question_score_ratio: number; question_min_points?: number; rebuild_max_hint_level: number; extra_checks: string[] };
   speak: { prompt_ko: string; rubric: string[] } | null;
   steps: StepItem[];
@@ -288,8 +288,8 @@ function LectureAppView(p: Props) {
 
       <section class="card stack-sm" id="notebook" aria-label="노트북 받기와 Colab 안내">
         <h2 class="t3">노트북 받기 · Colab에서 실행</h2>
-        {config.colabOpenUrl && p.notebook.name ? (
-          <a class="btn block" href={config.colabOpenUrl} target="_blank" rel="noopener noreferrer">
+        {p.notebook.colabUrl ? (
+          <a class="btn block" href={p.notebook.colabUrl} target="_blank" rel="noopener noreferrer">
             Colab에서 노트북 열기 <IconExternal />
           </a>
         ) : (
@@ -314,7 +314,6 @@ function LectureAppView(p: Props) {
                 노트북 준비 중
               </p>
             )}
-            <p class="cap">맥미니 Jupyter를 쓰면 받은 파일을 Jupyter에서 열면 됩니다(선택).</p>
           </>
         )}
       </section>

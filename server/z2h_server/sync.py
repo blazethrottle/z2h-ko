@@ -148,9 +148,10 @@ def coerce(rule: FieldRule, value: Any, *, is_key: bool = False) -> Any:
     if kind in ("id", "str", "text", "enum"):
         if not isinstance(value, str):
             raise OpRejected(f"{name}: 글자여야 합니다")
-        if kind == "id" and (not _ID.match(value) or len(value) > (rule.max_len or 64)):
+        # 글 전체가 맞아야 한다(re.match 와 $ 는 끝 줄바꿈을 받아 준다)
+        if kind == "id" and (not _ID.fullmatch(value) or len(value) > (rule.max_len or 64)):
             raise OpRejected(f"{name}: 아이디 모양이 아닙니다(영문·숫자·-_.: , 최대 {rule.max_len or 64}자)")
-        if rule.pattern and not re.match(rule.pattern, value):
+        if rule.pattern and not re.fullmatch(rule.pattern, value):
             raise OpRejected(f"{name}: 정해진 값이 아닙니다: {value}")
         if kind == "str" and rule.max_len and len(value) > rule.max_len:
             raise OpRejected(f"{name}: {rule.max_len}자를 넘습니다")
@@ -196,7 +197,7 @@ def coerce(rule: FieldRule, value: Any, *, is_key: bool = False) -> Any:
             raise OpRejected(f"{name}: 너무 큽니다")
         return value
     if kind == "share_id":
-        if not isinstance(value, str) or not _SHARE_ID.match(value):
+        if not isinstance(value, str) or not _SHARE_ID.fullmatch(value):
             raise OpRejected("share_id: 추측할 수 없는 임의 값(영문·숫자·-_ 16~64자)이어야 합니다")
         return value
     raise OpRejected(f"{name}: 알 수 없는 칸 종류")  # pragma: no cover

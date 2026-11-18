@@ -3,7 +3,7 @@
 import Base from '../../../layouts/Base.astro';
 import LectureApp from '../../../components/LectureApp.tsx';
 import LecturePlan from '../../../components/LecturePlan.astro';
-import { fileNameOf, lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
+import { colabUrlOf, fileNameOf, lectureArtifact, lectureLabel, loadSite, notebookPublicPath, unitTitles } from '../../../lib/pageData';
 import { config } from '../../../config';
 import { loadBasics } from '../../../lib/content/basics.mjs';
 import { unitHref } from '../../../lib/basics';
@@ -40,7 +40,11 @@ const title = d?.lecture.title_ko ?? item?.title_ko ?? lid;
       prereq={prereq}
       prereqLabel={b.recommend.lecture_start.label_ko}
       basics={{ units: b.units.map((u) => ({ unit_id: u.unit_id, ready: u.ready, mastery: u.mastery })), rule: b.rule }}
-      notebook={{ name: nbName, url: d.lecture.notebook.student_available ? notebookPublicPath(lid, d.lecture.notebook.student) : null }}
+      notebook={{
+        name: nbName,
+        url: d.lecture.notebook.student_available ? notebookPublicPath(lid, d.lecture.notebook.student) : null,
+        colabUrl: colabUrlOf(d.lecture.notebook.student, d.lecture.notebook.student_available),
+      }}
       rule={{
         steps_complete_ratio: MR.steps_complete_ratio ?? 1,
         question_score_ratio: MR.question_score_ratio ?? config.questionScoreRatio,

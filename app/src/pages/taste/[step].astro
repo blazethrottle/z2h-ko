@@ -5,10 +5,9 @@ import Base from '../../layouts/Base.astro';
 import TasteStepApp from '../../components/TasteStepApp.tsx';
 import TasteDoneApp from '../../components/TasteDoneApp.tsx';
 import { loadTaster } from '../../lib/content/taster.mjs';
-import { codeCredit, lectureLabel, loadSite } from '../../lib/pageData';
+import { codeCredit, colabUrlOf, lectureLabel, loadSite } from '../../lib/pageData';
 import { TASTER } from '../../content-config.mjs';
 import CodeCredit from '../../components/CodeCredit.astro';
-import { config } from '../../config';
 
 export function getStaticPaths() {
   const t: any = loadTaster();
@@ -52,7 +51,7 @@ const credit = codeCredit(TASTER.sourceRepos);
       requiredSteps={t.lecture.requires_steps}
       contentVersion={t.lecture.content_version}
       notebook={{ file: t.lecture.notebook.file, url: t.lecture.notebook.url }}
-      colabUrl={config.taste.colabOpenUrl}
+      colabUrl={colabUrlOf(t.lecture.notebook.path, t.lecture.notebook.available)}
     />
   )}
   <CodeCredit credit={credit} />

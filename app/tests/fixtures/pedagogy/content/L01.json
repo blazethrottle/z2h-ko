@@ -353,7 +353,10 @@
       "practice": 624,
       "total": 799,
       "formula_ko": "영상 146분 x 1.2 + 코드 단계 x 4분 + 새 코드 줄 x 1분 + 읽기 x 5분 + 정리 x 8분 + 문제 x 4분 + 재구성 x 25분(설계서 3-4, 추정)"
-    }
+    },
+    "changes_2026_11_18": [
+      "2026-11-18 결정(실행 장소 Colab 고정)에 따른 문구 정리: 맥미니 Jupyter 병기 구절만 뺌(app/scripts/canon-colab-time.mjs 표). 코드·출력·id·개수·판 이름은 그대로."
+    ]
   },
   "lecture": {
     "lecture_id": "L01",
@@ -465,7 +468,7 @@
       "new_code_lines": 5,
       "moved_code_lines": 0,
       "kind": "code",
-      "input_ko": "영상 8분 8초부터 보다가, 함수 f를 만드는 장면에서 멈춥니다. (1) 노트북 맨 위에 미리 들어 있는 '환경 확인' 준비 코드 셀을 실행합니다(없으면 아래 준비 코드를 새 셀에 붙여 넣고 실행). Colab과 맥미니 Jupyter 어느 쪽에서든 같은 노트북을 씁니다. (2) 다음 새 셀에 아래 5줄을 칩니다. 4번째 줄 끝의 쌍점(:)을 꼭 치세요. 5번째 줄은 앞에 빈칸(들여쓰기)을 둡니다. 화면은 2칸이지만, Enter를 치면 Colab은 2칸, 맥미니 Jupyter는 4칸을 알아서 넣어 줄 수 있습니다. 어느 쪽이든 됩니다.",
+      "input_ko": "영상 8분 8초부터 보다가, 함수 f를 만드는 장면에서 멈춥니다. (1) 노트북 맨 위에 미리 들어 있는 '환경 확인' 준비 코드 셀을 실행합니다(없으면 아래 준비 코드를 새 셀에 붙여 넣고 실행). (2) 다음 새 셀에 아래 5줄을 칩니다. 4번째 줄 끝의 쌍점(:)을 꼭 치세요. 5번째 줄은 앞에 빈칸(들여쓰기)을 둡니다.",
       "prepared_code": "import sys, shutil\nimport torch\nin_colab = 'google.colab' in sys.modules\ndevice = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')\nprint('실행 장소:', 'Colab' if in_colab else '내 컴퓨터(맥미니 Jupyter 등)')\nprint('기기:', device, '(1편은 cpu로 충분합니다)')\nprint('그림 프로그램 graphviz(dot):', '있음' if shutil.which('dot') else '없음')",
       "prepared_code_line_notes_ko": [
         "파이썬 자체 정보(sys)와 프로그램 찾기 도구(shutil)를 불러옵니다.",
@@ -697,7 +700,7 @@
       "new_code_lines": 5,
       "moved_code_lines": 0,
       "kind": "code",
-      "input_ko": "영상 19분 9초부터 봅니다. class Value를 처음 만드는 장면 뒤에 새 셀에 5줄을 칩니다. 이 셀을 앞으로 'Value 셀'이라고 부릅니다. 뒤 단계에서 여러 번 고칩니다. 줄 앞 빈칸(들여쓰기)은 화면에서 한 깊이에 2칸씩입니다. 맥미니 Jupyter처럼 Enter가 4칸씩 넣어 주면 4칸씩 써도 됩니다. 다만 뒤 단계에서 이 셀에 줄을 넣을 때는, 넣는 줄의 빈칸을 바로 위아래 같은 깊이 줄과 똑같이 맞춰야 합니다.",
+      "input_ko": "영상 19분 9초부터 봅니다. class Value를 처음 만드는 장면 뒤에 새 셀에 5줄을 칩니다. 이 셀을 앞으로 'Value 셀'이라고 부릅니다. 뒤 단계에서 여러 번 고칩니다. 줄 앞 빈칸(들여쓰기)은 화면에서 한 깊이에 2칸씩입니다. Enter가 4칸씩 넣어 주면 4칸씩 써도 됩니다. 다만 뒤 단계에서 이 셀에 줄을 넣을 때는, 넣는 줄의 빈칸을 바로 위아래 같은 깊이 줄과 똑같이 맞춰야 합니다.",
       "prepared_code": null,
       "prepared_code_line_notes_ko": [],
       "prepared_code_source_ko": null,
@@ -3970,7 +3973,7 @@
       "rebuild_id": "L01-R1",
       "lecture_id": "L01",
       "title_ko": "+, *, tanh와 각 _backward(+= 누적)가 있는 Value",
-      "task_ko": "Colab이나 맥미니 Jupyter에서 빈 노트북을 하나 엽니다. 앞 단계를 보지 않고, 새 셀에 Value 설계도를 다시 만듭니다. 들어가야 하는 것: __init__(data, _children, _op, label, grad, _backward), __repr__, __add__, __mul__, tanh. 세 연산 모두 _backward를 갖고, 기울기는 +=로 쌓아야 합니다. 맨 위에 import math를 잊지 마세요. 다 만들면 확인 셀(check_code)을 붙여 넣어 실행합니다. backward()는 R2에서 만들므로 여기서는 없어도 됩니다.",
+      "task_ko": "Colab에서 빈 노트북을 하나 엽니다. 앞 단계를 보지 않고, 새 셀에 Value 설계도를 다시 만듭니다. 들어가야 하는 것: __init__(data, _children, _op, label, grad, _backward), __repr__, __add__, __mul__, tanh. 세 연산 모두 _backward를 갖고, 기울기는 +=로 쌓아야 합니다. 맨 위에 import math를 잊지 마세요. 다 만들면 확인 셀(check_code)을 붙여 넣어 실행합니다. backward()는 R2에서 만들므로 여기서는 없어도 됩니다.",
       "check": {
         "type": "output_match",
         "reference": "karpathy/micrograd engine.py 동작, S41의 PyTorch 기울기",
@@ -4612,7 +4615,7 @@
       "hint_id": "L01-S14-H2",
       "target_id": "L01-S14",
       "level": 2,
-      "text_ko": "그림 도구 graphviz는 파이썬 부품과 컴퓨터 프로그램(dot) 두 가지가 다 있어야 합니다. Colab만: ModuleNotFoundError가 나면 새 셀에 `!pip install graphviz`를 실행한 뒤 준비 코드 셀을 다시 실행합니다. 맥미니 Jupyter: 저장소 가상환경에 파이썬 부품이, 맥에 graphviz 프로그램이 깔려 있어야 합니다. 없으면 직접 설치하지 말고 담당자에게 알리세요(설치는 승인 뒤, 환경 문제라 HELP로 표시). 그동안은 draw_dot(L) 대신 draw_text(L)로 같은 내용을 글자로 볼 수 있습니다. 기초 F-P8(에러 읽기)을 보세요.",
+      "text_ko": "그림 도구 graphviz는 파이썬 부품과 컴퓨터 프로그램(dot) 두 가지가 다 있어야 합니다. Colab만: ModuleNotFoundError가 나면 새 셀에 `!pip install graphviz`를 실행한 뒤 준비 코드 셀을 다시 실행합니다. 그동안은 draw_dot(L) 대신 draw_text(L)로 같은 내용을 글자로 볼 수 있습니다. 기초 F-P8(에러 읽기)을 보세요.",
       "code_with_blanks": null,
       "unlock": {
         "after_attempts": 1,
@@ -5782,7 +5785,7 @@
       "hint_id": "L01-S40-H2",
       "target_id": "L01-S40",
       "level": 2,
-      "text_ko": "Colab에는 PyTorch가 기본으로 들어 있는 것으로 알려져 있습니다(이번에 직접 확인하지는 않음). 맥미니 Jupyter는 저장소 가상환경에 깔려 있어야 합니다. 없으면 직접 설치하지 말고 담당자에게 알리세요(환경 문제라 HELP로 표시). 텐서는 기초 F-P9(텐서 첫걸음)에서 더 자세히 봅니다.",
+      "text_ko": "Colab에는 PyTorch가 기본으로 들어 있는 것으로 알려져 있습니다(이번에 직접 확인하지는 않음). 텐서는 기초 F-P9(텐서 첫걸음)에서 더 자세히 봅니다.",
       "code_with_blanks": null,
       "unlock": {
         "after_attempts": 1,

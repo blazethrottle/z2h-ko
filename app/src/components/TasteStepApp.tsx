@@ -1,5 +1,6 @@
 // 맛보기 단계 화면 /taste/S01/ ~ (spec 13.2, 목업 v2_taste_step). 영상 플레이어는 그리지 않는다(맛보기는 모두 영상 없음, D53).
 // 단계 완료는 "직접 확인했어요 · 완료"(self_reported similar)로만 기록하고, "다르게 나왔어요"(different)는 힌트 1단계를 연다(D54).
+// 실행 장소는 Colab 하나(2026-11-18 결정): 정본의 Colab 밖 대체 셀(code_alt_local)은 그리지 않는다.
 import { useEffect, useState } from 'preact/hooks';
 import { recordAttempt, openHint } from '../lib/hints';
 import { answersUrl, fetchJsonOnce, hintsUrl } from '../lib/runtime';
@@ -146,18 +147,6 @@ function TasteStepAppView(p: Props) {
               note="맛보기 코드는 모두 붙여 넣고 실행만 합니다 · 점수와 예측 없음"
               testId="taste-code"
             />
-          )}
-          {s.code_alt_local && (
-            <details class="card stack-sm" data-testid="taste-alt">
-              <summary>Colab 밖에서 하려면 (맥미니 Jupyter 등)</summary>
-              <TasteCode
-                code={s.code_alt_local}
-                notes={s.code_alt_local_line_notes_ko ?? []}
-                heading="Colab 밖에서 쓸 대체 셀"
-                note="Colab에서는 위 셀을 그대로 쓰면 됩니다"
-                foldable={false}
-              />
-            </details>
           )}
           {!first &&
             (p.colabUrl ? (

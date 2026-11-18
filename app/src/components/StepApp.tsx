@@ -4,12 +4,12 @@
 // 정본 칸: 준비 코드와 출처(prepared_code_source_ko), 먼저 다시 시작(restart_first)·다시 실행할 셀(rerun_first)·새 셀 위치(place_before),
 // 셀마다 나눈 코드(cell_line_counts), 실행 순서(run_plan), 보여야 하는 것·출력 예·에러 종류(expected_error)·스스로 확인할 것(self_check_ko).
 // 붙여넣기 비교 방식은 lib/checkPlan.ts 가 정본 출력 예로 확인해 고른다(통과할 수 없는 비교는 "같아요/달라요").
+// 실행 장소는 Colab 하나(2026-11-18 결정). 예전에 저장된 실행 장소 값(user_pref run_place)은 읽지도 지우지도 않는다.
 import { useEffect, useState } from 'preact/hooks';
-import { config } from '../config';
 import { checkPlan, runCheck, type CheckSource } from '../lib/checkPlan';
 import { compareMessageKo, looksLikeError } from '../lib/compare';
 import { recordAttempt } from '../lib/hints';
-import { ensureStepRow, markStepDone, parsePref, patchStep, PREF_RESUME, PREF_RUN_PLACE, setPref, startStepTimer, STEP_DONE } from '../lib/progress';
+import { ensureStepRow, markStepDone, patchStep, PREF_RESUME, setPref, startStepTimer, STEP_DONE } from '../lib/progress';
 import type { Segment } from '../lib/video';
 import { numEulReul, numRo } from '../lib/josa';
 import { answersUrl, fetchJsonOnce, hintsUrl } from '../lib/runtime';
@@ -48,7 +48,7 @@ export interface PublicStep {
   expected_output_example?: string | null;
   /** 그림이 나오는 단계의 스스로 확인할 것 */
   self_check_ko?: string[] | null;
-  /** 이 단계 전에 다시 시작(Colab 런타임, Jupyter Kernel)으로 기억을 비운다 */
+  /** 이 단계 전에 다시 시작(Colab 런타임)으로 기억을 비운다 */
   restart_first?: boolean;
   /** 새 셀(edits 로 앞 셀에 넣는 줄을 뺀 나머지)을 셀마다 나눈 것 */
   cells: { lines: string[]; notes: string[] }[];
@@ -87,6 +87,8 @@ interface Props {
   videoUrl: string | null;
   contentVersion: string;
   notebookName: string | null;
+  /** 이 편 노트북의 Colab 바로 열기 주소(커밋 고정). null 이면 개요의 "노트북 받기와 Colab 안내"로 보낸다 */
+  colabUrl?: string | null;
   step: PublicStep;
   steps: StepNav[];
   questions: PublicQuestion[];
@@ -111,7 +113,7 @@ const ERROR_STEPS = ['맨 아래 줄의 에러 종류', '그 줄의 설명', '�
 
 function StepAppView(p: Props) {
   const rt = useRuntime();
-  const t = useTables(rt, ['step_progress', 'question_attempt', 'user_pref']);
+  const t = useTables(rt, ['step_progress', 'question_attempt']);
   const s = p.step;
   const total = p.steps.length;
   const idx = p.steps.findIndex((x) => x.step_id === s.step_id);
@@ -136,8 +138,6 @@ function StepAppView(p: Props) {
   const rows = t?.step_progress ?? [];
   const myRow = rows.find((r) => r.step_id === s.step_id);
   const statusOf = (id: string) => rows.find((r) => r.step_id === id)?.status;
-  const runPref = parsePref<string>((t?.user_pref ?? []).find((r) => r.pref_key === PREF_RUN_PLACE));
-  const runLocation = runPref === 'jupyter' ? 'jupyter' : 'colab';
   const savedPrediction = myRow?.prediction ?? null;
   const revealed = predOpen || savedPrediction != null || isRead;
 
@@ -304,7 +304,7 @@ function StepAppView(p: Props) {
         {header}
         <p class="small muted">답을 내면 풀이가 열립니다.</p>
         {p.questions.map((q) => (
-          <QuestionCard rt={rt} lectureId={p.lectureId} q={q} attempts={t?.question_attempt ?? []} runLocation={runLocation} basicsReady={p.basicsReady} allowRetry={p.questionRetry} />
+          <QuestionCard rt={rt} lectureId={p.lectureId} q={q} attempts={t?.question_attempt ?? []} basicsReady={p.basicsReady} allowRetry={p.questionRetry} />
         ))}
         {nextLine(next ? `단계 ${next.order} · ${next.title_ko}` : `${overview}로 돌아가기`)}
         <div class="row">
@@ -361,24 +361,17 @@ function StepAppView(p: Props) {
           {!isRead && (
             <section class="card stack-sm" aria-label="어디서 실행하나요" data-testid="run-place">
               <h2 class="t3">어디서 실행하나요</h2>
-              <div class="row" role="group" aria-label="실행 장소">
-                {(['colab', 'jupyter'] as const).map((loc) => (
-                  <button type="button" class="chip" aria-pressed={runLocation === loc} onClick={() => rt && setPref(rt.store, PREF_RUN_PLACE, loc)}>
-                    {loc === 'colab' ? 'Google Colab' : '맥미니 Jupyter'}
-                  </button>
-                ))}
-              </div>
               {p.notebookGuide === false ? (
                 <p class="small" data-testid="run-new-cell">
-                  {runLocation === 'colab' ? 'Colab' : '맥미니 Jupyter'} 노트북의 새 셀에 붙여 넣은 뒤 실행(Shift+Enter)을 누르세요.
+                  Colab 노트북의 새 셀에 붙여 넣은 뒤 실행(Shift+Enter)을 누르세요.
                 </p>
               ) : (
                 <p class="small">
-                  {runLocation === 'colab' ? 'Colab' : '맥미니 Jupyter'}에서 노트북 <b>{nb}</b>를 열고 <b>{cell}</b> 칸에 붙여 넣은 뒤 실행(Shift+Enter)을 누르세요.
+                  Colab에서 노트북 <b>{nb}</b>를 열고 <b>{cell}</b> 칸에 붙여 넣은 뒤 실행(Shift+Enter)을 누르세요.
                 </p>
               )}
-              {p.notebookGuide === false ? null : config.colabOpenUrl && p.notebookName && runLocation === 'colab' ? (
-                <a class="btn block" href={config.colabOpenUrl} target="_blank" rel="noopener noreferrer">
+              {p.notebookGuide === false ? null : p.colabUrl ? (
+                <a class="btn block" href={p.colabUrl} target="_blank" rel="noopener noreferrer">
                   Colab에서 노트북 열기 <IconExternal />
                 </a>
               ) : (
@@ -402,7 +395,7 @@ function StepAppView(p: Props) {
           )}
           {s.restart_first && (
             <p class="band" data-testid="restart-first">
-              <b>먼저 다시 시작:</b> 이 단계 전에 기억을 비웁니다(Colab: 런타임 &gt; 런타임 다시 시작 · Jupyter: Kernel &gt; Restart Kernel).
+              <b>먼저 다시 시작:</b> 이 단계 전에 기억을 비웁니다(Colab: 런타임 &gt; 런타임 다시 시작).
             </p>
           )}
           {s.rerun_first && s.rerun_first.length > 0 && (
@@ -455,9 +448,9 @@ function StepAppView(p: Props) {
                         셀{x.n > 1 ? ` ${x.n}` : ''} 다시 실행
                       </>
                     ) : x.kind === 'restart' ? (
-                      '다시 시작(Colab: 런타임 > 런타임 다시 시작 · Jupyter: Kernel > Restart Kernel)'
+                      '다시 시작(Colab: 런타임 > 런타임 다시 시작)'
                     ) : (
-                      '모두 실행(Colab: 런타임 > 모두 실행 · Jupyter: Run > Run All Cells)'
+                      '모두 실행(Colab: 런타임 > 모두 실행)'
                     )}
                   </li>
                 ))}
@@ -600,7 +593,6 @@ function StepAppView(p: Props) {
               onOpened={onHintOpened}
               emphasize={!!check && !check.ok}
               lastOutput={pasted}
-              runLocation={runLocation}
               basicsReady={p.basicsReady}
             />
           )}

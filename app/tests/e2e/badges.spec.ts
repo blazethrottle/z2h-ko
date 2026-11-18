@@ -5,7 +5,8 @@ import { STAGE_BADGES, TASTE_MARK } from '../../src/badge-rules';
 import { lectureRefs, stageStatusKo } from '../../src/lib/badges';
 import type { Page } from '@playwright/test';
 
-const AT = '2026-11-16T09:00:00.000+09:00';
+// 지금 판(claude-1.0) 1편 기록이므로 그 판이 생긴 뒤 시각. 그 전 시각의 1편 기록은 옛 1.2판 기록으로 본다(src/lib/migrate)
+const AT = '2026-11-18T01:00:00.000+09:00';
 const EM_DASH = String.fromCharCode(0x2014);
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 

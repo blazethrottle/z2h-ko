@@ -364,7 +364,7 @@ export function TasteHints({
                   <pre class="out">{h.expected_output.replace(/\n+$/, '')}</pre>
                 </>
               )}
-              {lv === 5 && <HelpMemo rt={rt} targetId={targetId} title={title} seen={[1, 2, 3, 4]} runLocation="colab" />}
+              {lv === 5 && <HelpMemo rt={rt} targetId={targetId} title={title} seen={[1, 2, 3, 4]} />}
             </div>
           );
         })}

@@ -4,6 +4,9 @@ import type { LocalStore, Row } from './sync/store';
 import { nowKst, uuid4, weekStartKst, weekStartMs } from './time';
 import { ActivityTracker } from './activity';
 import { config } from '../config';
+import { isLegacyRow, isRevivedRow, viewRow } from './migrate/l01-v1_2';
+import { keepLegacyRows, legacyIndex } from './migrate/run';
+import { newStepRow } from './stepRow';
 
 // 기록이 아직 없는 단계(status undefined)도 그대로 물어볼 수 있게 undefined 를 받는다
 export const STEP_DONE: ReadonlySet<string | undefined> = new Set(['done', 'skipped_optional']);
@@ -26,8 +29,7 @@ export function weeklySeconds(
   return { auto, user, shown: user ?? auto };
 }
 
-// user_pref 키 (DESIGN.md 12.5: P1은 이 셋만)
-export const PREF_RUN_PLACE = 'run_place';
+// user_pref 키 (DESIGN.md 12.5). 옛 실행 장소 키 run_place 는 2026-11-18(Colab 고정)부터 앱이 읽지도 쓰지도 않는다(저장된 값은 지우지 않음)
 export const PREF_RESUME = 'resume';
 export const practicePrefKey = (now: number = Date.now()) => `practice_week:${weekStartKst(now)}`;
 
@@ -66,21 +68,16 @@ function withStepLock<T>(stepId: string, fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+// 옛 1.2판 1편 행(뜻이 다른 같은 id)은 없는 것으로 보고 그 단계에서 한 번만 새 행으로 시작한다(옛 행은 덮기 전에 보관본에, "새로 시작함" 표시와 함께).
+// 그 뒤 서버 합치기가 옛 완료를 되살려 보낸 행(isRevivedRow)은 학습자가 지금 판에서 쓴 행이라 이어 쓴다(migrate/l01-v1_2.ts)
 async function ensureRowUnlocked(store: LocalStore, stepId: string, contentVersion: string): Promise<Row> {
+  await store.whenPulled();
   const prev = await store.get('step_progress', { step_id: stepId });
-  if (prev) return prev;
-  return store.put('step_progress', {
-    step_id: stepId,
-    status: 'in_progress',
-    max_hint_level: 0,
-    attempts: 0,
-    started_at: nowKst(),
-    done_at: null,
-    active_seconds_auto: 0,
-    active_seconds_user: null,
-    prediction: null,
-    content_version: contentVersion,
-  });
+  if (!prev) return store.put('step_progress', newStepRow(stepId, contentVersion, nowKst()));
+  const legacy = await legacyIndex(store);
+  if (!isLegacyRow('step_progress', prev, legacy) || isRevivedRow(prev, legacy)) return prev;
+  await keepLegacyRows(store, { step_progress: [prev] }, nowKst, stepId);
+  return store.put('step_progress', newStepRow(stepId, contentVersion, nowKst()));
 }
 
 /** 단계 행이 없으면 만들고(in_progress), 있으면 그대로 둔다 */
@@ -88,11 +85,14 @@ export function ensureStepRow(store: LocalStore, stepId: string, contentVersion:
   return withStepLock(stepId, () => ensureRowUnlocked(store, stepId, contentVersion));
 }
 
-/** 바꿀 칸만 덮어쓴다. changes 가 함수면 지금 행을 보고 바꿀 칸을 정한다(시도 수 +1 등) */
+/**
+ * 바꿀 칸만 덮어쓴다. changes 가 함수면 화면에 보이는 모양의 지금 행을 보고 바꿀 칸을 정한다(시도 수 +1, 마치기 등).
+ * 되살아난 행은 화면에서 미완료라 "마치기"가 새 완료 시각을 쓰고, 바꾸지 않는 칸(서버가 지킨 상태 등)은 받은 그대로 보낸다
+ */
 export function patchStep(store: LocalStore, stepId: string, contentVersion: string, changes: Row | ((cur: Row) => Row | null)): Promise<Row> {
   return withStepLock(stepId, async () => {
     const cur = await ensureRowUnlocked(store, stepId, contentVersion);
-    const ch = typeof changes === 'function' ? changes(cur) : changes;
+    const ch = typeof changes === 'function' ? changes(viewRow('step_progress', cur, await legacyIndex(store)) ?? cur) : changes;
     if (!ch) return cur;
     return store.put('step_progress', { ...cur, ...ch, step_id: stepId, content_version: contentVersion });
   });

@@ -1,25 +1,19 @@
 ---
 // A 랜딩 (spec 13.1, 목업 v2_landing). 구역 7개: 첫 화면, 끝내면 얻는 것, 이런 분께, 수료까지의 길, 코드를 처음 봐도 따라갈 수 있게, 끝 CTA, 바닥.
 // 문구는 src/content/landing.mjs 한 곳(공개 전 승인 항목 D46, "예시 화면" 표시 유지). 단계 수는 video-segments.json 에서 세고,
-// 수료까지의 길의 편별 시간·누적 점검 구성은 홈과 같은 출처(content/lectures.yaml)에서 src/lib/landingPath.ts 가 채운다.
+// 수료까지의 길의 누적 점검 구성은 홈과 같은 출처(content/lectures.yaml)에서 src/lib/landingPath.ts 가 채운다. 전체 시간은 보이지 않는다(2026-11-18 결정).
 // 채운 accent 버튼은 첫 화면과 끝 CTA 에 하나씩(한 뷰포트에 1개). 로그인 화면은 없어 보조 버튼은 "학습 홈".
 import Base from '../layouts/Base.astro';
 import MiniCode from '../components/MiniCode.tsx';
 import { LANDING as L } from '../content/landing.mjs';
 import { loadSite } from '../lib/pageData';
 import { loadTaster } from '../lib/content/taster.mjs';
-import { loadBasics } from '../lib/content/basics.mjs';
 import { landingPathRows } from '../lib/landingPath';
 
 const site = loadSite();
 const taster: any = loadTaster();
 const counts: Record<string, number> = site.stepCounts ?? {};
-const pathRows = landingPathRows(L.path.rows, {
-  lectures: site.lectures,
-  checkpoints: site.checkpoints,
-  basicsMinutes: loadBasics().units.reduce((a, u) => a + u.estimated_minutes, 0),
-  stepCounts: counts,
-});
+const pathRows = landingPathRows(L.path.rows, { checkpoints: site.checkpoints, stepCounts: counts });
 const lectureRows = pathRows.filter((r) => r.lecture_id);
 const totalSteps = lectureRows.reduce((a, r) => a + (counts[r.lecture_id ?? ''] ?? 0), 0);
 const lead = L.path.lead
@@ -83,8 +77,6 @@ const codeRows = L.hero.code.lines
           <dl>
             <dt>{L.audience.pathLabel}</dt>
             <dd>{a.path}</dd>
-            <dt>{L.audience.timeLabel}</dt>
-            <dd class="num">{a.time}</dd>
           </dl>
         </div>
       ))}

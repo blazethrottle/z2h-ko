@@ -3,7 +3,10 @@
   "version": "1.2",
   "created_kst": "2026-11-16",
   "schema": "pedagogy/data-spec.md 2절(kind copy_run 추가)",
-  "generated_by": "pedagogy/content/build_content.py"
+  "generated_by": "pedagogy/content/build_content.py",
+  "changes_2026_11_18": [
+   "2026-11-18 결정(실행 장소 Colab 고정)에 따른 문구 정리: 힌트의 맥미니 Jupyter 구절만 뺌(app/scripts/canon-colab-time.mjs 표). 코드·code_alt_local·id·판 이름은 그대로."
+  ]
  },
  "lecture": {
   "lecture_id": "TASTER",
@@ -695,7 +698,7 @@
    "hint_id": "T-S03-H4",
    "target_id": "T-S03",
    "level": 4,
-   "text_ko": "예상 출력: `32033 ['emma', 'olivia', 'ava', 'isabella', 'sophia']`. 맥미니 Jupyter에서는 `!wget`이 없을 수 있어 앱이 대신 쓸 코드(code_alt_local)를 보여 줍니다. 그래도 안 되면 HELP를 누릅니다.",
+   "text_ko": "예상 출력: `32033 ['emma', 'olivia', 'ava', 'isabella', 'sophia']`. 안 되면 HELP를 누릅니다.",
    "code_with_blanks": null,
    "show_solution": true,
    "taster_role_ko": "예상 출력 전체와 HELP",

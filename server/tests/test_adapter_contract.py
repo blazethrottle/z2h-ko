@@ -197,6 +197,57 @@ def test_pref_keys_are_limited_to_the_p1_list(adapter, user):
     assert [r["op_id"] for r in bad.rejected] == ["k3", "k4"]
 
 
+def test_legacy_progress_archive_pref_is_kept_as_is(adapter, user):
+    """옛 1편(1.2판) 진도 보관본(app/src/lib/migrate): user_pref legacy_progress:L01:1.2 에 옛 행을 JSON 그대로 둔다. 다른 꼴의 열쇠는 여전히 거절."""
+    key = {"pref_key": "legacy_progress:L01:1.2"}
+    archive = {
+        "format": 1,
+        "lecture_id": "L01",
+        "from_version": "1.2",
+        "to_version": "claude-1.0",
+        "archived_at": t("20:00:00"),
+        "applied_at": None,
+        "rows": {"step_progress": [{"step_id": "L01-S09b", "status": "done", "content_version": "auto-6256adb2ec11"}], "grade_result": []},
+    }
+    res = adapter.apply_ops(user, "pc", [op("a1", "user_pref", key, {"value": archive}, t("20:00:00"))])
+    assert res.applied == ["a1"]
+    assert adapter.get_row(user, "user_pref", key)["value"] == archive
+    bad = adapter.apply_ops(
+        user,
+        "pc",
+        [
+            op("a2", "user_pref", {"pref_key": "legacy_progress:anything"}, {"value": 1}, t("20:00:00")),
+            op("a3", "user_pref", {"pref_key": "legacy_progress:L01:"}, {"value": 1}, t("20:00:00")),
+        ],
+    )
+    assert [r["op_id"] for r in bad.rejected] == ["a2", "a3"]
+
+
+def test_keys_with_trailing_newline_are_rejected(adapter, user):
+    """열쇠 검사는 글 전체가 규칙과 맞아야 한다(정규식 $ 는 끝 줄바꿈 앞에서도 맞으므로 fullmatch). 기존 열쇠는 그대로 받는다."""
+    bad = adapter.apply_ops(
+        user,
+        "pc",
+        [
+            op("n1", "user_pref", {"pref_key": "resume\n"}, {"value": 1}, t("20:00:00")),
+            op("n2", "user_pref", {"pref_key": "legacy_progress:L01:1.2\n"}, {"value": 1}, t("20:00:00")),
+            op("n3", "step_progress", {"step_id": "L01-S01\n"}, {"status": "done"}, t("20:00:00")),
+        ],
+    )
+    assert [r["op_id"] for r in bad.rejected] == ["n1", "n2", "n3"]
+    ok = adapter.apply_ops(
+        user,
+        "pc",
+        [
+            op("o1", "user_pref", {"pref_key": "resume"}, {"value": 1}, t("20:00:00")),
+            op("o2", "user_pref", {"pref_key": "practice_week:2026-11-16"}, {"value": None}, t("20:00:00")),
+            op("o3", "user_pref", {"pref_key": "legacy_progress:L01:1.2"}, {"value": {}}, t("20:00:00")),
+            op("o4", "step_progress", {"step_id": "L01-S01"}, {"status": "done"}, t("20:00:00")),
+        ],
+    )
+    assert ok.applied == ["o1", "o2", "o3", "o4"]
+
+
 def test_times_are_normalized_to_kst(adapter, user):
     adapter.apply_ops(
         user,

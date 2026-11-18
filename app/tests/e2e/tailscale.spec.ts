@@ -34,9 +34,14 @@ test('이어진 Tailscale 계정: 설정에 개발용 계정 바꾸기·만들�
   await noOverflow(page);
   await page.screenshot({ path: `test-results/screens/${info.project.name}_settings_tailscale_linked.png`, fullPage: true });
 
-  // 기록은 서버가 정한 학습 계정으로 올라가고, 앱은 계정을 만들지 않는다
-  await page.getByRole('button', { name: /맥미니 Jupyter/ }).click();
-  await expect.poll(() => api.opsFor('user_pref').find((o) => o.key.pref_key === 'run_place')?.user_id).toBe(ACC.user_id);
+  // 기록은 서버가 정한 학습 계정으로 올라가고, 앱은 계정을 만들지 않는다(홈에서 이번 주 실습 시간을 고쳐 기록 하나를 만든다)
+  await page.goto('/home/');
+  const week = page.getByTestId('week-time');
+  await week.getByRole('button', { name: '이번 주 실습 시간 수정' }).click();
+  await week.getByLabel('시간').fill('1');
+  await week.getByLabel('분').fill('0');
+  await week.getByRole('button', { name: '저장' }).click();
+  await expect.poll(() => api.opsFor('user_pref').find((o) => String(o.key.pref_key).startsWith('practice_week:'))?.user_id).toBe(ACC.user_id);
   expect(api.accounts).toEqual([ACC]);
 });
 

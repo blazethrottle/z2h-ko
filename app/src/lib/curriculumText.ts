@@ -10,8 +10,3 @@ export function checkpointRangeKo(covers: readonly string[]): string {
 export function checkpointHeadKo(cp: { checkpoint_id: string; covers: readonly string[]; question_count: number }): string {
   return `누적 점검 ${cp.checkpoint_id.slice(2)} (${checkpointRangeKo(cp.covers)}, ${cp.question_count}문항)`;
 }
-
-/** 설계서의 예상 분(추정 공식, 실측 아님)을 시간으로: 반올림, 최소 1시간, "추정" 표시 */
-export function estimateHoursKo(minutes: number): string {
-  return `약 ${Math.max(1, Math.round(minutes / 60))}시간(추정)`;
-}

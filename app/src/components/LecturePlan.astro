@@ -1,10 +1,11 @@
 ---
 // 단계 콘텐츠가 아직 없는 편의 안내(/lectures/L02/ 등, spec 2절 강의 개요의 머리·카드를 그대로 씀). 값은 모두 content/lectures.yaml(docs/CURRICULUM.md 에서 옮김).
-// 편 목표, 설계 규모(단계·문항·재구성 수, 예상 시간 추정), 선행 편·선행 기초(정본 F.json lecture_prereq_units), 다리(난이도가 뛰는 곳과 다리 카드 요지),
+// 편 목표, 설계 규모(단계·문항·재구성 수), 선행 편·선행 기초(정본 F.json lecture_prereq_units), 다리(난이도가 뛰는 곳과 다리 카드 요지),
 // 이 편 다음 누적 점검. 설계서의 잠금(CP1 → L04 등)은 쓰지 않는다(잠금 없음, 추천만). 다리 카드의 질문·정답은 옮기지 않았다(편이 준비되면 화면에서 푼다).
+// 편 전체 예상 시간은 보이지 않는다(2026-11-18 결정: 전체 시간 표시 안 함). 화면 글은 lectures.yaml 의 화면 칸만 쓰고 design_source(설계서 원문)는 그리지 않는다.
 import Inline from './Inline.tsx';
 import { formatClock } from '../lib/video';
-import { checkpointRangeKo, estimateHoursKo } from '../lib/curriculumText';
+import { checkpointRangeKo } from '../lib/curriculumText';
 import type { LectureListItem, Site } from '../lib/content/types';
 
 interface Props {
@@ -29,7 +30,6 @@ const pre = (item.prereq_lectures ?? []).map((id) => ({ id, title: site.lectures
         <span class="badge num">{plan.steps}단계{plan.optional_steps ? `(선택 ${plan.optional_steps})` : ''}</span>
         <span class="badge num">확인 문제 {plan.questions}개</span>
         <span class="badge num">재구성 과제 {plan.rebuild}조각</span>
-        <span class="badge num">{estimateHoursKo(plan.total_minutes)}</span>
       </div>
     )}
     <p class="waiting" data-testid="lecture-plan-pending">단계 콘텐츠 준비 중입니다. 아래는 이 편의 설계입니다.</p>

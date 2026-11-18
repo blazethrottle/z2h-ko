@@ -115,6 +115,14 @@ describe('랜딩 문구 파일', () => {
     expect(LANDING.sample.label).toBe('예시 화면');
     expect(LANDING.sample.note).toMatch(/공개 전 승인 대기/);
   });
+  it('전체 시간은 쓰지 않는다: "이런 분께" 카드에 길별 시간 줄이 없고, 문구 파일에 "N시간"이 없다 (2026-11-18 결정)', () => {
+    for (const a of LANDING.audience.items) expect(a, a.name).not.toHaveProperty('time');
+    expect(LANDING.audience).not.toHaveProperty('timeLabel');
+    for (const [at, s] of all) expect(/\d+\s*시간/.test(s), at).toBe(false);
+  });
+  it('실행 장소는 Colab 하나: 문구 파일에 "내 맥"·맥미니·Jupyter 가 없다 (2026-11-18 결정)', () => {
+    for (const [at, s] of all) expect(/내 맥|맥미니|Jupyter/.test(s), at).toBe(false);
+  });
   it('단계 수는 문구 파일에 적지 않는다 (빌드 때 셈)', () => {
     for (const r of LANDING.path.rows) expect(r).not.toHaveProperty('steps');
     expect(LANDING.path.lead).toMatch(/\{steps\}/);

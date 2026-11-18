@@ -1,4 +1,4 @@
-// 설정: 동기화 상태, 계정, 실행 장소, JSON 백업 내보내기 (12.3절, D43·D44).
+// 설정: 동기화 상태, 계정, JSON 백업 내보내기 (12.3절, D43·D44). 실행 장소 칸은 없다(2026-11-18 결정: Colab 고정, 저장된 run_place 값은 지우지 않고 읽지 않음).
 // 계정 칸은 로그인 길(auth_provider)별 표 config.auth.screens 를 따른다. 행의 part 이름으로 아래 ACCOUNT_PARTS 의 부품을 그린다.
 //  - dev_local(맥미니 127.0.0.1. 옛 서버와 "none" 도 이 행): 개발용 계정 바꾸기·만들기
 //  - tailscale(폰, Tailscale serve 경유): 서버가 접속자 정보로 학습 계정을 정한다. "접속 중" 한 줄, 안 이어졌으면 맥미니에서 연결하라는 안내.
@@ -10,8 +10,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { API_PATHS, listDevAccounts, type Account } from '../lib/api';
 import { createAndUseDevAccount, switchDevAccount, type Runtime } from '../lib/runtime';
 import { authScreen, config, type AccountPart, type AuthScreen } from '../config';
-import { parsePref, PREF_RUN_PLACE, setPref } from '../lib/progress';
-import { authProviderOf, useRuntime, useSyncState, useTables } from './hooks';
+import { authProviderOf, useRuntime, useSyncState } from './hooks';
 import { IconCheck, IconCross, IconSync } from './Icons';
 import { gated } from './Gate';
 
@@ -133,8 +132,6 @@ const ACCOUNT_PARTS: Record<AccountPart, ComponentType<AccountPartProps>> = {
 function SettingsAppView({ contentVersion }: { contentVersion: string | null }) {
   const rt = useRuntime();
   const s = useSyncState(rt);
-  const t = useTables(rt, ['user_pref']);
-  const run = parsePref<string>((t?.user_pref ?? []).find((r) => r.pref_key === PREF_RUN_PLACE)) === 'jupyter' ? 'jupyter' : 'colab';
   const [exported, setExported] = useState<string | null>(null);
 
   const exportLocal = async () => {
@@ -191,18 +188,6 @@ function SettingsAppView({ contentVersion }: { contentVersion: string | null }) 
         <button type="button" class="btn" onClick={() => void rt?.sync.retryNow()}>
           지금 다시 시도
         </button>
-      </section>
-
-      <section class="card stack-sm" aria-label="실행 장소">
-        <h2 class="t3">노트북 실행 장소</h2>
-        <div class="row" role="group" aria-label="실행 장소">
-          {(['colab', 'jupyter'] as const).map((loc) => (
-            <button type="button" class="chip" aria-pressed={run === loc} onClick={() => rt && setPref(rt.store, PREF_RUN_PLACE, loc)}>
-              {loc === 'colab' ? 'Google Colab (기본)' : '맥미니 Jupyter (선택)'}
-            </button>
-          ))}
-        </div>
-        <p class="small muted">단계 화면의 실행 안내가 이 선택을 따릅니다. 다른 기기와도 맞춰집니다.</p>
       </section>
 
       <section class="card stack-sm" aria-label="백업 내보내기">
