@@ -1,11 +1,12 @@
 // 진도 기록 도우미. 모든 쓰기는 LocalStore(대기열)를 거친다.
 
 import type { LocalStore, Row } from './sync/store';
+import { systemTimers, type Timers } from './sync/manager';
 import { nowKst, uuid4, weekStartKst, weekStartMs } from './time';
 import { ActivityTracker } from './activity';
 import { config } from '../config';
 import { isLegacyRow, isRevivedRow, viewRow } from './migrate/l01-v1_2';
-import { keepLegacyRows, legacyIndex } from './migrate/run';
+import { keepLegacyStepRow, legacyIndex } from './migrate/run';
 import { newStepRow } from './stepRow';
 
 // 기록이 아직 없는 단계(status undefined)도 그대로 물어볼 수 있게 undefined 를 받는다
@@ -69,14 +70,15 @@ function withStepLock<T>(stepId: string, fn: () => Promise<T>): Promise<T> {
 }
 
 // 옛 1.2판 1편 행(뜻이 다른 같은 id)은 없는 것으로 보고 그 단계에서 한 번만 새 행으로 시작한다(옛 행은 덮기 전에 보관본에, "새로 시작함" 표시와 함께).
-// 그 뒤 서버 합치기가 옛 완료를 되살려 보낸 행(isRevivedRow)은 학습자가 지금 판에서 쓴 행이라 이어 쓴다(migrate/l01-v1_2.ts)
+// 그 뒤 서버 합치기가 옛 완료를 되살려 보낸 행(isRevivedRow)은 학습자가 지금 판에서 쓴 행이라 이어 쓴다(migrate/l01-v1_2.ts).
+// 첫 받기를 상한·오프라인으로 포기한 뒤에도 기다리지 않고 쓴다: 옛 행은 대기함에, 옛 1편과 번호가 겹치는 행은 실제로 받은 뒤에 보낸다(migrate/run.ts)
 async function ensureRowUnlocked(store: LocalStore, stepId: string, contentVersion: string): Promise<Row> {
   await store.whenPulled();
   const prev = await store.get('step_progress', { step_id: stepId });
   if (!prev) return store.put('step_progress', newStepRow(stepId, contentVersion, nowKst()));
   const legacy = await legacyIndex(store);
   if (!isLegacyRow('step_progress', prev, legacy) || isRevivedRow(prev, legacy)) return prev;
-  await keepLegacyRows(store, { step_progress: [prev] }, nowKst, stepId);
+  await keepLegacyStepRow(store, prev, stepId);
   return store.put('step_progress', newStepRow(stepId, contentVersion, nowKst()));
 }
 
@@ -95,6 +97,23 @@ export function patchStep(store: LocalStore, stepId: string, contentVersion: str
     const ch = typeof changes === 'function' ? changes(viewRow('step_progress', cur, await legacyIndex(store)) ?? cur) : changes;
     if (!ch) return cur;
     return store.put('step_progress', { ...cur, ...ch, step_id: stepId, content_version: contentVersion });
+  });
+}
+
+/** 화면의 저장 한 번(마치기·건너뛰기)에 상한을 둔다: 넘으면 실패로 끝내 화면이 '저장 중'에 머물지 않는다(저장은 뒤에서 이어질 수 있다) */
+export function saveWithin<T>(p: Promise<T>, ms: number, timers: Timers = systemTimers): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const h = timers.setTimeout(() => reject(new Error(`저장이 ${ms}ms 안에 끝나지 않았습니다`)), ms);
+    p.then(
+      (v) => {
+        timers.clearTimeout(h);
+        resolve(v);
+      },
+      (e) => {
+        timers.clearTimeout(h);
+        reject(e);
+      },
+    );
   });
 }
 

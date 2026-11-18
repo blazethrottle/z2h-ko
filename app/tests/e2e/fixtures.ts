@@ -30,6 +30,12 @@ export class MockApi {
   forwardedHeaders: string[] = [];
   /** 서버에 이미 있는 행(다른 기기에서 올린 것처럼). 첫 상태 받기(since 없음)에만 돌려준다 */
   serverTables: Record<string, any[]> = {};
+  /** true 면 GET /api/state 에 답하지 않는다(첫 받기가 멈춘 경우) */
+  holdState = false;
+  /** true 면 POST /api/sync 에 답하지 않는다(보내기 응답이 멈춘 경우). 붙잡은 요청은 기록하지 않는다 */
+  holdSync = false;
+  /** 답하지 않고 붙잡아 둔 요청 수 */
+  held = 0;
 
   /** 응답을 늦추는 동안 테스트가 mode 를 바꿀 수 있어 볼 때마다 새로 읽는다 */
   isDown(): boolean {
@@ -39,6 +45,11 @@ export class MockApi {
   async attach(page: Page) {
     await page.route('**/api/**', async (route) => {
       if (this.isDown()) return route.abort('connectionrefused');
+      const path = new URL(route.request().url()).pathname;
+      if ((this.holdState && path === '/api/state') || (this.holdSync && path === '/api/sync')) {
+        this.held++;
+        return;
+      }
       if (this.delayMs) await new Promise((r) => setTimeout(r, this.delayMs));
       if (this.isDown()) return route.abort('connectionrefused');
       const url = new URL(route.request().url());

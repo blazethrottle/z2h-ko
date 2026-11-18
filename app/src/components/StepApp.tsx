@@ -9,10 +9,12 @@ import { useEffect, useState } from 'preact/hooks';
 import { checkPlan, runCheck, type CheckSource } from '../lib/checkPlan';
 import { compareMessageKo, looksLikeError } from '../lib/compare';
 import { recordAttempt } from '../lib/hints';
-import { ensureStepRow, markStepDone, patchStep, PREF_RESUME, setPref, startStepTimer, STEP_DONE } from '../lib/progress';
+import { config } from '../config';
+import { ensureStepRow, markStepDone, patchStep, PREF_RESUME, saveWithin, setPref, startStepTimer, STEP_DONE } from '../lib/progress';
+import type { LocalStore } from '../lib/sync/store';
 import type { Segment } from '../lib/video';
 import { numEulReul, numRo } from '../lib/josa';
-import { answersUrl, fetchJsonOnce, hintsUrl } from '../lib/runtime';
+import { answersUrl, fetchJsonOnce, getRuntime, hintsUrl } from '../lib/runtime';
 import CodeBlock from './CodeBlock';
 import EditsView, { type EditView } from './EditsView';
 import Inline from './Inline';
@@ -134,6 +136,8 @@ function StepAppView(p: Props) {
   const [prediction, setPrediction] = useState('');
   const [pasted, setPasted] = useState('');
   const [check, setCheck] = useState<CheckResult | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const rows = t?.step_progress ?? [];
   const myRow = rows.find((r) => r.step_id === s.step_id);
@@ -200,17 +204,44 @@ function StepAppView(p: Props) {
     }
   };
 
-  const finish = async () => {
-    if (rt) await markStepDone(rt.store, s.step_id, p.contentVersion);
-    if (hasQuiz) setPhase('quiz');
-    else location.href = next ? stepHref(next) : base;
+  /** "마치기"·"건너뛰기": 이 기기에 저장한 뒤에만 넘어간다. 저장소가 아직 없으면 준비를 기다리고, 상한 안에 못 끝나면 안내하고 다시 누르게 한다 */
+  const saveThen = async (save: (store: LocalStore) => Promise<unknown>, go: () => void) => {
+    setSaving(true);
+    setSaveFailed(false);
+    const saved = getRuntime().then((r) => save(r.store));
+    try {
+      await saveWithin(saved, config.saveMaxMs);
+    } catch {
+      setSaveFailed(true);
+      // 상한 뒤에라도 저장이 끝나면 안내만 지운다. 넘어가지는 않는다: 그 사이 쓰던 예측·붙여넣기를 잃지 않게(버튼이 "다음으로"가 된다)
+      saved.then(
+        () => setSaveFailed(false),
+        () => undefined,
+      );
+      return;
+    } finally {
+      setSaving(false);
+    }
+    go();
   };
 
+  const finish = () =>
+    saveThen(
+      (store) => markStepDone(store, s.step_id, p.contentVersion),
+      () => {
+        if (hasQuiz) setPhase('quiz');
+        else location.href = next ? stepHref(next) : base;
+      },
+    );
+
   /** 선택 단계 건너뛰기 (spec 10절): status skipped_optional, 언제든 다시 할 수 있다 */
-  const skipOptional = async () => {
-    if (rt) await patchStep(rt.store, s.step_id, p.contentVersion, (cur) => (STEP_DONE.has(cur.status) ? null : { status: 'skipped_optional' }));
-    location.href = next ? stepHref(next) : base;
-  };
+  const skipOptional = () =>
+    saveThen(
+      (store) => patchStep(store, s.step_id, p.contentVersion, (cur) => (STEP_DONE.has(cur.status) ? null : { status: 'skipped_optional' })),
+      () => {
+        location.href = next ? stepHref(next) : base;
+      },
+    );
 
   const onHintOpened = async (level: number) => {
     if (!rt) return;
@@ -618,14 +649,19 @@ function StepAppView(p: Props) {
                   이전
                 </a>
               )}
-              <button type="button" class="btn primary grow" onClick={finish} data-testid="finish-step">
-                {done ? `단계 ${s.order} 다음으로` : `단계 ${s.order} 마치기`}
+              <button type="button" class="btn primary grow" onClick={finish} disabled={saving} data-testid="finish-step">
+                {saving ? '저장 중' : done ? `단계 ${s.order} 다음으로` : `단계 ${s.order} 마치기`}
               </button>
             </div>
+            {saveFailed && (
+              <p class="small" role="alert" data-testid="save-failed">
+                이 기기에 저장하지 못했습니다. 다시 눌러 주세요.
+              </p>
+            )}
             {isOptional && !done && (
               <div class="stack-sm" data-testid="optional-step">
                 <p class="small muted">선택 단계입니다. 하지 않아도 이 단위를 익힐 수 있고, 건너뛴 뒤에도 언제든 다시 할 수 있습니다.</p>
-                <button type="button" class="btn" onClick={skipOptional} data-testid="skip-optional">
+                <button type="button" class="btn" onClick={skipOptional} disabled={saving} data-testid="skip-optional">
                   건너뛰기 (선택)
                 </button>
               </div>

@@ -32,6 +32,16 @@ export function opData(table: string, row: Row): Row {
   return out;
 }
 
+/**
+ * 서버가 이 행을 가졌는지 이 기기가 모를 때(base 없음) 보내는 data: 값이 null 인 칸은 뺀다. 서버는 없는 칸을 그대로 두므로(server/API.md 2절)
+ * 다른 기기가 쓴 값(예측, 고친 실습 시간)을 이 기기의 빈 칸이 지우지 않는다. 보내는 중인 변경이 값을 실은 칸은 서버가 곧 그 값을 가지므로 비우기(null)를 보낸다
+ */
+export function unknownRowData(data: Row, sending: Row[]): Row {
+  const out: Row = {};
+  for (const [k, v] of Object.entries(data)) if (v !== null || sending.some((d) => d[k] != null)) out[k] = v;
+  return out;
+}
+
 export type StoreEvent = { type: 'put' | 'merge' | 'queue'; table?: string };
 
 export class LocalStore {
@@ -41,6 +51,13 @@ export class LocalStore {
   /** 서버 기록을 처음 받았거나(또는 받지 못해 이 사본으로 계속하기로 했거나) 풀리는 약속. 동기화를 붙이지 않은 사본은 처음부터 풀려 있다 */
   private firstPull: Promise<void> = Promise.resolve();
   private releaseFirstPull: (() => void) | null = null;
+  /** 이 페이지에서 서버 기록을 실제로 받았다(상한·오프라인으로 기다림만 푼 것과 다르다). 동기화를 붙이지 않은 사본은 처음부터 참 */
+  serverRead = true;
+  private serverReadP: Promise<void> = Promise.resolve();
+  private resolveServerRead: (() => void) | null = null;
+  /** 실제로 받기 전에는 보내지 않고 이 기기에 둘 열쇠(옛 판 기록과 겹치는 행, lib/migrate/run.ts). 서버의 그 행을 모르는(base 없는) 변경만 둔다 */
+  holdBeforeRead: ((table: string, key: Record<string, unknown>) => boolean) | null = null;
+  private heldSkipped = false;
 
   private constructor(
     private db: IDBPDatabase,
@@ -62,13 +79,30 @@ export class LocalStore {
     return new LocalStore(db, userId);
   }
 
-  /** 동기화 관리자가 붙을 때: 첫 받기가 끝날 때까지 whenPulled 를 기다리게 한다 */
+  /** 동기화 관리자가 붙을 때: 첫 받기가 끝날 때까지 whenPulled·whenServerRead 를 기다리게 한다 */
   expectFirstPull(): void {
     this.firstPull = new Promise((resolve) => (this.releaseFirstPull = resolve));
+    this.serverReadP = new Promise((resolve) => (this.resolveServerRead = resolve));
+    this.serverRead = false;
   }
-  markPulled(): void {
+  /** 서버 기록을 실제로 받았다: 두 기다림을 다 푼다. 그동안 보내지 않고 둔 변경이 있었으면 참(이제 보낼 차례) */
+  markPulled(): boolean {
+    this.continueWithoutPull();
+    this.serverRead = true;
+    this.resolveServerRead?.();
+    this.resolveServerRead = null;
+    const held = this.heldSkipped;
+    this.heldSkipped = false;
+    return held;
+  }
+  /** 받지 못했지만(상한·오프라인·계정 없음) 이 사본으로 계속한다: 단계 쓰기의 기다림만 푼다 */
+  continueWithoutPull(): void {
     this.releaseFirstPull?.();
     this.releaseFirstPull = null;
+  }
+  /** 서버 기록을 실제로 받을 때까지. 서버에 있을지 모르는 기록을 합쳐 쓰는 일(옛 1편 보관본)은 이것을 기다린다 */
+  whenServerRead(): Promise<void> {
+    return this.serverReadP;
   }
   /** 서버에 같은 열쇠의 행이 있을 수 있는 표(단계 행)를 처음 쓰기 전에 기다린다: 서버 행을 모른 채 새 행을 쓰면 서버 합치기가 옛 값을 되살린다 */
   whenPulled(): Promise<void> {
@@ -101,12 +135,15 @@ export class LocalStore {
     const prev = (await tx.objectStore('rows').get(ks)) as RowRec | undefined;
     const base = prev?.base_at ?? null;
     await tx.objectStore('rows').put({ id: ks, table, key, data, updated_at: updatedAt, base_at: base } satisfies RowRec);
+    const sending: Row[] = [];
     let cur = await tx.objectStore('queue').index('keyStr').openCursor(IDBKeyRange.only(ks));
     while (cur) {
-      if (!this.inflight.has(cur.value.op_id)) await cur.delete();
+      if (this.inflight.has(cur.value.op_id)) sending.push(cur.value.data);
+      else await cur.delete();
       cur = await cur.continue();
     }
-    const op: QueuedOp = { op_id: uuid4(), table, key, keyStr: ks, data: opData(table, data), updated_at: updatedAt };
+    const fields = opData(table, data);
+    const op: QueuedOp = { op_id: uuid4(), table, key, keyStr: ks, data: base ? fields : unknownRowData(fields, sending), updated_at: updatedAt };
     if (base) op.base_updated_at = base;
     await tx.objectStore('queue').add(op);
     await tx.done;
@@ -141,7 +178,15 @@ export class LocalStore {
   }
 
   async pendingOps(limit: number): Promise<QueuedOp[]> {
-    return (await this.db.getAll('queue', undefined, limit)) as QueuedOp[];
+    const hold = this.serverRead ? null : this.holdBeforeRead;
+    if (!hold) return (await this.db.getAll('queue', undefined, limit)) as QueuedOp[];
+    const out: QueuedOp[] = [];
+    for (const op of (await this.db.getAll('queue')) as QueuedOp[]) {
+      if (out.length >= limit) break;
+      if (!op.base_updated_at && hold(op.table, op.key)) this.heldSkipped = true;
+      else out.push(op);
+    }
+    return out;
   }
 
   async queueSize(): Promise<number> {
@@ -182,8 +227,8 @@ export class LocalStore {
     return recs.length + ops.length;
   }
 
-  /** 서버 행을 사본에 합친다. 아직 못 보낸 내 변경이 더 늦으면 내 것을 둔다 */
-  async mergeServerRows(tables: Record<string, Row[]>): Promise<number> {
+  /** 서버 행을 사본에 합친다. 아직 못 보낸 내 변경이 더 늦으면 내 것을 두고, 그때 사본에 넣지 못한 서버 행은 onKept 로 알린다 */
+  async mergeServerRows(tables: Record<string, Row[]>, onKept?: (table: string, serverRow: Row) => void): Promise<number> {
     let n = 0;
     const tx = this.db.transaction(['rows', 'queue'], 'readwrite');
     for (const [table, rows] of Object.entries(tables)) {
@@ -202,6 +247,7 @@ export class LocalStore {
         if (pending && local && (!serverAt || Date.parse(local.updated_at) >= Date.parse(serverAt))) {
           // 내 변경을 지키되, 서버가 가진 값의 시각은 기억해 둔다(다음 op 의 base_updated_at)
           await tx.objectStore('rows').put({ ...local, base_at: serverAt || local.base_at || null });
+          onKept?.(table, row);
           continue;
         }
         await tx.objectStore('rows').put({ id: ks, table, key, data: row, updated_at: serverAt || local?.updated_at || '', base_at: serverAt || null } satisfies RowRec);
@@ -226,6 +272,14 @@ export class LocalStore {
   }
   async setUi(k: string, v: unknown): Promise<void> {
     await this.db.put('ui', { k, v });
+  }
+  /** 읽고-고치고-쓰기를 한 트랜잭션으로: 같은 저장소를 연 다른 탭의 쓰기가 사이에 끼어 지워지지 않게 */
+  async updateUi<T>(k: string, fn: (cur: T | undefined) => T): Promise<T> {
+    const tx = this.db.transaction('ui', 'readwrite');
+    const next = fn(((await tx.store.get(k)) as { v: T } | undefined)?.v);
+    await tx.store.put({ k, v: next });
+    await tx.done;
+    return next;
   }
 
   async exportAll(): Promise<{ exported_at: string; user_id: string | null; tables: Record<string, Row[]>; pending_ops: QueuedOp[] }> {

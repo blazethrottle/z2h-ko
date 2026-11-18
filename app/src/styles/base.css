@@ -76,16 +76,16 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .fixture-banner { margin: 0; padding: var(--space-2) var(--space-5); background: var(--paper-sunken); color: var(--ink-muted); font-size: var(--type-caption-size); font-weight: var(--weight-medium); border-bottom: 1px solid var(--line); }
 
 /* 동기화 표시 (spec 0.6) */
-.sync { position: relative; }
 .sync-btn { display: inline-flex; align-items: center; gap: 4px; min-height: var(--touch-min); padding: 0 var(--space-2); border: 0; background: transparent; font-size: var(--type-caption-size); font-weight: var(--weight-semibold); white-space: nowrap; cursor: default; }
 .sync-btn.saved { color: var(--correct); }
-.sync-btn.syncing { color: var(--ink-muted); }
+.sync-btn.syncing { color: var(--ink-muted); cursor: pointer; }
 .sync-btn.offline { color: var(--retry); cursor: pointer; }
 .sync-btn.account { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 /* 계정·첫 확인 전 "확인 중": 옅은 글자로 늘 보인다 (spec 0.6) */
 .sync-btn.checking { color: var(--ink-muted); font-weight: var(--weight-medium); }
 .devtag { display: inline-flex; padding: 0 8px; border: 1px dashed var(--line-strong); border-radius: var(--radius-pill); color: var(--ink-muted); font-size: var(--type-caption-size); font-weight: var(--weight-semibold); }
-.sync-card { position: absolute; right: 0; top: calc(100% + var(--space-1)); width: min(320px, calc(100vw - 2 * var(--space-5))); z-index: 30; }
+/* 안내 카드는 상단 바(.topbar) 오른쪽 끝에 붙인다: 표시 오른쪽 끝에 붙이면 폰 폭에서 화면 왼쪽 밖으로 나간다 */
+.sync-card { position: absolute; right: var(--space-5); top: calc(100% + var(--space-1)); width: min(320px, calc(100vw - 2 * var(--space-5))); z-index: 30; }
 
 /* 하단 탭 (모바일·태블릿) */
 .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; height: var(--tabbar-h); display: grid; grid-template-columns: repeat(4, 1fr); background: var(--paper-raised); border-top: 1px solid var(--line); }

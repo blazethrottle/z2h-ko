@@ -65,7 +65,12 @@ export interface AppConfig {
   /** "동기화 중" 표시는 이 시간보다 오래 걸릴 때만 */
   syncingIndicatorDelayMs: number;
   syncBatchSize: number;
+  /** 요청 하나의 시간 한도. 응답 본문(오류 본문 포함)을 다 읽을 때까지 */
   requestTimeoutMs: number;
+  /** 페이지를 열 때의 첫 받기를 기다리는 상한. 넘으면 그 동기화를 버리고 오프라인으로 보고 이 기기 사본에 먼저 쓴다(DESIGN.md 2절) */
+  firstPullMaxMs: number;
+  /** "마치기"·"건너뛰기" 저장 한 번의 상한. 넘으면 안내 한 줄과 다시 누르기(첫 받기 상한보다 길게) */
+  saveMaxMs: number;
   /** 실습 시간: 마지막 입력 뒤 이 시간이 지나면 세지 않음 */
   idleLimitMs: number;
   activityFlushMs: number;
@@ -153,6 +158,8 @@ export const config: AppConfig = {
   syncingIndicatorDelayMs: 1_000,
   syncBatchSize: 200,
   requestTimeoutMs: 15_000,
+  firstPullMaxMs: 5_000,
+  saveMaxMs: 8_000,
   idleLimitMs: 5 * 60_000,
   activityFlushMs: 15_000,
   videoLoadTimeoutMs: 10_000,
